@@ -1,0 +1,71 @@
+Téma diplomky: Praktické (a skutečně použitelné) aplikace metod umělé
+               inteligence/strojového učení
+
+Bayes applications
+ * naive Bayes - spam classification
+               - sort incoming troubleshooting mails to core developers, gui developers, BFU help, ...
+ * TODO barva očí (genetické poruchy...) v královských rodech
+ * TODO
+
+
+poznámky k zadání
+=================
+- je třeba se na začátku rozhodnout jestli psát english/česky?
+- prototypování v Octave/Matlab/Python
+- SVM není neobvyklý přístup
+- ne ani tak tvořit applety... (aspoň ne výhradně)
+- aby nebylo zadání příliš jednoduché ALE ani příliš složité
+
+brainstorming o možnostech co dělat
+===================================
+- Bayesovské modely ???
+   * spam filtering - nenaivní filter = síť
+   * fault diagnosis
+   * medical data
+   * Norvig: Artificial intelligence: A modern approach
+   * Probabilistic Graphical Models: Principles and Techniques
+- anomaly detection
+- umělá inteligence pro identifikaci malware (spam, vir, ...)
+   * určení jazyka => různé klasifikátory natrénované pro jazyky
+- recommender systems
+   * shlukování dokumentů (filmů podle anotace)
+   * doporučení dle vytvořených shluků
+
+- skutečně použitelný rozpoznávání ručně psaných číslic/písmen
+- [to check out pdfs :(] clustering of articles on news servers
+
+
+rozpoznávání číslic
+===================
+- PCA pro analýzu obrázků, zmenšení počtu features
+- probabilistic neural networks
+
+
+filtrování spamu
+================
+- příznaky
+   * specific keywords (viagra, cheap, ...)
+   * HTML tagy (vypustit / naopak zahrnout nějakou metriku jak moc jich je)
+   * odkazování obrázků
+   * odkazy jinam
+   * "barevnost" mailu
+   ? množinu příznaků určit pomocí GA ("když nevíme, jak vybrat a zjevně se jedná
+     o optimalizační problém...")
+   -> vektor {0,1}* dle přítomnosti příznaků
+
+- blacklist domén, IP adres
+
+- techniky machine learning
+   * Bayesian filter + vektor slov (+ GA)
+   * logistická regrese + vektor slov (+ GA)
+   * SVM + vektor slov (+ GA)
+   * zlatý grál
+       (1) hybridní systém, který bude lepší než pouze jeho komponenty
+       (2) !!! dynamické učení během nasazení pro konkrétního uživatele, měnící se podmínky
+
+
+implementation
+==============
+- prototypování v Octavu
+- externí knihovny lineární algebry (maticové operace -> učení)
+
