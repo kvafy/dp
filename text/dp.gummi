@@ -3,5 +3,5 @@ typesetter=pdflatex
 steps=texpdf
 root=/home/kvafy/skola/dp/text/dp.tex
 
-file=/home/kvafy/skola/dp/text/obsah.tex
+file=/home/kvafy/skola/dp/text/obsah-gummi.tex
 file=/home/kvafy/skola/dp/text/prilohy.tex
