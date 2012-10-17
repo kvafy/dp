@@ -173,15 +173,15 @@
 
 
 \chapter{Theory of Bayes networks}
-This chapter will present theoretical foundations for understanding Bayes networks and for doing computations over them. Studying Bayes networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to reason about Bayes network.
+This chapter will present theoretical foundations for understanding Bayes networks and for doing computations over them. Studying Bayes networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to perform inference given some observations.
 
-First will be presented notation used in this thesis and necessary overview of basic statistics. Then we will proceed to theory of Bayes networks, at first in terms of pure mathematics followed by practical and effective \uncertain{reasoning about information represented by them.}
+First will be presented notation used in this thesis and necessary overview of probability theory. Then we will proceed to theory of Bayes networks, at first in terms of pure mathematics followed by techniques of practical and effective \uncertain{reasoning about information represented by them according to some observation.}
 
 
 
 
 \section{Preliminaries}
-At first we need to establish notation and explain basic facts regarding mathematical probability. As will be shown later, Bayes networks are models for discrete probability distributions.
+At first we need to establish notation and explain basic facts regarding mathematical probability because, as will be shown later, Bayes networks are graphical models for joint probability distributions.
 
 \subsection{Probability distributions}
 Lets begin by defining what a probability distribution is if there is one random variable.
@@ -194,10 +194,10 @@ Lets begin by defining what a probability distribution is if there is one random
     \end{itemize}
 \end{math_def}
 
-We may also have probability distributions over more than one random variable which are then called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely is every single outcome of a throw.. In this case there are $6 \times 6 = 36$ possibilities so the $P(X_{black},X_{white})$ function would have 36 entries if represented by a table. Note that space needed to store table for joint probability distribution $P(X_{black},X_{white})$ is much bigger than if we were to store $P(X_{black})$ and $P(X_{white})$ separately. This is one of the reasons why to use Bayes networks but more on that will be covered later.
+We may also have probability distributions over more than one random variable which are then called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely is every single outcome of a throw. In this case there are $6 \times 6 = 36$ possibilities so the $P(X_{black},X_{white})$ function would have 36 entries if represented by a table. Note that space needed to store table for joint probability distribution $P(X_{black},X_{white})$ is much bigger than if we were to store $P(X_{black})$ and $P(X_{white})$ separately. This is one of the reasons why to use Bayes networks but more on that will be covered later.
 
 \subsection{Factors}
-Reasoning about joint probability distributions brings us to the notion of \term{factors}. Factors are introduced because there are certain operations defined over them and these operations will be needed for reasoning about Bayes networks later. According to the definition~\ref{def_factor} presented bellow factors are essentially mathematical functions and as such a discrete probability distribution $P(X_1, \dots, X_n)$ is also a factor.
+Reasoning about joint probability distributions brings us to the notion of \term{factors}. Factors are introduced because there are certain operations defined over them and these operations will be needed for reasoning about Bayes networks later. According to the definition~\ref{def_factor} presented bellow, factors are essentially mathematical functions and as such a discrete probability distribution $P(X_1, \dots, X_n)$ is also a factor.
 
 \begin{math_def}\label{def_factor}
     Factor $\phi$ is a function $\phi: X_1 \times X_2 \times \dotsm \times X_k \rightarrow \mathbb{R}$. Set $\lbrace X_1, X_2, \dots, X_k \rbrace$ is called scope of the factor $\phi$.
@@ -213,37 +213,37 @@ Reasoning about joint probability distributions brings us to the notion of \term
 
 
 \section{Bayes networks}
-Why use Bayes networks? As was illustrated earlier having a complicated joint probability distribution with many random variables inevitably leads to a potentially huge table that would represent such joint probability distribution. Lets assume we have random variables $X_1, X_2, \dots$ and each of these variables is binary. Then for representing distribution $P(X_1)$ we would need a table with two entries, for distribution $P(X_1, X_2)$ the table would have four entries and a general distribution $P(X_1, \dots, X_k)$ would have a table with $2^k$ entries which brings several problems:
+Why use Bayes networks? As was illustrated earlier, having a complicated joint probability distribution with many random variables inevitably leads to a potentially huge table that would represent such joint probability distribution. Lets assume we have binary random variables $X_1, X_2, \dots$ Then for representing distribution $P(X_1)$ we would need a table with two entries, for distribution $P(X_1, X_2)$ the table would have four entries and a general distribution $P(X_1, \dots, X_k)$ would have a table with $2^k$ entries. This exponential growth brings several problems:
 \begin{itemize}
-    \item Table describing the joint probability distribution may be too big to store.
-    \item Even if the table could be stored, making calculations over it would not be efficient.
+    \item Table describing a joint probability distribution may be too big to store.
+    \item Even if the table could be stored, making calculations over it (e.g. marginalization) would not be efficient.
     \item In order to construct such a probability table:
     \begin{enumerate}
-        \item[a)] We would require huge amount of data to create an accurate statistical model from since we would essentially count occurrences of every single possible assignment to our random variables and finally divide it by the total number of all examples.
+        \item[a)] We would require huge amount of training data to create an accurate statistical model from, since we would essentially count occurrences of every single possible assignment to all random variables and finally divide it by the total number of all training examples.
         \item[b)] We would need a human expert to determine the probability of every possible assignment to random variables. This is generally not possible because all probabilities would be near to zero and people are simply not able to correctly capture probabilities on this level~\cite{pgm}.
     \end{enumerate}
 \end{itemize}
 
-As will be shown later, Bayes networks couple with these problems by having several smaller probability distributions (factors) based on dependencies between random variables.
+As will be shown later, Bayes networks couple with the problem of exponential growth of probability tables by having several smaller conditional probability distributions (factors) based on dependencies between random variables. Product of all these conditional probabilities (factors) gives the underlaying joint probability distribution which would, if represented directly, require an exponentially bigger table.
 
 \begin{math_def}\label{def_bayes_network}
-    Bayes network $G$ is a directed acyclic graph where each node represents a random variable distribution and oriented edges between nodes express dependencies between random variables.
+    Bayes network $G$ is a directed acyclic graph where each node represents a~random variable and oriented edges between nodes express direct dependencies between random variables.
 \end{math_def}
 
-The definition implies several things. Acyclic property tells us that there is a hierarchy of nodes in terms of parent-child relation meaning that child random variable $C$ is dependent on its parent random variables $P_1, \dots, P_m$ (also denoted $Parents(C)$). This conditional probability distribution $P(C | Parents(C))$ is usually expressed via a \term{Conditional Probability Table (CPT)} that defines probability for every possible assignment of variables $Parents(C)$ and $C$. Of course for every assignment $p_1,\dots,p_m$ of variables $Parents(C)$ must hold that $\sum_C P(C | p_1, \dots, p_m) = 1$. Otherwise $P(C | Parents(C))$ would, by definition~\ref{def_prob_distribution}, not be a probability distribution.
+The definition of Bayes network (abbreviated as BN) implies several things. Acyclic and directed properties tell us that there is a hierarchy of nodes in terms of parent-child relation, meaning that child random variable $C$ is dependent on its parent random variables $P_1, \dots, P_m$ (also denoted $Parents(C)$). This conditional probability distribution $P(C | Parents(C))$ is usually\footnote{For purposes of this thesis, we assume probability distributions of discrete, not continuous, variables whose events are from a finite set. Such probability distribution can be expressed by a table.} expressed via a \term{Conditional Probability Table (CPT)} that defines probability distribution of variable $C$ for every possible assignment of variables $Parents(C)$. Of course for every assignment $p_1,\dots,p_m$ of variables $Parents(C)$ must hold that $\sum_C P(C | p_1, \dots, p_m) = 1$. Otherwise $P(C | Parents(C))$ would, by definition~\ref{def_prob_distribution}, not be a probability distribution.
 
-We say that Bayes network $G$ induces joint distribution $P(X_1, \dots, X_k)$ given by
+We say that Bayes network $G$ with nodes $\lbrace X_1, \dots, X_k\rbrace$ induces joint probability distribution $P(X_1, \dots, X_k)$ given by
 \begin{equation}\label{eq_bn_joint}
     P(X_1, \dots, X_k) = \Pi_{i=1}^k P(X_i | Parents(X_i))
 \end{equation}
-Equivalent statement is that $P$ factorizes over $G$ if the equation \eqref{eq_bn_joint} holds. This is because the terms $P(X_i | Parents(X_i))$ are \term{factors} and by construction Bayes network we can factorize otherwise very space-consuming CPD to several smaller CPDs.
+Equivalent statement is that $P(X_1, \dots, X_k)$ factorizes over BN $G$ if the equation \eqref{eq_bn_joint} holds. This is because the terms $P(X_i | Parents(X_i))$ are \term{factors} and by constructing a~Bayes network we can factorize otherwise very space-consuming CPD of $P(X_1, \dots, X_k)$ to several smaller CPDs for every node $X_i$ in BN as conditional distribution $P(X_i | Parents(X_i))$.
 
-We can proof \cite{myself} that induced joint distribution \eqref{eq_bn_joint} is indeed a probability distribution when every factor $P(X_i | Parents(X_i))$ is also a probability distribution:
+We can proof \cite{myself} that induced joint distribution \eqref{eq_bn_joint} is indeed a probability distribution when assuming that every factor $P(X_i | Parents(X_i))$ is also a probability distribution. The proof is as follows:
 \begin{enumerate}
-   \item $P \geq 0$:
-       Trivial since factors $P(X_i | Parents(X_i))$ are assumed to be valid probability distributions. Then by definition $\forall i: P(X_i | Parents(X_i)) \geq 0$. And product of non-negative numbers (factors) is also non-negative.
-   \item $\sum P = 1$:
-       If there is a dependency, we compute topological sort of $G$ which always exists ($G$ is a DAG), take maximal element $X_{max}$, push it in inside summation and since $P(X_i | Parents(X_i))$ is probability distribution, $\sum P(X_i | Parents(X_i)) = 1$. By this we eliminated variable $X_{max}$ and got the remainder of $G$ for which we repeat this process until there is any dependency. At the end everything sums to 1.
+   \item $P(X_1, \dots, X_k) \geq 0$:
+       Trivial since factors $P(X_i | Parents(X_i))$ are assumed to be valid probability distributions. Then by definition of probability distribution~\ref{def_prob_distribution} we know that $\forall i: P(X_i | Parents(X_i)) \geq 0$. And product of non-negative numbers (factors) is also non-negative.
+   \item $\sum P(X_1, \dots, X_k) = 1$:
+       If there is a dependency, we compute topological sort of $G$ which always exists (because every BN is a DAG), take maximal element $X_{max}$, push it in inside summation and since $P(X_{max} | Parents(X_{max}))$ is probability distribution, $\sum P(X_{max} | Parents(X_{max})) = 1$. By this we eliminated variable $X_{max}$ and got the remainder of $G$ for which we repeat this process until there is any dependency. At the end we have only one factor (namely $P(X_1, \dots, X_k)$) where everything sums to 1.
 \end{enumerate}
 
 
@@ -252,14 +252,16 @@ We can proof \cite{myself} that induced joint distribution \eqref{eq_bn_joint} i
 
 
 \subsection{Flow of influence}
-To express how observing certain facts propagates through Bayes network and affects probability distributions of other variables on qualitative level lets introduce so called \term{flow of influence}. This also enables us to describe notion of (in)dependency of random variables given some facts.
+To express how observing certain facts propagates through Bayes network and affects probability distributions of other unobserved variables on qualitative level, lets introduce so called \term{flow of influence}. Later we will build on flow of influence to quantitatively reason about changes of probability distributions when given some facts (this will be called \term{belief propagation}). Flow of influence also enables us to describe notion of conditional (in)dependency of random variables in a BN when given some facts. 
 \begin{math_def}
     Let $G$ be a Bayes network with nodes $\lbrace X_i \rbrace$. Undirected trail $X_1 - X_2 - \dots - X_m$ given facts $Z$ is active iff
     \begin{itemize}
-        \item For every so called "V-structure" $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ is $X_i \in Z$.
+        \item For every so called "V-structure" $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ on the trail is $X_i \in Z$.
         \item No other $X_i$ on given trail is in $Z$.
     \end{itemize}
     Note: V-structure is defined as a segment of trail in form $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ (edge directions matter).
+    
+    Note 2: $X_{i-1}$ and $X_{i+1}$ may be the same.
 \end{math_def}
 
 \todo{To understand better the definition of active trail see Figure~xx. Please note, that the set of facts $Z$ might be empty.}

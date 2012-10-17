@@ -1,2 +1,4 @@
 2012/10/09: 4 hours, watching Probabilistic Graphical Models (PGM) at coursera.org
 2012/10/10: 3 hours, setting up latex template, introduction to Bayes networks (math)
+2012/10/18: 3 hours, Alppaydin Machine Learning (chain belief propagation, calculations over BNs by hand)
+
