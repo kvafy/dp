@@ -7,7 +7,12 @@ Bayes applications
  * TODO barva očí (genetické poruchy...) v královských rodech (Schwarzenberg)
  * EDA algoritmy (přinejmenším zajímavá konstrukce BN dle závislostí
    určených pomocí chí^2)
- * TODO
+ * analýza bible => napsána více lidmi => blbost, že "psal bůh"
+   (použitelné možná i v soudní analýze - kdo napsal jaký dopis???)
+   - features jako
+      x zastoupení adjektiv
+      x délka vět
+      x frekvence výskytu slova "bůh" ap.
 
 
 konzultace #1

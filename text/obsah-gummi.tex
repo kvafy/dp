@@ -216,7 +216,7 @@ Reasoning about joint probability distributions brings us to the notion of \term
 Why use Bayes networks? As was illustrated earlier, having a complicated joint probability distribution with many random variables inevitably leads to a potentially huge table that would represent such joint probability distribution. Lets assume we have binary random variables $X_1, X_2, \dots$ Then for representing distribution $P(X_1)$ we would need a table with two entries, for distribution $P(X_1, X_2)$ the table would have four entries and a general distribution $P(X_1, \dots, X_k)$ would have a table with $2^k$ entries. This exponential growth brings several problems:
 \begin{itemize}
     \item Table describing a joint probability distribution may be too big to store.
-    \item Even if the table could be stored, making calculations over it (e.g. marginalization) would not be efficient.
+    \item Even if the table could be stored, making calculations over it (e.g. factor marginalization or multiplication) would not be efficient. In fact operations such as exact inference are known to be NP-hard~\cite{pgm} wrt. number of variables.
     \item In order to construct such a probability table:
     \begin{enumerate}
         \item[a)] We would require huge amount of training data to create an accurate statistical model from, since we would essentially count occurrences of every single possible assignment to all random variables and finally divide it by the total number of all training examples.
@@ -267,12 +267,12 @@ To express how observing certain facts propagates through Bayes network and affe
 \todo{To understand better the definition of active trail see Figure~xx. Please note, that the set of facts $Z$ might be empty.}
 
 \begin{math_def}
-    Let $G$ be a Bayes network, $X,Y$ its nodes and $Z$ facts (observations). We say that $X,Y$ given $Z$ are d-separated in $G$ (denoted as $\text{d-sep}_G(X,Y|Z)$) iff there is no active trail between $X,Y$ given $Z$.
+    Let $G$ be a Bayes network, $X,Y$ two of its nodes and $Z$ facts (observations). We say that $X,Y$ given $Z$ are d-separated in $G$ (denoted $\text{d-sep}_G(X,Y|Z)$) iff there is no active trail between $X$ and $Y$ given $Z$.
 \end{math_def}
 
 Using d-separation we can quite elegantly determine if an observation of some variable $X$ can or cannot affect distribution of other random variable. Basically variable $X$ can influence variable $Y$ given facts $Z$ if there is an active trail between $X,Y$ given $Z$ (or equivalently if $X,Y$ aren't d-separated given $Z$). So it boils down to question whether there is flow of influence between some variables.
 
-Flow of influence also tells us whether two random variables are dependent or not. Clearly two random variables that are directly connected to each other are dependent. But we can also examine other than these direct relations. Also please note that if two random variables $X,Y$ are independent in Bayes network depends on our observations $Z$ as it can activate some trails in V-structures just as it can deactivate other trails.
+Flow of influence also tells us whether two random variables given some observation are dependent or not. Clearly two random variables that are directly connected to each other are dependent. But we can also examine other than these direct relations. Also please note that whether two random variables $X,Y$ are independent in Bayes network depends on our observations $Z$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
 
 \todo{Intuition behind d-separation and (in)dependence\,--\,example, show V-structure effect etc.}
 
@@ -297,22 +297,40 @@ Flow of influence also tells us whether two random variables are dependent or no
 
 
 
+\section{Inference in Bayes networks}
+Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of both mathematic and algorithmic complexity but exhibits serious running-time disadvantages. On the other hand approximate inference methods allow us to calculate answer to a query quickly but it isn't exact solution.
+
+
+\subsection{Sum-product}
+One of the simplest methods for computing a conditional probability query is called sum-product. Problem is to compute conditional probability $P(X | E)$ where $X$ is one or more random variables, $E$ are evidence (observed) variables that have a concrete value and no other. Then there are $Y$ variables that are neither query nor evidence variables. The query is computed according to Bayes' theorem as follows:
+\begin{equation*}
+P(X|E)
+ = \frac{P(X, E)} {P(E)}
+ = \frac{\sum_Y P(X, Y_1, \dots, Y_n, E)}{\sum_{X,Y} P(X, Y_1, \dots, Y_n, E)}
+\end{equation*}
+Every item of the sums in numerator or denominator can be written according to joint distribution represented by a BN (definition~\eqref{eq_bn_joint}) as product of conditional probability distributions of all nodes in given BN. This explains the name of this inference method\,--\,we effectively compute many products of factors and sum them.
+
+Sum-product inference method has, from its nature, exponential running time in the worst case. It depends on number of all nodes (variables) and on the number of possible assignments to a variable. There might be other factors involved but, as sum-product is just a method rather than algorithm, they won't be discussed.
+
+
+\subsection{Variable elimination}
+Variable elimination algorithm can be seen as implementation of the sum-product method explained earlier.
+
+\todo{řeči kolem, algoritmus, časová složitost, kliky, největší immidiate factor}
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Creating a Bayes network}
-
-
-
-
-
-
-
-
-
-
-\section{Inference in Bayes networks}
-
-
-
 
 
 
