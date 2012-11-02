@@ -1,4 +1,7 @@
+2012/11/02: 6 hours, programming factor marginalization, renormalization and refactoring
+2012/11/01: 3 hours, programming basic factor multiplication
 2012/10/09: 4 hours, watching Probabilistic Graphical Models (PGM) at coursera.org
 2012/10/10: 3 hours, setting up latex template, introduction to Bayes networks (math)
 2012/10/18: 3 hours, Alppaydin Machine Learning (chain belief propagation, calculations over BNs by hand)
-
+2012/10/23: 3 hours, PGM lectures - exact inference & variable elimination, thesis notes
+2012/10/24: 1.5 hours, PGM lectures - belief propagation

@@ -13,14 +13,17 @@ Bayes applications
       x zastoupení adjektiv
       x délka vět
       x frekvence výskytu slova "bůh" ap.
+ * modelování pokerových hráčů - blafuje/neblafuje? Je pro mě výhodné zkusit bluf?
 
 
-konzultace #1
+konzultace #1 (29.10.2012)
 =============
 - "Bayesian" místo "Bayes"
 - zaměřit se taky na popis algoritmů belief propagation
-- návrh předvěst naive bayes jako jednu z aplikací
-
+- návrh předvést naive bayes jako jednu z aplikací
+- píšu poznámky rovnou formou DP (dýštak se něco vymaže), 5 stran so far
+- studium: factor, conditional (in)dependence, sum-product, variable elimination,
+           belief propagation
 
 
 poznámky k zadání
