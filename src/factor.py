@@ -33,9 +33,13 @@ class Factor:
     """Immutable."""
 
     def __init__(self, scope, prob):
-        assert(len(scope) > 0)
+        if len(scope) == 0:
+            raise FactorException("Factor must have non-empty scope")
         card = Factor._card(scope)
-        assert(product(card) == len(prob))
+        if product(card) != len(prob):
+            raise FactorException("Invalid length of prob vector")
+        if not all(p >= 0 for p in prob):
+            raise FactorException("Value of a factor must be non-negative")
         # make it tuples instead of lists => enforce immutability
         self.scope = tuple(scope)
         self.card = card  # list of cardinalities for each variable
@@ -55,7 +59,13 @@ class Factor:
         
         return Factor(res_scope, res_prob)
     
-    # TODO def __mul__
+    def __mul__(self, f2):
+        if isinstance(f2, Factor):
+            return self.multiply(f2)
+        # TODO makes sense for numeric types (eg. for renormalization)
+        # docs: http://docs.python.org/3.3/reference/datamodel.html?highlight=object#object.__rmul__
+        else:
+            raise NotImplemented
     
     def marginalize(self, vars_to_marginalize):
         """Marginalize over specified variables."""
@@ -71,13 +81,26 @@ class Factor:
         return Factor(res_scope, res_prob)
     
     def reduce(self, evidences_dict):
-        # TODO set all probabilities inconsistent with evidence to zero
-        pass
+        """Set all probabilities inconsistent with evidence to zero."""
+        # TODO more efficiently
+        def contradicts_evidence(assignment):
+            for (e_var, e_val) in evidences_dict.items():
+                try:
+                    index = self.scope.index(e_var)
+                    if assignment[index] != e_val:
+                        return True
+                except ValueError:
+                    pass
+            return False
+        res_prob = list(self.prob)
+        for assignment in Factor._assignment_generator(self.scope):
+            if contradicts_evidence(assignment):
+                index = Factor._map_assignment_to_index(assignment, self.card)
+                res_prob[index] = 0
+        return Factor(self.scope, res_prob)
     
     def renormalize(self):
-        """
-        Make the factor sum to one.
-        """
+        """Make the factor sum to one."""
         current_sum = sum(self.prob)
         if current_sum == 1:
             return self
@@ -85,9 +108,6 @@ class Factor:
             renorm_prob = [self.prob[i] / current_sum for i in range(len(self.prob))]
             return Factor(self.scope, renorm_prob)
     
-    def probability(self, evidences_dict):
-        # TODO
-        pass
     
     @staticmethod
     def _card(variables):
@@ -118,6 +138,10 @@ class Factor:
         """
         return tuple(va for va in vars_a if va not in vars_b)
     
+    def _variables_issubset(sup, sub):
+        """Check if set of variables sub is a subset of set sup."""
+        return all(v in sup for v in sub)
+    
     @staticmethod
     def _assignment_generator(vars):
         """
@@ -138,27 +162,33 @@ class Factor:
             assignment[i] += 1
     
     @staticmethod
-    def _multiple_assignment_generator(base_vars, *subscopes):
+    def _multiple_assignment_generator(base_scope, *subscopes):
         """
-        Generates all assignments for variables base_vars. Then there is
-        additional list of subsets of base_vars and for the current assignment
-        of base_vars it also generates assignments for variables in the subsets.
-        Each combination is yielded as a tuple of 1 + len(subscopes) assignments.
+        Generates all assignments for variables base_scope, one by one.
+        Then there is additional list of subsets of base_scope and for
+        the current assignment of base_scope it also generates assignments
+        for variables in the subsets. Each combination is yielded as
+        a tuple of 1 + len(subscopes) assignments to respective sets
+        of variables, ie. (base_assignment, subscope1_assignment, ...).
+        Note: Each subscope must be subset of base_scope.
         """
+        if not all(Factor._variables_issubset(base_scope, ss) for ss in subscopes):  # TODO performance
+            raise FactorException("variables of each subscope must be all in base_scope")
         def extract_assignment(src_assignment, mapping):
             return tuple(src_assignment[i] for i in mapping)
+        # mappings[i][v] ~ what is the index of v-th variable from subscope "i"
+        #                  in the base_scope list
+        mappings = [[base_scope.index(sub_var) for sub_var in subscope] for subscope in subscopes]
         
-        mappings = [[base_vars.index(sub_var) for sub_var in subscope] for subscope in subscopes]
-        
-        for base_assignment in Factor._assignment_generator(base_vars):
+        for base_assignment in Factor._assignment_generator(base_scope):
             subscopes_assignments = tuple(extract_assignment(base_assignment, mapping) for mapping in mappings)
             yield (base_assignment, ) + subscopes_assignments
     
     @staticmethod
     def _map_assignment_to_index(assignment, card):
         assignment = tuple(assignment)
-        assert(len(assignment) == len(card))
-        assert(assignment < card)
+        assert(len(assignment) == len(card))  # TODO performance
+        assert(assignment < card)  # TODO performance
         index = 0
         multiplier = 1
         for i in range(len(assignment)):
@@ -168,7 +198,7 @@ class Factor:
     
     @staticmethod
     def _map_index_to_assignment(index, card):
-        assert(index < product(card))
+        assert(index < product(card))  # TODO performance
         assignment = []
         for i in range(len(card)):
             assignment_i = index % card[i]
@@ -199,22 +229,10 @@ class Factor:
         return "\n".join([title, header, separator] + body_lines)
 
 
-class UnconditionalFactor(Factor):
-    pass
-
-
-class ConditionalFactor(Factor):
-    pass
-
-
-
 def product(iterable):
     """Return product of the whole iterable. Return 1 for empty iterable."""
     return functools.reduce(operator.mul, iterable, 1)
 
-def double_eq(v1, v2):
-    eps = 1e-5
-    return abs(v1 - v2) <= eps
 
 if __name__ == "__main__":
     var_rain = Variable("Rain", ["r0", "r1"])
