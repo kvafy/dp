@@ -4,7 +4,17 @@ import itertools
 import operator
 
 
+class FactorException(Exception):
+    """Exception for manipulation with factors."""
+    pass
+
+
 class Variable:
+    """
+    A variable defined by it's name and list of values.
+    Variables are fully distinguished by their names, hence there cannot
+    be two different variables of the same in common factor.
+    """
     def __init__(self, name, values):
         self.name = name
         self.values = values  # list of strings (eg. ["0", "1"], ["rain0", "rain1"], ...)
@@ -22,13 +32,13 @@ class Variable:
 class Factor:
     """Immutable."""
 
-    def __init__(self, vars, cond_vars, prob):
-        assert(len(vars) > 0)
-        all_vars = vars + cond_vars
-        card = Factor._card(all_vars) 
+    def __init__(self, uncond_vars, cond_vars, prob):
+        assert(len(uncond_vars) > 0)
+        all_vars = uncond_vars + cond_vars
+        card = Factor._card(all_vars)
         assert(product(card) == len(prob))
         # make it tuples instead of lists => enforce immutability
-        self.uncond_vars = tuple(vars)
+        self.uncond_vars = tuple(uncond_vars)
         self.cond_vars = tuple(cond_vars)
         self.all_vars = tuple(all_vars)
         self.card = card  # list of cardinalities for each variable
@@ -38,9 +48,11 @@ class Factor:
         """Multiply with factor f2 and return result as a new factor."""
         f1 = self
         if not set(f1.uncond_vars).isdisjoint(set(f2.uncond_vars)):
-            raise Exception("multiplying something like P(X, ...|...) * P(X, ...|)")
+            # TODO instead should enforce somethink like: P(A,B) * P(B,C), where A union C is non-empty
+            #      (ie. variables of f1 aren't subset of variables of f2 and vice versa)
+            raise FactorException("multiplying something like P(X, ...|...) * P(X, ...|)")
         if f2.cond_vars:
-            raise Exception("right operand may not have any conditional variable")
+            raise FactorException("right operand may not have any conditional variable")
             
         res_uncond_vars = Factor._variables_union(f1.uncond_vars, f2.uncond_vars)
         res_cond_vars = Factor._variables_difference(f1.cond_vars, f2.uncond_vars)
@@ -55,10 +67,13 @@ class Factor:
         
         return Factor(res_uncond_vars, res_cond_vars, res_prob)
     
-    # TODO def __mult__
+    # TODO def __mul__
     
     def marginalize(self, vars_to_marginalize):
         """Marginalize over specified variables."""
+        # TODO nefunguje spravne pro faktory s podminkovymi promennymi (lze to vubec??)
+        if Factor._variables_intersection(self.cond_vars, vars_to_marginalize):
+            raise FactorException("Don't know how to marginalize over a condition variable")
         def remap_values(values, indices):
             remaped = [None for i in range(len(values))]
             for (v, i) in zip(values, indices):
@@ -85,7 +100,7 @@ class Factor:
         return Factor(res_uncond_vars, res_cond_vars, res_prob)
     
     def reduce(self, evidences_dict):
-        # TODO
+        # TODO set all probabilities inconsistent with evidence to zero
         pass
     
     def renormalize(self):
@@ -99,7 +114,6 @@ class Factor:
         the assignment of condition variables changes. Note that if there is no
         condition variable, the whole table must sum to 1.
         """
-        # TODO nefunguje dobre pro faktory s podminkovymi promennymi
         renorm_period = product(Factor._card(self.uncond_vars))  # aka block size
         renorm_prob = list(self.prob)
         renorm_block_count = len(self.prob) // renorm_period
