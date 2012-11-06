@@ -12,12 +12,17 @@ class FactorException(Exception):
 class Variable:
     """
     A variable defined by it's name and list of values.
+    Values can be of any type as long as they are not duplicate. If some value,
+    however, is of type 'int', it's index in values list has to be equal to
+    it's numeric value.
     Variables are fully distinguished by their names, hence there cannot
     be two different variables of the same name in a factor.
     """
     def __init__(self, name, values):
         if len(values) != len(set(values)):
             raise Exception("Values of a variable have to be unique")  # TODO exception class
+        if any(isinstance(v, int) and v != values.index(v) for v in values):
+            raise Exception("Value of type int has incorrect position")  # TODO exception class
         self.name = name
         self.values = values  # list of strings (eg. ["0", "1"], ["rain0", "rain1"], ...)
     
@@ -51,12 +56,17 @@ class Factor:
     
     def value(self, assignment_dict):
         """Get value of this factor for a particular assignment of variables."""
+        def variable_value_to_index(var):
+            assignment = assignment_dict[var]
+            if not isinstance(assignment, int):
+                assignment = var.values.index(assignment)
+            return assignment
         try:
-            factor_assignment = tuple(assignment_dict[var] for var in self.scope)
+            factor_assignment = tuple(variable_value_to_index(var) for var in self.scope)
             index = Factor._map_assignment_to_index(factor_assignment, self.card)
             return self.prob[index]
-        except KeyError:
-            raise FactorException("assignment is incomplete")
+        except KeyError:  # some variable from the scope of this factor hasn't assignment
+            raise FactorException("Assignment is incomplete for this factor")
     
     def multiply(self, f2):
         """Multiply with factor f2 and return result as a new factor."""

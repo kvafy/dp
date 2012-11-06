@@ -45,7 +45,7 @@ class FactorBurglarTest(unittest.TestCase):
     def test_value_correct(self):
         assignment_dict = {self.var_burglary: 0, self.var_earthquake: 0, self.var_alarm: 0, self.var_john_calls: 1}
         f_value = self.factor_alarm.value(assignment_dict)
-        self.assertEquals(f_value, self.factor_alarm.prob[0])
+        self.assertEqual(f_value, self.factor_alarm.prob[0])
     
     def test_value_incomplete(self):
         assignment_dict = {self.var_burglary: 0, self.var_alarm: 0}
