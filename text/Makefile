@@ -34,6 +34,7 @@ obsah.tex: obsah-gummi.tex
 	cp obsah-gummi.tex obsah.tex
 	sed -e '0,/%end-of-inserted-header/d' -i obsah.tex
 	sed -e '/%begin-of-inserted-footer/,$$d' -i obsah.tex
+	vlna -l -v Aa obsah.tex # english vlna
 
 clean:
 	rm -f *.dvi *.log $(CO).blg $(CO).bbl $(CO).toc *.aux $(CO).out $(CO).lof

@@ -14,6 +14,8 @@ Bayes applications
       x délka vět
       x frekvence výskytu slova "bůh" ap.
  * modelování pokerových hráčů - blafuje/neblafuje? Je pro mě výhodné zkusit bluf?
+ * porozumění přirozenému jazyku - jakou pizzu člověk v pizzerce chce když "gurmán", "s brokolicí", "brokolice s kuřecím mase", ... jsou to samé?
+   => stejný přístup jako u spamu, Naive Bayes (ale možná i složitější model)
 
 
 konzultace #1 (29.10.2012)

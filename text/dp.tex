@@ -25,16 +25,19 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1, IL2]{fontenc}
 \usepackage{url}
+
 \DeclareUrlCommand\url{\def\UrlLeft{<}\def\UrlRight{>} \urlstyle{tt}}
 
 %zde muzeme vlozit vlastni balicky
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{color}
+\usepackage{comment}
 \newtheorem{math_def}{Definition}[chapter] % 3. parametr zajisti cislovani "<sekce>.<číslo definice>"
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
 \newcommand{\todo}[1]{{\color{red} #1}}
 \newcommand{\uncertain}[1]{{\color{blue} #1}}
+\newcommand{\note}[1]{{\color{green} #1}}
 
 
 % =======================================================================
@@ -80,12 +83,12 @@
   %===========================================================================
   %Klicova slova
   keywords.cs={Klíčová slova v českém jazyce.}, %klicova slova v ceskem jazyce
-  keywords.en={Klíčová slova v anglickém jazyce.}, %klicova slova v anglickem jazyce
+  keywords.en={Klíčová slova v anglickém jazyce. Bayesian network, probability}, %klicova slova v anglickem jazyce
   %Abstract
   abstract.cs={Výtah (abstrakt) práce v českém jazyce.}, % abstrakt v ceskem jazyce
   abstract.en={Výtah (abstrakt) práce v anglickém jazyce.}, % abstrakt v anglickem jazyce
   %Prohlaseni
-  declaration={Prohlašuji, že jsem tuto bakalářskou práci vypracoval samostatně pod vedením pana ...},
+  declaration={Prohlašuji, že jsem tuto diplomovou práci vypracoval samostatně pod vedením pana doc.~Ing.~Františka V. Zbořila,~CSc.},
   %Podekovani (nepovinne)
   acknowledgment={Zde je možné uvést poděkování vedoucímu práce a těm, kteří poskytli odbornou pomoc.} % nepovinne
 }

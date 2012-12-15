@@ -31,11 +31,14 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{color}
+\usepackage{comment}
+\usepackage{verbatim}
 \newtheorem{math_def}{Definition}[chapter] % 3. parametr zajisti cislovani "<sekce>.<číslo definice>"
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
 \newcommand{\todo}[1]{{\color{red} #1}}
 \newcommand{\uncertain}[1]{{\color{magenta} #1}}
 \newcommand{\note}[1]{{\color{green} #1}}
+\newcommand{\vars}[1]{{\bold{#1}}} % matematicke vyrazy - mnozina promennych
 
 
 % =======================================================================
@@ -137,10 +140,12 @@
 % (c) Michal Bidlo, Bohuslav Křena, 2008
 
 \chapter{Introduction}
-\todo{pros: intuitive models, with proper algorithms can discover interesting things}
 
-\todo{Bayesian instead of Bayes}
+Bayesian networks represent a subclass of probabilistic graphical models and they serve as a tool for modeling probability distributions of random variables. Bayesian networks were originally used to evaluate medical data of a patient in order to determine probability of him having a certain disease\,--\,a situation with many unknown facts (eg. missing medical history or unknown results of possible tests). Since then there have been many other applications such as inspection of pedigree trees in genetics or general classification tasks.
 
+The main advantage of Bayesian networks lies in their inherent property that, thanks to conditional dependency and independency between variables, they represent the probability distribution in a very compact way in terms of space complexity. Construction of Bayesian networks for some concrete problem is a complicated process involving complex algorithms, enough input data and, in most cases, expert knowledge. Another problem is answering queries over the underlaying probability distribution of a Bayesian network, so called inference.
+
+The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables as well as in terms of structure and show possible application domains. Inference is narrowed down to stochastic approaches because other ways, are very complex. Still all forms of inference will be mentioned at least on the level of basic concept, since it is a fundamental part of theory of Bayesian networks.
 
 
 
@@ -175,40 +180,38 @@
 
 
 \chapter{Theory of Bayesian networks}
-This chapter will present theoretical foundations for understanding Bayesian networks and performing computations over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to produce answers for probability queries.
+This chapter will present theoretical foundations for understanding Bayesian networks and performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and then to provide answers for probability queries.
 
-First will be established notation used in this thesis and necessary overview of probability theory. Then we will proceed to the theory of Bayesian networks, at first in terms of pure mathematics followed by techniques of practical and effective \uncertain{reasoning about information represented by them according to some observation.}
-
-
+First will be established notation used in this thesis and necessary overview of probability theory. Then we will proceed to the theory of Bayesian networks, explain their advantages and proceed to construction and inference techniques.
 
 
 \section{Preliminaries}
 At first we need to establish notation and explain basic facts regarding mathematical probability because, as will be shown later, Bayesian networks are graphical models for joint probability distributions.
 
 \subsection{Philosophical views}
-Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled no matter what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, usually is in many states at the same time. Yet certain qualities of both these worlds can be described by the same mathematical apparatus\,--\,probability theory.
+Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by so called wave function $\Psi$; then $|\Psi|^2$ describes density probability as a function of space and time coordinates. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory. \todo{cite physics from grammar school?}
 
-Somewhat close to probability theory is fuzzy sets theory which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference when compared to probability is, that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation, that would strictly place a person to one single category.
+Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person to one single category.
 
 
 \subsection{Probability distributions}
-Lets begin by defining what a probability distribution is if there is one random variable.
+Lets begin by defining what a probability distribution is when there is only one single random variable.
 \begin{math_def}\label{def_prob_distribution}
     $P(X)$ is discrete probability distribution of discrete random variable $X$ such that:
     \begin{itemize}
         \item $X$ can be assigned any value from the set $\lbrace x_1, x_2, \dots \rbrace$ which is finite or denumerable.
         \item $\forall i: P(X = x_i) \geq 0$
-        \item $\sum_i P(X = x_i) = 1$
+        \item $\Bigl( \sum_i P(X = x_i) \Bigr) = 1$
     \end{itemize}
 \end{math_def}
 
-Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables are denoted by small letters such as $x_1$. Further we'll also use capital letters to denote sets of variables.
+Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables are denoted by small letters such as $x_1$. Further we'll use bold capital letters to denote sets of variables such as $\vars{X}$.
 
 Probability distributions of more than one random variable are called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely is every single outcome of a throw. In this case there are $6 \times 6 = 36$ possibilities so the $P(X_{black},X_{white})$ function would have 36 entries if represented by a table.
 
-So far we've described probability distributions of variables that don't depend on any other variables. \term{Conditional probability distribution} of variables $X$ depending on variables $E$ is denoted $P(X|E)$. Such expression is often read as "probability of $X$ given $E$" where $E$ are called \term{evidence} or \term{observed} variables. Conditional probability distribution can be seen as a collection of probability distributions of variables $X$ for every possible assignment to variables $E$.
+So far we've described probability distributions of variables that don't depend on any other variables. \term{Conditional probability distribution} of variables $\vars{X}$ depending on variables $\vars{E}$ is denoted $P(\vars{X}|\vars{E})$. Such expression is often read as "probability of $\vars{X}$ given $\vars{E}$" where $\vars{E}$ are called \term{evidence} or \term{observed} variables. Conditional probability distribution can be seen as a collection of probability distributions of variables $\vars{X}$ for every possible assignment to variables $\vars{E}$.
 
-Probability distributions introduced so far describe so called \term{prior probabilities} which are applicable in situations when no observation has been made and hence everything is governed purely by probability. If, on the other hand, we know concrete value of some random variable, we speak of \term{posterior probability} and the observed variables are called \term{evidence variables}. Posterior and prior probability distributions are not the same in general because observation of a variable affects other variables. This topic will be studied further in context of Bayesian networks and conditional dependencies they encode.
+Probability distributions introduced so far describe so called \term{prior probabilities} which are applicable in situations when no observation has been made and hence everything is governed purely by probability. If, on the other hand, we know concrete value of some random variable then we speak of \term{posterior probability} and the observed variables are called \term{evidence variables}. Posterior and prior probability distributions are not the same in general because observation of a variable may affect distribution of other variables. This topic will be studied further in context of Bayesian networks and conditional dependencies they encode.
 
 
 \subsection{Factors}
@@ -226,20 +229,20 @@ $$\psi(x_1, \dots, x_m, y_1, \dots, y_n, z_1, \dots, z_k)
 = \phi_1(x_1, \dots, x_m, y_1, \dots, y_n) \cdot \phi_2(y_1, \dots, y_n, z_1, \dots, z_k)
 $$
 
-Please note that it is also possible for the sets $\lbrace X_i \rbrace, \lbrace Y_i \rbrace,\lbrace Z_i \rbrace$ to be empty. Of course, according to the definition~\ref{def_factor}, factor must have at least one variable in it's scope.
+Please note that it is also possible for the sets $\lbrace X_i \rbrace, \lbrace Y_i \rbrace,\lbrace Z_i \rbrace$ to be empty (of course, according to the definition~\ref{def_factor}, factor must have at least one variable in it's scope).
 
-Factor representation of a joint probability distribution $P(X,\dots,Z)$ is straightforward\,--\,simply put $\phi(x,\dots,z) = P(x,\dots,z)$ for every assignment $x,\dots,z$ of variables $X,\dots,Z$. In this case probabilities of all possible assignments must necessarily sum to one since $P(X,\dots,Z)$ is a~probability distribution. This summation is denoted \uncertain{$\sum_{X,\dots,Z} P(x,\dots,z) = 1$. (malý nebo velký indexy sumy a následně prvky v $P$, přes které sčítám?)}
+Factor representation of a joint probability distribution $P(X,\dots,Z)$ is straightforward\,--\,simply put $\phi(x,\dots,z) = P(x,\dots,z)$ for every assignment $x,\dots,z$ of variables $X,\dots,Z$. In this case probabilities of all possible assignments must necessarily sum to one since $P(X,\dots,Z)$ is a~probability distribution. For further reference, this summation is denoted $\sum_{X,\dots,Z} P(x,\dots,z) = 1$.
 
-Lets examine the case of a conditional probability distribution $P(X|E)$. Suppose $X$ and $E$ are sets of variables rather than single variables. Then $scope(\phi)$ is $X \cup E$ but probability of all possible assignments to $X$ and $E$ doesn't sum to one. This is because the conditional probability distribution $P(X|E)$ is more like a collection of probability distributions of variables $X$ for every assignment to $E$. So, for any concrete assignment $e$ of evidence variables $E$, the probability distribution $P(X|e)$ again sums to one, ie. \uncertain{$\sum_X P(x|e) = 1$. (malý nebo velký indexy sumy a následně prvky v $P$, přes které sčítám?)}
+Lets examine the case of a conditional probability distribution $P(\vars{X}|\vars{E})$. Suppose that, according to the established notation, $\vars{X}$ and $\vars{E}$ are sets of variables rather than single variables. Then $scope(\phi)$ is $\vars{X} \cup \vars{E}$ but probability of all possible assignments to $\vars{X}$ and $\vars{E}$ doesn't sum to one! This is because the conditional probability distribution $P(\vars{X}|\vars{E})$ is more like a collection of probability distributions of variables $\vars{X}$ for every assignment to $\vars{E}$. So, for any concrete assignment $\vars{e}$ of evidence variables $\vars{E}$, the probability distribution $P(\vars{X}|\vars{e})$ again sums to one, ie. $\sum_\vars{X} P(\vars{x}|\vars{e}) = 1$.
 
 \subsubsection{Marginalization}
-Marginalization of a factor $\phi$ over variables $Y$ is operation of summing out these variables, effectively producing factor $\psi$. Let $X = scope(\phi) \minus Y$. Then $scope(\psi) = X$ and for every assignment $x$ of variables $X$ holds that $\psi(x) = \sum_Y \phi(x,y)$.
+Marginalization of a factor $\phi$ over variables $\vars{Y}$ is operation of summing out these variables, effectively producing factor $\psi$. Then $scope(\psi) = scope(\phi) \setminus \vars{Y}$ and for every assignment $\vars{x}$ of variables in $scope(\phi)$ holds that $\psi(\vars{x}) = \sum_\vars{Y} \phi(\vars{x},\vars{y})$.
 
 \subsubsection{Conditioning}
-Conditioning is operation used when there is some observed evidence $e$ of variables $E$. By conditioning we set probabilities of all events inconsistent with observed evidence to 0. Of~course the resulting factor won't be normalized in general.
+Conditioning is operation used when there is some observed evidence $\vars{e}$ of variables $\vars{E}$. By conditioning we set probabilities of all events inconsistent with observed evidence to 0. Of~course the resulting factor won't be normalized in general.
 
 \subsubsection{Renormalization}
-Renormalization of factor $\phi$ ensures that all values of the factor sum to one. Suppose that $X = scope(\phi)$ and let $\alpha = \sum_X \phi(x)$ be normalizing constant. Values of the resulting factor $\psi$ are given for every assignment $x$ of variables $X$ as $\psi(x) = \phi(x) / \alpha$.
+Renormalization of factor $\phi$ ensures that all values of the factor sum to one. Suppose that $\vars{X} = scope(\phi)$ and let $\alpha = \sum_\vars{X} \phi(\vars{x})$ be normalizing constant. Values of the resulting factor $\psi$ are given for every assignment $\vars{x}$ of variables $\vars{X}$ as $\psi(\vars{x}) = \phi(\vars{x}) / \alpha$.
 
 It may be useful to point out that renormalization makes sense only for factors that don't represent conditional probability distributions.
 
@@ -247,10 +250,12 @@ It may be useful to point out that renormalization makes sense only for factors 
 
 
 \section{Bayesian networks}
+\todo{uprava notace - mnoziny promennych tucne pomoci backslash vars\{...\}}
+
 Why use Bayesian networks? First of all, having a complicated joint probability distribution with many random variables inevitably leads to a potentially huge table that would represent such probability distribution. Lets assume we have binary random variables $X_1, X_2, \dots$ Then for representing distribution $P(X_1)$ we would need a table with two entries, for distribution $P(X_1, X_2)$ the table would have four entries and a general distribution $P(X_1, \dots, X_k)$ would have a table with $2^k$ entries. This exponential growth brings several problems:
 \begin{itemize}
     \item Table describing a joint probability distribution may be too big to store.
-    \item Even if the table could be stored, making calculations over it (e.g. factor marginalization or multiplication) would not be efficient. In fact operations such as exact inference are known to be NP-hard~\cite{pgm} wrt. number of variables.
+    \item Even if the table could be stored, making calculations over it (e.g. factor marginalization or multiplication) would not be efficient. In fact operations such as exact inference are known to be NP-hard~\cite{pgm} in number of variables.
     \item In order to construct such a probability table:
     \begin{enumerate}
         \item[a)] We would require huge amount of training data to create an accurate statistical model from, since we would essentially count occurrences of every single possible assignment to all random variables and finally divide it by the total number of all training examples.
@@ -301,12 +306,12 @@ To express how observing certain facts propagates through Bayesian network and a
 \todo{To understand better the definition of active trail see Figure~xx. Please note, that the set of facts $Z$ might be empty.}
 
 \begin{math_def}
-    Let $G$ be a Bayesian network, $X,Y$ two of its nodes and $Z$ facts (observations). We say that $X,Y$ given $Z$ are d-separated in $G$ (denoted $\text{d-sep}_G(X,Y|Z)$) iff there is no active trail between $X$ and $Y$ given $Z$.
+    Let $G$ be a Bayesian network, $X,Y$ two of it's nodes and $Z$ facts (observations). We say that $X,Y$ given $Z$ are d-separated in $G$ (denoted $\text{d-sep}_G(X,Y|Z)$) iff there is no active trail between $X$ and $Y$ given $Z$.
 \end{math_def}
 
 \todo{$P(X|Parents(X)$ means, by the way, that $X$ is independent of its previous ancestors given its parents}
 
-Using d-separation (direction-dependent separation~\cite{russell_norvig_2ed}) we can quite elegantly determine if an observation of some variable $X$ can or cannot affect distribution of other random variable. Basically variable $X$ can influence variable $Y$ given facts $Z$ if there is an active trail between $X,Y$ given $Z$ (or equivalently if $X,Y$ aren't d-separated given $Z$). So it boils down to question whether there is flow of influence between some variables.
+Using d-separation (direction-dependent separation~\cite{russell_norvig_2ed}) we can quite elegantly determine if an observation of some variable $X$ can or cannot affect distribution of other random variable. Basically variable $X$ can influence variable $Y$ given facts $Z$ if there is an active trail between $X,Y$ given $Z$ (or equivalently if $X,Y$ aren't d-separated given $Z$). So it boils down to the question whether there is flow of influence between some variables.
 
 Flow of influence also tells us whether two random variables given some observation are dependent or not. Clearly two random variables that are directly connected to each other are dependent. But we can also examine other than these direct relations. Also please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $Z$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
 
@@ -334,9 +339,11 @@ Flow of influence also tells us whether two random variables given some observat
 
 
 \section{Inference in Bayesian networks}
-\todo{Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of both mathematic and algorithmic complexity but exhibits serious running-time disadvantages. On the other hand approximate inference methods allow us to calculate answer to a query quickly but it isn't exact solution.}
+There are several types of queries that might be asked in context of a Bayesian network. Most often by inference in Bayesian networks is meant computing the posterior probability distribution for a set of query variables given values of evidence variables. Mathematically the task is to compute the probability distribution $P(Query | Evidence)$. Another type of query is so called \term{maximum a~posteriori} (abbreviated as MAP) whose task is to find $arg\ max_X P(X|E)$. MAP is basically used for finding out the most probable cause (concrete assignment of variables $X$) for observations $E$. Practical example could be getting the most probable word (sequence of letters) that corresponds to classifier output for a segmented picture containing that word.
 
-\todo{types of queries? (Russell, Norvig 2ed page 448 (466 pdf))}
+Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of mathematical description and algorithmic implementation but exhibits serious running-time disadvantages. On the other hand, approximate inference methods allow us to answer queries more quickly what we get isn't an exact solution.
+
+\todo{include types of queries\,--\,diagnostic, causal, intercausal, mixed? (Russell, Norvig 2ed page 448 (466 pdf))}
 
 \subsection{Sum-product}
 Probably the simplest method for computing a conditional probability query is called sum-product. The problem at hand is to compute conditional probability distribution $P(X | e)$ where $X$ is one or more variables, $E$ are evidence (observed) variables and $Y$ variables that are neither query nor evidence variables. The query is computed according to Bayes' theorem as follows:
@@ -361,21 +368,27 @@ Computation of this expression using the sum-product method means making four st
 
 Every item of the sum in numerator can be written according to joint distribution represented by a BN (definition~\eqref{eq_bn_joint}) as a product of conditional probability distributions of all nodes in given BN (equivalently of all factors). This explains the name of this inference method\,--\,we effectively compute many products of factors and sum them.
 
-Sum-product inference algorithm has, from its nature, exponential running time in number of variables because it effectively generates the whole joint probability distribution encoded by given Bayesian network and size of a table representing any joint probability distribution has been earlier shown to be exponential wrt. number of variables. Because of this quality is sum-product method suitable only for inference in considerably small networks.
+Sum-product inference algorithm has, from its nature, exponential running time in number of variables because it effectively generates the whole joint probability distribution encoded by given Bayesian network and size of a table representing any joint probability distribution has been earlier shown to be exponential wrt. number of variables. Because of this quality is the sum-product method suitable only for inference in considerably small networks.
 
 \uncertain{ (je třeba rozlišit operaci násobení faktorů a násobení uvnitř faktorů samotných)
 
 Formally, exact number of operations carried out in the nominator sum can be determined as follows. Let $m$ be the number of all variables, $n$~be the number of non-query and non-evidence variables $Y$ and let $k$~be the number of possible assignments to a variable. The numerator summation unrolls to $k^n$ items, each item being a product of all $m$ factors which means $k^n (m-1)$ multiplications and $k^n - 1$ additions. Therefore the overall running time is roughly $O(m k^n)$.}
 
 \subsection{Variable elimination}
-Variable elimination algorithm can be seen as a smart implementation of the sum-product method explained earlier.
+Variable elimination algorithm can be seen as a somewhat smarter implementation of the sum-product algorithm explained earlier. The main ideas behind variable elimination are:
+\begin{itemize}
+	\item Suppose we sum over many variables in a product of factors, say one of these variables is $X$. Then factors whose scopes don't contain $X$ are irrelevant for the summation over $X$ and hence these factors can be factored out in front of the summation over $X$. This way we can push all summations as far to the right as possible, so that each summation is done only over factors containing the variable being summed out. This effectively eliminates reevaluation of some factors and thereby speeds up the computation. \todo{concrete example}
+	\item \todo{$\sum_X P(X|E) = 1$ by definition, so any node that is not an ancestor of a query or evidence variable can be left out. Implementation can be recursively done in the way of eliminating all leave nodes that are not in $X \cup E$ and performing the same operation until some node is removed.}~\cite{russell_norvig_ed2, 509,537pdf}
+	\item \todo{Running time is governed by the greatest immediate factor that arrises during the computation, so we can choose a better ordering of factor products and marginalizations. The problem is NP-complete, so heuristics are used instead~\cite{pgm}.}
+\end{itemize}
 
-\todo{řeči kolem, algoritmus, časová složitost, kliky, největší immidiate factor}
+\todo{řeči kolem, algoritmus, časová složitost, kliky, časová složitost dána největším immidiate faktorem}
 
-\todo{can remove any variable (node) that is leaf and is not a query nor evidence variable~\cite{russell_norvig_ed2,509,537pdf}}
+\todo{Running time in polytrees is $O(n)$~\cite{russell_norvig_ed2,510,538pdf}, therefore it's good method for answering individual queries $P(X|e)$ where $X$ is single variable (or small number). Running time in multiply connected networks has exponential running time in general but it can be helped with by clustering algorithms that transform multiply connected network to a polytree.}
+
 
 \subsection{Belief-NET-ASK}
-notes (source~\cite{russell_norvig_ed2}):
+notes (source~\cite{russell_norvig_ed2_Other}):
 \begin{itemize}
 	\item begin at query variable and chain back to evidence variables (probably in any direction)
 	\item only for singly connected networks (polytrees)\,--\,at most one undirected path between any two nodes (because when two paths meet at one node, it causes complitactions)
@@ -385,15 +398,24 @@ notes (source~\cite{russell_norvig_ed2}):
 
 
 \subsection{Belief propagation}
+\cite{pgm}
 Belief propagation is an approximate inference algorithm from a family of so called \term{message passing algorithms}. The main idea is that nodes exchange information about their believes (probability distributions) and the whole network converges to some solution. We won't pay deeper attention to belief propagation because there are approximate inference algorithms with better characteristics.
 
 \note{Cluster graphs and \term{running intersection property}: Nodes $C_i \subseteq \lbrace X_1, \dots, X_n \rbrace$ and sepsets $S_{i,j} \subseteq C_i \cup C_j$ such that for each factor $\phi$ exists $C_i$: $scope(\phi) \subseteq C_i$.
 For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie. no cycle and single unbroken component)\,--\,cycle would mean that a node would get information about variable $X$ twice and the probabilities would go up and up. If some node with $X$ would be isolated from others, it would not get the belief updates. Bethe cluster automatically satisfies the running intersection property.}
 
+\subsection{Sampling methods}
 
 
+\subsection{Likelihood sampling}
+\cite{russell_norvig_ed2,514,pdf542}
 
+Likelihood sampling is an approximate inference method from Monte Carlo family. Other less sophisticated Monte Carlo methods include \term{direct sampling} and \term{rejection sampling}. These methods won't be discussed in detail.
 
+\subsubsection{Markov Chain Monte Carlo}
+$\pi(x)$ is the stationary distribution (ustálený)
+
+works for regular Markov chains ($\exists k \forall x, x':$ z $x$ do $x'$ se lze dostatat přesně v $k$ krocích s nenulovou pstí)
 
 
 
@@ -439,7 +461,7 @@ For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie
 
 
 
-
+\begin{comment}
 \chapter{Původní text šablony}
 Abychom mohli napsat odborný text jasně a~srozumitelně, musíme splnit několik základních předpokladů:
 \begin{itemize}
@@ -534,7 +556,7 @@ Orientační rozsah práce v~normostranách lze v~programu Microsoft Word zjisti
 
 \chapter{Závěr}
 Závěrečná kapitola obsahuje zhodnocení dosažených výsledků se zvlášť vyznačeným vlastním přínosem studenta. Povinně se zde objeví i zhodnocení z pohledu dalšího vývoje projektu, student uvede náměty vycházející ze zkušeností s řešeným projektem a uvede rovněž návaznosti na právě dokončené projekty.
-
+\end{comment}
 %=========================================================================
 %begin-of-inserted-footer
 
