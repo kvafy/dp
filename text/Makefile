@@ -7,7 +7,6 @@ CO=dp
 
 all: $(CO).pdf
 
-pdf: $(CO).pdf
 
 $(CO).ps: $(CO).dvi
 	dvips $(CO)
@@ -17,6 +16,7 @@ $(CO).pdf: clean obsah.tex
 	bibtex $(CO)
 	pdflatex $(CO)
 	pdflatex $(CO)
+	make clean-post-build
 
 $(CO).dvi: $(CO).tex $(CO).bib obsah.tex
 	latex $(CO)
@@ -36,11 +36,13 @@ obsah.tex: obsah-gummi.tex
 	sed -e '/%begin-of-inserted-footer/,$$d' -i obsah.tex
 	vlna -l -v Aa obsah.tex # english vlna
 
-clean:
+clean-post-build:
 	rm -f *.dvi *.log $(CO).blg $(CO).bbl $(CO).toc *.aux $(CO).out $(CO).lof
+
+clean: clean-post-build
 	rm -f $(CO).pdf
 	rm -f obsah.tex
 	rm -f *~
 
-pack:
-	tar czvf bp-xjmeno.tar.gz *.tex *.bib *.bst ./fig/* ./cls/* Makefile Changelog
+zip: obsah.tex
+	zip -r sp-xchalo09.zip *.tex *.bib *.bst ./fig/* *.cls Makefile --exclude obsah-gummi.tex

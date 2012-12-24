@@ -1,3 +1,7 @@
+2012/12/24: 4 hours, revision of the rest (Baysian networks, inference algorithms),
+                     proof that BN induces a valid probability distribution,
+                     finished variable elimination, Monte Carlo sampling methods
+2012/12/15: 2 hours, revision of the introduction chapters, new notation \vars{...}
 2012/11/02: 6 hours, programming factor marginalization, renormalization and refactoring
 2012/11/01: 3 hours, programming basic factor multiplication
 2012/10/09: 4 hours, watching Probabilistic Graphical Models (PGM) at coursera.org
