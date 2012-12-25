@@ -365,7 +365,7 @@ Formally, exact number of operations carried out in the nominator sum during the
 Variable elimination algorithm can be seen as a somewhat smarter implementation of the sum-product algorithm explained above. Again, we answer the given query by multiplying all factors of the BN and summing out $\vars{Y}$ variables. The innovative ideas behind variable elimination are:
 \begin{itemize}
 	\item Suppose we sum over many variables in a product of factors, say one of these variables is $V$. Then factors whose scopes don't contain $V$ are irrelevant for the summation over~$V$ and hence these factors can be factored out in front of the summation over~$V$. This way we can push all summations as far to the right as possible, so that each summation is done only over product of factors containing the variable $V$ being summed out. What is the benefit for us? It can be shown~\cite{pgm} that running time of variable elimination depends on the size of the largest immediate factor during the summing-out process. When we sum only over product of factors containing variable $V$, the resulting immediate factor is the smallest possible. Because problem of determining the optimal order of elimination is NP-hard, greedy heuristics are usually used instead~\cite{pgm}.
-	\item By definition of a conditional probability distribution it holds for any instantiation of parent variables that $\sum_V P(v|Parents(V)) = 1$. So, when computing aposterior probability distribution $P(\vars{X} | \vars{e})$, any node (factor) $V$ that is not an ancestor of a query or evidence variable can be ommited because, thanks to the order of elimination of variables, the term $\sum_V P(v|Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
+	\item By definition of a conditional probability distribution, it holds for any instantiation of parent variables that $\sum_V P(v|Parents(V)) = 1$. So, when computing aposterior probability distribution $P(\vars{X} | \vars{e})$, any node (factor) $V$ that is not an ancestor of a query or evidence variable can be ommited because, thanks to the order of elimination of variables, the term $\sum_V P(v|Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
 \end{itemize}
 
 \todo{řeči kolem, algoritmus, časová složitost, kliky}
@@ -373,6 +373,13 @@ Variable elimination algorithm can be seen as a somewhat smarter implementation 
 Running time of variable elimination in polytrees is $O(n)$~\cite[p.~510]{russell_norvig_ed2}, therefore it is a good method for answering individual queries $P(X|\vars{e})$ where $X$ is single variable. Analogically we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i|\vars{e})$ and returning $P(\vars{X}) = \prod_i P(X_i|\vars{e})$.
 
 Running time in multiply connected networks is exponential in general but it can be coped with by clustering algorithms that transform multiply connected network into a~polytree.
+
+\subsection{Belief propagation}
+Belief propagation~\cite{pgm} is an approximate inference algorithm from the family of so called \term{message passing algorithms}. The main idea is that nodes in the BN exchange information about their believes (probability distributions affected by evidence) and the whole network converges to some solution close to true posterior probability. As methods from this family are far from trivial and they are not the aim of this thesis, we won't pay deeper attention to them.
+\begin{comment}
+\note{Cluster graphs and \term{running intersection property}: Nodes $C_i \subseteq \lbrace X_1, \dots, X_n \rbrace$ and sepsets $S_{i,j} \subseteq C_i \cup C_j$ such that for each factor $\phi$ exists $C_i$: $scope(\phi) \subseteq C_i$.
+For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie. no cycle and single unbroken component)\,--\,cycle would mean that a node would get information about variable $X$ twice and the probabilities would go up and up. If some node with $X$ would be isolated from others, it would not get the belief updates. Bethe cluster automatically satisfies the running intersection property.}
+\end{comment}
 
 
 \subsection{Sampling methods}
@@ -410,11 +417,13 @@ An important drawback of importance sampling is that it doesn't account well for
 \subsection{Markov Chain Monte Carlo}
 The likelihood weighting method presented before doesn't account well for evidences in or near leaf nodes. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way the information about all evidence variables propagates through the network.
 
-To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket is a minimal set of variables such that $X$ is conditionally independent from all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and children $\vars{Y}$ of $X$ because there is a direct connection between them and $X$. Furthermore $MB(X)$ needs to include parents of children $\vars{Y}$ because observing any of these children $Y_i$ activates a V-structure and $X$ would become conditionally dependent on $Parents(Y_i)$ given $Y_i$.
+To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket is a minimal set of variables such that $X$ is conditionally independent from all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and children $\vars{C}$ of $X$ because there is a direct connection between them and $X$. Furthermore $MB(X)$ needs to also include parents of $\vars{C}$ because observing any of these children $C_i$ activates a V-structure and $X$ would become conditionally dependent on $Parents(C_i)$ given $C_i$.
 
-The MCMC algorithm starts by producing one sample consistent with the evidence (eg. by one iteration of likelihood weighting and discarding the weight). Then we repeat the following: For each non-evidence variable $Y_i$ we resample this variable from current distribution $P(Y_i | MB(Y_i))$ producing a new sample. For this sample we increase the counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable.
+The MCMC algorithm starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y_i$ we resample this variable from current distribution $P(Y_i | MB(Y_i))$ producing a new sample. For this sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable.
 
-Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each assignment of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this assignment. More generally MCMC is based on state space of a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC method.
+Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each assignment of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this assignment. More formally MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
+
+\todo{pgm 541+ has good notes of other papers}
 
 \begin{comment}
 $\pi(x)$ is the stationary distribution (ustálený)
@@ -422,23 +431,6 @@ $\pi(x)$ is the stationary distribution (ustálený)
 works for regular Markov chains ($\exists k \forall x, x':$ z $x$ do $x'$ se lze dostatat přesně v $k$ krocích s nenulovou pstí)
 \end{comment}
 
-\subsection{Belief-NET-ASK}
-\todo{uprava notace - mnoziny promennych tucne pomoci backslash vars\{...\}}
-
-notes (source~\cite{russell_norvig_ed2_Other}):
-\begin{itemize}
-	\item begin at query variable and chain back to evidence variables (probably in any direction)
-	\item only for singly connected networks (polytrees)\,--\,at most one undirected path between any two nodes (because when two paths meet at one node, it causes complications)
-\end{itemize}
-
-
-
-\subsection{Belief propagation}
-\cite{pgm}
-Belief propagation is an approximate inference algorithm from a family of so called \term{message passing algorithms}. The main idea is that nodes exchange information about their believes (probability distributions) and the whole network converges to some solution. We won't pay deeper attention to belief propagation because there are approximate inference algorithms with better characteristics.
-
-\note{Cluster graphs and \term{running intersection property}: Nodes $C_i \subseteq \lbrace X_1, \dots, X_n \rbrace$ and sepsets $S_{i,j} \subseteq C_i \cup C_j$ such that for each factor $\phi$ exists $C_i$: $scope(\phi) \subseteq C_i$.
-For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie. no cycle and single unbroken component)\,--\,cycle would mean that a node would get information about variable $X$ twice and the probabilities would go up and up. If some node with $X$ would be isolated from others, it would not get the belief updates. Bethe cluster automatically satisfies the running intersection property.}
 
 
 
@@ -450,13 +442,26 @@ For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie
 
 
 
+\section{Model learning}
+So far we've been reasoning about Bayesian networks that were already given to us, so both structure of the BN and CPDs associated with nodes were known. Now were are going to examine the problem of creating a Bayesian network so that the probability distribution it induces somehow corresponds to the real probability distribution of target domain.
+
+Basically, there are two approaches to creating a BN. First option is to cooperate with an expert of target domain who can make correct dependency and independency assumptions and provide us with conditional probability distributions, ie. with CPDs to all nodes. The other approach is to use automated techniques for creating models based on a big dataset. The dataset can be viewed as set of samples of the target probability distribution $P*$ which we attempt to reconstruct. The aim is to create a model $\tilde{\mathcal{M}}$ such that the probability distribution $P_{\tilde{\mathcal{M}}}$ induced by $\tilde{\mathcal{M}}$ is "very close" to the original distribution $P*$.
+
+Construction of a BN through cooperation with an expert is problematic because, for a non-trivial BN, the task often requires significant time (several months~\cite{pgm}), the expert might not correctly capture CPDs, especially for nodes with large number of parents and furthermore there might not even be an expert of the target domain at all. On the other, hand automated techniques of model construction are constrained by limited computational power and more importantly by the size of supplied dataset. As will be shown later, we encounter classical problem of overfitting present in the whole AI.
+
+\todo{
+tests by giving "typical" queries and examining whether the answer is plausible, typically not enough data to perfectly reconstruct model $ \tilde{\mathcal{M}}$ such that the probability distribution $\tilde{P}$ is close the original distribution $P*$ the data was sampled from
+}
+
+\subsection{Parameter estimation \todo{(pgm pdf 732)}}
+Goal of parameter estimation is to supply CPDs to a BN whose structure is already known. In order for the estimation to be reasonably correct, we need to have sufficiently large dataset wrt. complexity of the BN structure.
 
 
+\subsubsection{Maximum likelihood estimation}
+Maximum likelihood estimation views the dataset as a set of independent samples $x_1, \dots, x_m$ taken from a~parametrized probability distribution with parameter $\Theta$. The parameter $\Theta$ is a vector of entries of all CPDs (if the probability distribution was represented by a BN). Core of the maximum likelihood estimation is to choose $\Theta$ in such a way that the probability of obtaining samples $x_1, \dots, x_m$ from the parametrized distribution is maximal. Formally $\Theta = \arg \max P(x_1,\dots,x_m | \Theta)$. Lets inspect a simple example of $m$ coin tosses $x_1, \dots, x_m$ with biased coin for which $P(X = heads) = \theta$ (inspired by~\cite{pgm}). Lets suppose we get $H$ times heads and $T$ times tails. Then we can write $P(x_1,\dots,x_m | \theta) = \theta^H (1 - \theta)^T$ because the coin tosses are independent given $\theta$. The task of maximizing the expression $\theta^H (1 - \theta)^T$ is equivalent to maximizing it's logarithm $H \cdot \ln(\theta) + T \cdot \ln(1 - \theta)$. The equation $\frac{\partial}{\partial\theta} \ H \cdot \ln(\theta) + T \cdot \ln(1 - \theta) = 0$ yields result $\theta = H / (H + T)$ which is a fairly intuitive conclusion (number of times we got heads divided by the number of all tosses). Similar result can be obtained for a multinomial distribution.
 
-\section{Parameter estimation}
-pgm pdf 732
-
-lot of data, maximum likelihood estimation, fragmentation and overfitting (large number of parents, exponential number of "buckets")
+Now suppose we want to compute probability distribution $P(X | Parents(X))$ for some node $X$ according to our dataset, ie. to compute the CPD of that node.
+Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach when we partition the dataset to disjoint subsets, each for a concrete instantiation of variables $\lbrace X \rbrace \cup Parents(X)$. Then CPD entry $P(X=x_i | Parents(X) = \vars{p_i})$ is computed as the ratio $N_{x_i,\vars{p_i}} / N_{\vars{p_i}}$. Potential problem with this approach is that the number of subsets grows exponentially with the number of parents and hence the estimated CPD looses precision. Therefore a perfect model with all dependencies between variables might be outperformed by a simpler and wrong model just because we didn't have sufficient amount of data to accurately compute CPDs for the more complicated structure\footnote{Such observation has often been made, for example, with the Naïve Bayes model which assumes that all effect variables are independent given the cause variable. Such assumption is seldom justified, nevertheless Naïve Bayes models have proved themselves to perform well.}~\cite{pgm}. This is a~typical AI problem of overfitting, in context of BNs also referred to as \term{fragmentation}.
 
 
 
@@ -469,7 +474,8 @@ lot of data, maximum likelihood estimation, fragmentation and overfitting (large
 
 
 
-\section{Structure learning}
+
+\subsection{Structure learning}
 
 
 
@@ -500,9 +506,13 @@ lot of data, maximum likelihood estimation, fragmentation and overfitting (large
 
 
 \chapter{Applications}
-\todo{něco vybrat}
 
-
+\begin{itemize}
+	\item Medical diagnosis (from a big dataset of patient records)\,--\,structure and CPDs.
+	\item Pedigrees (BUT structure is known).
+	\item Some classification task (eg. $\chi^2$ for dependency analysis as in EVO by Schwarz).
+	\item Document classification, image segmentation (pgm 700).
+\end{itemize}
 
 
 
