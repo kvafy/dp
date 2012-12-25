@@ -38,7 +38,8 @@
 \newcommand{\todo}[1]{{\color{red} #1}}
 \newcommand{\uncertain}[1]{{\color{magenta} #1}}
 \newcommand{\note}[1]{{\color{green} #1}}
-\newcommand{\vars}[1]{{\mathbf{#1}}} % matematicke vyrazy - mnozina promennych
+\newcommand{\vars}[1]{{\mathbf{#1}}} % matematicke vyrazy - mnozina
+\newcommand{\ignore}[1]{} % komentar v radku
 
 
 % =======================================================================
@@ -364,40 +365,62 @@ Formally, exact number of operations carried out in the nominator sum during the
 Variable elimination algorithm can be seen as a somewhat smarter implementation of the sum-product algorithm explained above. Again, we answer the given query by multiplying all factors of the BN and summing out $\vars{Y}$ variables. The innovative ideas behind variable elimination are:
 \begin{itemize}
 	\item Suppose we sum over many variables in a product of factors, say one of these variables is $V$. Then factors whose scopes don't contain $V$ are irrelevant for the summation over~$V$ and hence these factors can be factored out in front of the summation over~$V$. This way we can push all summations as far to the right as possible, so that each summation is done only over product of factors containing the variable $V$ being summed out. What is the benefit for us? It can be shown~\cite{pgm} that running time of variable elimination depends on the size of the largest immediate factor during the summing-out process. When we sum only over product of factors containing variable $V$, the resulting immediate factor is the smallest possible. Because problem of determining the optimal order of elimination is NP-hard, greedy heuristics are usually used instead~\cite{pgm}.
-	\item By definition of a conditional probability distribution it holds for any instantiation of parent variables that $\sum_V P(v|Parents(V)) = 1$. So, when computing aposterior probability distribution $P(\vars{X} | \vars{e})$, any node (factor) $V$ that is not an ancestor of a query or evidence variable can be ommited because, thanks to the order of elimination of variables, the term $\sum_V P(v|Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite{russell_norvig_ed2}. % 509,537pdf
+	\item By definition of a conditional probability distribution it holds for any instantiation of parent variables that $\sum_V P(v|Parents(V)) = 1$. So, when computing aposterior probability distribution $P(\vars{X} | \vars{e})$, any node (factor) $V$ that is not an ancestor of a query or evidence variable can be ommited because, thanks to the order of elimination of variables, the term $\sum_V P(v|Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
 \end{itemize}
 
 \todo{řeči kolem, algoritmus, časová složitost, kliky}
 
-Running time of variable elimination in polytrees is $O(n)$~\cite{russell_norvig_ed2}, % 510, 538pdf
-therefore it is a good method for answering individual queries $P(X|\vars{e})$ where $X$ is single variable. Analogically we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i|\vars{e})$ and returning $P(\vars{X}) = \prod_i P(X_i|\vars{e})$.
+Running time of variable elimination in polytrees is $O(n)$~\cite[p.~510]{russell_norvig_ed2}, therefore it is a good method for answering individual queries $P(X|\vars{e})$ where $X$ is single variable. Analogically we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i|\vars{e})$ and returning $P(\vars{X}) = \prod_i P(X_i|\vars{e})$.
 
 Running time in multiply connected networks is exponential in general but it can be coped with by clustering algorithms that transform multiply connected network into a~polytree.
 
 
-\subsection{Monte Carlo methods}
-Monte Carlo methods are stochastic methods based on sampling the probability distribution induced by a BN. There are three main sampling methods: \term{direct sampling}, \term{rejection sampling} and \term{likelihood sampling}. All these methods basically generate a sufficient number of independent samples and then compute simple statistics over there samples. In general, relative precision of Monte Carlo methods is proportional to $1/\sqrt{N}$ where $N$ is the number of samples.
+\subsection{Sampling methods}
+Monte Carlo methods (or particle methods) are stochastic methods of inference based on sampling the probability distribution induced by a BN. There are three main sampling methods: \term{direct sampling}, \term{rejection sampling} and \term{likelihood sampling}. All these methods basically generate a sufficient number of independent samples and then compute simple statistics over there samples. In general, relative precision of Monte Carlo methods is proportional to $1/\sqrt{N}$ where $N$ is the number of samples.
 
 \subsubsection{Direct sampling}
-Direct sampling is a method for computing unconditional probability distribution $P(\vars{X})$. It produces a number of samples, ie. of concrete events, according to the probability distribution induced by the given BN, and then for every assignment $\vars{x}$ computes it's probability according to maximum likelihood estimation as $P(\vars{x}) = N_\vars{x} / N_{all}$, where $N_\vars{x}$ is the number of samples in which variables $\vars{X}$ have the values $\vars{x}$ and $N_{all}$ is the number of all samples generated.
+Direct sampling is a method for computing unconditional probability distribution $P(\vars{X})$. It produces a number of samples, ie. of concrete events, according to the probability distribution induced by the given BN, and then for every assignment $\vars{x}$ computes it's probability as $P(\vars{x}) = N_\vars{x} / N_{all}$, where $N_\vars{x}$ is the number of samples in which variables $\vars{X}$ have the values $\vars{x}$ and $N_{all}$ is the number of all samples generated.
 
-A single sample is generated as follows. First randomly assign values to variables with no parents according to their probability distributions. Then choose a variable $V$ such that all of it's parents have already been instantiated, and randomly assign a value to $V$ according to the probability distribution $P(V | Parents(V))$ and to the values of it's parents in current sample. Repeat this step until all variables have been instantiated, thereby obtaining a~sample.
+A single sample is generated as follows. First randomly assign values to variables with no parents according to their probability distributions. Then choose a variable $V$ such that all of it's parents have already been instantiated, and randomly assign a value to $V$ according to the probability distribution $P(V | Parents(V))$ and according to the values of it's parents in current sample. Repeat this step until all variables have been instantiated, thereby obtaining a~sample. The process can easily be done if we first compute topological sort of the BN and then sample variables in ascending order.
+
+It can be shown~\cite[p.~491]{pgm} that to obtain an estimate with error bounded by $\epsilon$ with probability at least $1-\delta$ we need to generate $M$ samples:
+\begin{equation*}%\label{eq_sampling_accuracy}
+M \geq \frac{\ln(2 / \delta)}{2 \epsilon ^ 2}
+\end{equation*}
+Problem is that for a very unlikely event we may not generate a single sample and therefore the obtained probability distribution would indicate that this event is impossible (it's probability equals to zero). Still it would be a sound result within the error estimate $(\epsilon, \delta)$.
 
 \subsubsection{Rejection sampling}
-Direct sampling doesn't allow any evidence. Rejection sampling could be viewed as a simple extension of direct sampling for computing posterior probability distribution $P(\vars{X} | \vars{e})$. The idea is to exclude samples inconsistent with evidence $\vars{e}$ meaning that when an evidence variable is instantiated during the production of a sample, the sample is discarded unless the randomly assigned value is the same as the observed value. This, of course, bears the disadvantage that when the observed value of an evidence variable is very unlikely, then many samples get discarded and hence lot of computational time is wasted.
+Direct sampling presented before doesn't allow any evidence. Rejection sampling could be viewed as a simple extension of direct sampling for computing posterior probability distribution $P(\vars{X} | \vars{e})$. The idea is to exclude samples inconsistent with evidence $\vars{e}$ meaning that when an evidence variable is instantiated during the production of a sample, the sample is discarded unless the randomly assigned value corresponds with the observed value. Then $P(\vars{x} | \vars{e}) = N_{\vars{x},\vars{e}} / N_{\vars{e}}$. This simple approach bears the disadvantage that if the observed evidence is very unlikely then many samples get discarded and hence a lot of computational time is wasted because rejected samples don't contribute to the final probability distribution. Unfortunately, when considering somewhat uniform distribution, the probability $P(\vars{e})$ decreases exponentially with the number of observed variables (eg. with symptoms of a patient) and by the same rationale the number of samples that are not rejected decreases by the same amount.
 
-\subsubsection{Likelihood sampling}
-Likelihood sampling~\cite{russell_norvig_ed2} %,514,pdf542
-...
+\subsubsection{Likelihood weighting}
+Rejection sampling described earlier can theoretically be used for answering queries of the form $P(\vars{X} | \vars{e})$ but the number of rejected samples may be unbearable in practice. Likelihood weighting method copes with this problem by forcing every sample to be consistent with observed evidence. Then, of course, not every sample is equally likely, so we cannot determine $P(\vars{x} | \vars{e})$ by simply dividing number of samples $N_{\vars{x},\vars{e}}$ by $N_\vars{e}$. For each sample $\vars{x},\vars{y},\vars{e}$ we need additional information which is the probability of assigning values $\vars{e}$ to evidence variables given it's parents~\cite[p.~514]{russell_norvig_ed2}. Formally written, weight of a sample $\vars{x},\vars{y},\vars{e}$ is $w_{\vars{x},\vars{y},\vars{e}} = P(\vars{e} | Parents(\vars{E}))$.
 
-\todo{pro proměnné které nejsou předkem žádné query ani evidence variable a zároveň nejsou query ani evidence variable nemusíme vůbec přiřazovat hodnotu (obdobně jako u variable elimination)}
+The sampling algorithm needs to be changed in the following way. When generating a~new sample, we set weight of the current sample to 1. Then for a non-evidence variable we proceed as before\,--\,randomly assign a value according to the probability distribution of that variable and according to values assigned to it's parents. When we encounter an evidence variable $E_i$, we set it to value $e_i$ according to the evidence $\vars{e}$ and multiply weight of the current sample by $P(e_i | Parents(E_i))$. The final probability distribution is computed as follows:
+\begin{equation*}
+    P(\vars{x} | \vars{e})
+    = \frac
+        {w_{\vars{x},\vars{e}} \cdot N_{\vars{x},\vars{e}}}
+        {\sum_\vars{X} (w_{\vars{x},\vars{e}} \cdot N_{\vars{x},\vars{e}})}
+\end{equation*}
 
+I believe that the sampling process can furthermore be accelerated by omitting variables $\vars{Y'}$ that satisfy following two conditions: (1) $\vars{Y'} \cap (\vars{X} \cup \vars{E}) = \emptyset$, (2) no direct or indirect child of any variable from $\vars{Y'}$ is in $\vars{X} \cup \vars{E}$. Rationale behind this is the same as in the variable elimination algorithm\,--\,when computing the final probability distribution, we effectively sum out variables $\vars{Y'}$ and it is irrelevant what values they were assigned because they contribute to the same buckets $N_{\vars{x},\vars{e}}$ and don't affect weight. This observation is applicable also to direct and rejection sampling.
+
+An important drawback of importance sampling is that it doesn't account well for evidence in leaf nodes or near to them. This is because in that case we effectively sample the prior probability distribution and finally assign a weight to the generated sample by evidence but the sampling process is most of the time unaffected by the evidence and virtually only weights take evidence into account. So, for a very rare evidence (eg. for some rare set of symptoms) all of the generated samples might have very small weight and, in case of medical diagnosis, no sample representing the "real cause" of observed evidence might be generated. Once again, this is because we sample prior probability distribution rather than posterior and these two distributions may be very different~\cite[p.~503]{pgm}.
 
 \subsection{Markov Chain Monte Carlo}
+The likelihood weighting method presented before doesn't account well for evidences in or near leaf nodes. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way the information about all evidence variables propagates through the network.
+
+To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket is a minimal set of variables such that $X$ is conditionally independent from all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and children $\vars{Y}$ of $X$ because there is a direct connection between them and $X$. Furthermore $MB(X)$ needs to include parents of children $\vars{Y}$ because observing any of these children $Y_i$ activates a V-structure and $X$ would become conditionally dependent on $Parents(Y_i)$ given $Y_i$.
+
+The MCMC algorithm starts by producing one sample consistent with the evidence (eg. by one iteration of likelihood weighting and discarding the weight). Then we repeat the following: For each non-evidence variable $Y_i$ we resample this variable from current distribution $P(Y_i | MB(Y_i))$ producing a new sample. For this sample we increase the counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable.
+
+Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each assignment of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this assignment. More generally MCMC is based on state space of a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC method.
+
+\begin{comment}
 $\pi(x)$ is the stationary distribution (ustálený)
 
 works for regular Markov chains ($\exists k \forall x, x':$ z $x$ do $x'$ se lze dostatat přesně v $k$ krocích s nenulovou pstí)
-
+\end{comment}
 
 \subsection{Belief-NET-ASK}
 \todo{uprava notace - mnoziny promennych tucne pomoci backslash vars\{...\}}
@@ -431,9 +454,9 @@ For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie
 
 
 \section{Parameter estimation}
-xxx
+pgm pdf 732
 
-
+lot of data, maximum likelihood estimation, fragmentation and overfitting (large number of parents, exponential number of "buckets")
 
 
 
