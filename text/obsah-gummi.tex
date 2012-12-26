@@ -206,7 +206,7 @@ Lets begin by defining what a probability distribution is when there is only one
     \end{itemize}
 \end{math_def}
 
-Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables are denoted by small letters such as $x_1$. Further we'll use bold capital letters to denote sets of variables such as $\vars{X}$.
+Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables (instantiations) are denoted by small letters such as $x$. Further we'll use bold capital letters to denote sets of random variables such as $\vars{X}$ and their instantiation with bold small letters such as $\vars{x}$.
 
 Probability distributions of more than one random variable are called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely is every single outcome of a throw. In this case there are $6 \times 6 = 36$ possibilities so the $P(X_{black},X_{white})$ function would have 36 entries if represented by a table.
 
@@ -293,13 +293,13 @@ To describe how observing certain facts propagates through a Bayesian network an
     Let $G$ be a Bayesian network with nodes $X_1, X_2, \dots, X_k$ and let $\vars{Z}$ be a~set of observed variables. Connected undirected trail $X_a - X_{a+1} - \dots - X_b$ given facts $\vars{Z}$ is active iff
     \begin{itemize}
         \item For every so called "V-structure" $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ on the trail is $X_i \in \vars{Z}$.
-        \item No other $X_i$ on given trail is in $\vars{Z}$.
+        \item No other node of given trail is in $\vars{Z}$.
     \end{itemize}
     Notes: V-structure is defined as a segment of trail in form $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ (in this case, edge directions do matter). Also note that the trail may contain duplicate nodes.
 \end{math_def}
 
 \begin{math_def}
-    Let $G$ be a Bayesian network, $X,Y$ two of it's nodes and $\vars{Z}$ observed facts. We say that $X,Y$ given $vars{Z}$ are d-separated in $G$ (denoted $\text{d-sep}_G(X,Y|\vars{Z})$) iff there is no active trail between $X$ and $Y$ given $\vars{Z}$.
+    Let $G$ be a Bayesian network, $X,Y$ two of it's nodes and $\vars{Z}$ observed variables. We say that $X,Y$ given $\vars{Z}$ are d-separated in $G$ (denoted $\text{d-sep}_G(X,Y|\vars{Z})$) iff there is no active trail between $X$ and $Y$ given $\vars{Z}$.
 \end{math_def}
 
 Using d-separation (direction-dependent separation~\cite{russell_norvig_2ed}) we can quite elegantly determine if observation of a variable $X$ can or cannot affect distribution of some other random variable. Clearly two random variables that are directly connected are dependent. But we can also examine other than these intuitively obvious relations. Also please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $\vars{Z}$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
@@ -415,13 +415,17 @@ I believe that the sampling process can furthermore be accelerated by omitting v
 An important drawback of importance sampling is that it doesn't account well for evidence in leaf nodes or near to them. This is because in that case we effectively sample the prior probability distribution and finally assign a weight to the generated sample by evidence but the sampling process is most of the time unaffected by the evidence and virtually only weights take evidence into account. So, for a very rare evidence (eg. for some rare set of symptoms) all of the generated samples might have very small weight and, in case of medical diagnosis, no sample representing the "real cause" of observed evidence might be generated. Once again, this is because we sample prior probability distribution rather than posterior and these two distributions may be very different~\cite[p.~503]{pgm}.
 
 \subsection{Markov Chain Monte Carlo}
-The likelihood weighting method presented before doesn't account well for evidences in or near leaf nodes. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way the information about all evidence variables propagates through the network.
+The likelihood weighting method presented before doesn't account well for evidences in or near leaf nodes \todo{(evidential reasoning)}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way the information about all evidence variables propagates through the network.
 
-To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket is a minimal set of variables such that $X$ is conditionally independent from all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and children $\vars{C}$ of $X$ because there is a direct connection between them and $X$. Furthermore $MB(X)$ needs to also include parents of $\vars{C}$ because observing any of these children $C_i$ activates a V-structure and $X$ would become conditionally dependent on $Parents(C_i)$ given $C_i$.
+To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket of $X$ is a minimal set of variables such that $X$ is conditionally independent from all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children $\vars{C}$ of $X$ because there is a direct connection between them and $X$. Furthermore $MB(X)$ also needs to include parents of $\vars{C}$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$.
 
-The MCMC algorithm starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y_i$ we resample this variable from current distribution $P(Y_i | MB(Y_i))$ producing a new sample. For this sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable.
+The MCMC algorithm starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from current distribution $P(Y | MB(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable. The distribution $P(Y | MB(Y))$ can be obtained by computing $P(y | MB(Y))$ for every $y$ as follows~\cite[p.~518]{russell_norvig_2ed}:
+\begin{equation*}
+    P(y | MB(Y)) = \alpha \cdot P(y | Parents(Y)) \prod_i P(c_i | Parents(C_i))
+\end{equation*}
+where $\alpha$ is a normalizing constant. Note that $MB(\cdot)$ and $Parents(\cdot)$ in this context denote concrete instantiation of respective variables in the current sample.
 
-Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each assignment of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this assignment. More formally MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
+Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each instantiation of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this instantiation. More formally, MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
 
 \todo{pgm 541+ has good notes of other papers}
 
@@ -458,10 +462,10 @@ Goal of parameter estimation is to supply CPDs to a BN whose structure is alread
 
 
 \subsubsection{Maximum likelihood estimation}
-Maximum likelihood estimation views the dataset as a set of independent samples $x_1, \dots, x_m$ taken from a~parametrized probability distribution with parameter $\Theta$. The parameter $\Theta$ is a vector of entries of all CPDs (if the probability distribution was represented by a BN). Core of the maximum likelihood estimation is to choose $\Theta$ in such a way that the probability of obtaining samples $x_1, \dots, x_m$ from the parametrized distribution is maximal. Formally $\Theta = \arg \max P(x_1,\dots,x_m | \Theta)$. Lets inspect a simple example of $m$ coin tosses $x_1, \dots, x_m$ with biased coin for which $P(X = heads) = \theta$ (inspired by~\cite{pgm}). Lets suppose we get $H$ times heads and $T$ times tails. Then we can write $P(x_1,\dots,x_m | \theta) = \theta^H (1 - \theta)^T$ because the coin tosses are independent given $\theta$. The task of maximizing the expression $\theta^H (1 - \theta)^T$ is equivalent to maximizing it's logarithm $H \cdot \ln(\theta) + T \cdot \ln(1 - \theta)$. The equation $\frac{\partial}{\partial\theta} \ H \cdot \ln(\theta) + T \cdot \ln(1 - \theta) = 0$ yields result $\theta = H / (H + T)$ which is a fairly intuitive conclusion (number of times we got heads divided by the number of all tosses). Similar result can be obtained for a multinomial distribution.
+Maximum likelihood estimation views the dataset as a set of independent samples $x_1, \dots, x_m$ taken from a~parametrized probability distribution with parameter $\Theta$. The parameter $\Theta$ can be viewed as a vector of entries of all CPDs if the probability distribution was represented by a BN. Core of the maximum likelihood estimation is to choose $\Theta$ in such a way that the probability of obtaining samples $x_1, \dots, x_m$ from the parametrized distribution is maximal. Formally $\Theta = \arg \max P(x_1,\dots,x_m | \Theta)$. Lets inspect a simple example of $m$ coin tosses $x_1, \dots, x_m$ with biased coin for which $P(X = heads) = \theta$ (inspired by~\cite{pgm}). Lets suppose we get $H$ times heads and $T$ times tails. Then we can write $P(x_1,\dots,x_m | \theta) = \theta^H (1 - \theta)^T$ because the coin tosses are independent given $\theta$. The task of maximizing the expression $\theta^H (1 - \theta)^T$ is equivalent to maximizing it's logarithm $H \cdot \ln(\theta) + T \cdot \ln(1 - \theta)$. The equation $\frac{\partial}{\partial\theta} \ H \cdot \ln(\theta) + T \cdot \ln(1 - \theta) = 0$ yields global maximum $\theta = H / (H + T)$ which is a fairly intuitive conclusion\,--\,number of times we got heads divided by the number of all tosses. Similar formula can be obtained for a multinomial distribution.
 
 Now suppose we want to compute probability distribution $P(X | Parents(X))$ for some node $X$ according to our dataset, ie. to compute the CPD of that node.
-Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach when we partition the dataset to disjoint subsets, each for a concrete instantiation of variables $\lbrace X \rbrace \cup Parents(X)$. Then CPD entry $P(X=x_i | Parents(X) = \vars{p_i})$ is computed as the ratio $N_{x_i,\vars{p_i}} / N_{\vars{p_i}}$. Potential problem with this approach is that the number of subsets grows exponentially with the number of parents and hence the estimated CPD looses precision. Therefore a perfect model with all dependencies between variables might be outperformed by a simpler and wrong model just because we didn't have sufficient amount of data to accurately compute CPDs for the more complicated structure\footnote{Such observation has often been made, for example, with the Naïve Bayes model which assumes that all effect variables are independent given the cause variable. Such assumption is seldom justified, nevertheless Naïve Bayes models have proved themselves to perform well.}~\cite{pgm}. This is a~typical AI problem of overfitting, in context of BNs also referred to as \term{fragmentation}.
+Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach when we partition the dataset to disjoint subsets, each for a concrete instantiation of variables $\lbrace X \rbrace \cup Parents(X)$. Then CPD entry $P(X=x_i | Parents(X) = \vars{p_i})$ is computed as the ratio $N_{x_i,\vars{p_i}} / N_{\vars{p_i}}$. Potential problem with this approach is that the number of subsets grows exponentially with the number of parents and hence the estimated CPD looses precision. Therefore a perfect model with all dependencies between variables might be outperformed by a simpler and wrong model just because we didn't have sufficient amount of data to accurately compute CPDs for the more complicated structure\footnote{Such observation has often been made, for example, with the Naïve Bayes model which assumes that every two effect variables are independent given the cause variables. Such assumption is seldom justified, nevertheless Naïve Bayes models have proved themselves to perform well.}~\cite{pgm}. This is a~typical AI problem of overfitting, in context of BNs also referred to as \term{fragmentation}. In extreme cases $N_{x_i,\vars{p_i}}$ could be zero which is in most cases very wrong. \uncertain{This can be prevented using Laplace correction known in context of Naïve Bayes classifier.}
 
 
 
@@ -505,7 +509,7 @@ Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach
 
 
 
-\chapter{Applications}
+\chapter{Selected applications}
 
 \begin{itemize}
 	\item Medical diagnosis (from a big dataset of patient records)\,--\,structure and CPDs.
@@ -529,7 +533,9 @@ Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach
 \todo{závěr}
 
 
-
+\begin{itemize}
+	\item Study variants of stochastic sampling methods~\cite{neal93}.
+\end{itemize}
 
 
 
