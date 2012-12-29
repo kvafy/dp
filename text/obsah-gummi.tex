@@ -489,28 +489,49 @@ Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach
 
 
 \subsubsection{Bayesian estimation}
-An important drawback of the maximum likelihood estimation presented earlier is that it doesn't really account for the size of the dataset. The key idea of Bayesian estimation is to define a prior distribution over parameters $\Theta$ with some degree of strength of this initial distribution and then compute the posterior probability distribution $P(\Theta \mid \mathcal{D})$ as we get more empirical data. This way we can, for example, distinguish between rolling a six three times out of eight throws and rolling a six 300 times out of 800 throws. It is clear that these two datasets tells us something different about the die, although probability of rolling a six is, according to maximum likelihood estimation, $3/8$ in both cases.
+An important drawback of the maximum likelihood estimation presented earlier is that it doesn't really account for the size of the dataset\,--\,small dataset may not have enough samples for every instantiation of every variable and its parents and the dataset might be noisy. The key idea of Bayesian estimation is to view the parameters themselves (ie. CPDs) as random variables with some prior distribution and then, according to the supplied dataset, compute the posterior distribution over parameters which will be our estimated CPDs. So, parameter learning is in this case a type of inference.
+More formally, we define a~prior distribution $P(\Theta)$ over parameters $\Theta$ with some degree of strength of this initial distribution and then, using the Bayes' rule, compute the posterior probability distribution $P(\Theta \mid \mathcal{D}) \propto P(\mathcal{D},\Theta) P(\Theta)$ as we get more empirical data. This way we can, for example, distinguish between rolling a~six three times out of eight throws and rolling a six 300 times out of 800 throws. It is clear that these two datasets tell us something different about the die, although probability of rolling a six, according to maximum likelihood estimation, is $3/8$ in both cases.
 
-The exact mathematical derivation~\cite[p.~733]{pgm} of Bayesian parameter estimation formulas is based on \term{Beta} distribution. The derivation is not trivial and also is not needed further in this thesis, so we jump straight to the practical conclusion. For a given dataset $\mathcal{D}$ and hyper-parameters $(\alpha_1, \dots, \alpha_k)$ the probability of variable $X$ having value $x_i$ is given as follows:
+The exact mathematical derivation~\cite[p.~733]{pgm} of Bayesian parameter estimation formulas is based on \term{Dirichlet distribution}$(\alpha_1,\dots,\alpha_k)$. The derivation is not trivial and also is not needed further in this thesis, so we jump straight to the practical conclusions and interpretations. For a~given dataset $\mathcal{D}$ and hyperparameters $(\alpha_1, \dots, \alpha_k)$ the probability of variable $X$ having value $x_i$ is given as follows:
 
 \begin{equation*}
-    P(X = x_i \mid \mathcal{D})
-     = \frac
+    \begin{array}{rcl}
+    P(X = x_i \mid \mathcal{D}) &
+     = &
+     \displaystyle\frac
         {\alpha_i + N_{x_i}}
-        {\sum_j \alpha_j + \sum_j N_{x_j}}
+        {\sum_j (\alpha_j + N_{x_j})}\\
+        & & \\
+    P(X = x_i \mid Parents(X) = \vars{p_i}, \mathcal{D}) &
+     = &
+     \displaystyle\frac
+        {\alpha_{x_i \mid \vars{p_i}} + N_{x_i, \vars{p_i}}}
+        {\sum_j (\alpha_{x_j \mid \vars{p_i}} + N_{x_j, \vars{p_i}})}
+    \end{array}
 \end{equation*}
+where a hyperparameter $\alpha_i$ can be viewed as count of imaginary samples $x_i$ (also called \term{pseudo-samples}), similarly for $\alpha_{x_i \mid \vars{p_i}}$. Hyperparameters define both:
+\begin{enumerate}
+	\item The prior distribution $P(\Theta)$\,--\,initial CPD values defined by ratios $\alpha_i / \sum_j \alpha_j$.
+	\item The confidence we have in the prior distribution\,--\,the total sum $\sum_j \alpha_j$ is called \term{equivalent sample size} and tells us how many samples it takes to deviate from the prior distribution.
+\end{enumerate}
+We have already encountered two special cases of hyperparameters\,--\,$(0,\dots,0)$ is the pure maximum likelihood estimation when we compute the CPDs based just on the dataset $\mathcal{D}$; hyperparameters $(1,\dots,1)$ correspond the maximum likelihood estimation with Laplace's correction.
+It is clear that the maximum likelihood estimation and the Bayesian estimation are asymptotically the same for large datasets. However, Bayesian estimation generalizes better with sparse datasets and exhibits lower sensitivity to noise in the data~\cite[p.~749]{pgm}.
 
-\todo{ratios of alphas govern the initial distribution, sum over alphas is "strenght" of the prior distribution (how may samples does it take to change the posterior), for alphas $(1,\dots,1)$ it is Laplace's correction and uniform distribution, asymptotically the same as MLE}
+\medskip
 
+Parameter learning methods explained so far deal strictly with table CPDs and assume that parameters $\Theta$ of the BN are independent. More advanced methods of parameters learning include learning structured probability distributions (eg. tree-based) and dependent or shared parameters~\cite{pgm}.
+
+\begin{comment}
 \begin{itemize}
 	\item Familiar vs. unfamiliar setting (coin tossing vs. two teams playing)
 	\item anything uncertain is viewed as random variable that is updated over time as data is acquired
-	\item learning as a special type of inference (prior is what we expect the distribution to be $P(\Theta)$ and posterior is $P(\Theta \mid \mathcal{D}) = P(\Theta) \prod_{X_i \in \mathcal{D}} P(X_i \mid \Theta)$)
+	\item learning as a special type of inference (prior is what we expect the distribution to be $P(\Theta)$ and posterior is $P(\Theta \mid \mathcal{D}) \propto P(\Theta) \prod_{X_i \in \mathcal{D}} P(X_i \mid \Theta)$)
 	\item better for sparse datasets (better generalization)
 	\item no need for Laplace correction (somewhat implicit by the initial $P(\Theta)$).
 	\item $\alpha_i$ correspond to seeing $\alpha_i$ occurrences of $x_i$ a priori (imaginary samples)
+	\item use\,--\,plot learning curves? try alphas on logarithmic scale?
 \end{itemize}
-
+\end{comment}
 
 
 
@@ -524,7 +545,16 @@ The exact mathematical derivation~\cite[p.~733]{pgm} of Bayesian parameter estim
 
 \subsection{Structure learning}
 
-
+\begin{itemize}
+	\item Why? Discover the structure (dependencies) or to really use the network to answer queries
+	\item fewer edges can generalize better than too many edges
+	\item score-based learning: define score for structure (how well it matches the data)
+	\item $\hat{P}(\cdot)$ is \term{empirical distribution}, ie. simple relative counts (exactly as in maximum likelihood estimation)
+	\item lecture Likelihood scores is pretty good to understand (maybe include the derivation?)
+	\item likelihood score almost always positive (indicates to add an edge)\,--\,avoid overfitting (restrict no of parents or parameters), score that penalizes complexity
+	\item BIC score is likelihood score with a penalty term (for complex structures)
+	\item 
+\end{itemize}
 
 
 
