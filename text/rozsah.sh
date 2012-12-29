@@ -3,7 +3,7 @@
 PDF="dp.pdf"
 BEGIN_RE="Chapter"     # první relevantní řádek práce
 END_RE="ISBN" # poslední relevantní řádek
-coef=0.95  # kolik procent znaku je odhaden uzitecny text
+coef=1.00  # kolik procent znaku je odhaden uzitecny text
 
 #########################################################################
 

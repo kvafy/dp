@@ -182,22 +182,20 @@ The aim of this thesis is to present techniques of learning Bayesian networks, b
 
 
 
-\chapter{Theory of Bayesian networks}
-This chapter will present theoretical foundations for understanding Bayesian networks and performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and to provide answers for probability queries.
+\chapter{Preliminaries}
+This chapter will present theoretical foundations for understanding Bayesian networks and performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and to provide answers for probability queries. In some cases the mathematical derivation will be presented because, I believe, it provides useful insight into the underlaying theory. In other cases we will jump straight to the practical conclusion needed in order to algorithmically solve the problem at hand because the derivation is either very difficult or the process itself is uninteresting for a~non-mathematician and would rather obfuscate the topic.
 
-First will be established notation used in this thesis and necessary overview of probability theory. Then we will move on to the theory of Bayesian networks, explain their advantages and proceed to construction and inference techniques.
+First will be established notation used in this thesis and necessary overview of probability theory. Then we will move on to the theory of Bayesian networks, explain their advantages and proceed to inference and construction techniques.
 
 
-\section{Preliminaries}
-At first we need to establish notation and explain basic facts regarding mathematical probability because, as will be shown later, Bayesian networks are graphical models for joint probability distributions.
 
-\subsection{Philosophical views}
+\section{Philosophical views}
 Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by so called wave function $\Psi$ and $\vert\Psi\vert^2$ describes density probability as a function of space and time coordinates. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory. \todo{cite physics from grammar school?}
 
 Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person into one single category.
 
 
-\subsection{Probability distributions}
+\section{Probability distributions}
 Let's begin by defining what a probability distribution is when there is only one single random variable.
 \begin{math_def}\label{def_prob_distribution}
     $P(X)$ is discrete probability distribution of discrete random variable $X$ such that:
@@ -217,7 +215,7 @@ Posterior and prior probability distributions are not the same in general becaus
 Conditional probability distribution of variables $\vars{X}$ depending on variables $\vars{E}$ is denoted $P(\vars{X}\mid\vars{E})$ and such expression is usually read as "probability of $\vars{X}$ given $\vars{E}$" where $\vars{E}$ are called \term{evidence} or \term{observed} variables. Conditional probability distribution can be seen as a collection of probability distributions over variables $\vars{X}$ for every possible instantiation of variables $\vars{E}$.
 
 
-\subsection{Factors}
+\section{Factors}
 When reasoning about Bayesian networks we express probability distributions as so called \term{factors}. Factors are interesting for us because factor operations correspond to mathematical operations we need to do with probability distributions in order to answer queries in a~Bayesian network. 
 \begin{math_def}\label{def_factor}
     Factor $\phi$ is a function $\phi: X_1 \times X_2 \times \dotsm \times X_k \rightarrow \mathbb{R}_0^+$. The non-empy set $\lbrace X_1, X_2, \dots, X_k \rbrace$ is called scope of the factor $\phi$.
@@ -250,9 +248,40 @@ Renormalization of a factor $\phi$ ensures that all values of the factor sum to 
 It may be useful to point out that renormalization makes sense only for factors that don't represent conditional probability distributions.
 
 
-\clearpage
 
-\section{Bayesian networks}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\chapter{Theory of Bayesian networks}
 Question might be why to use Bayesian networks? First of all, having a complicated joint probability distribution with many random variables inevitably leads to a potentially enormously large table that would represent such probability distribution. Let's assume we have binary random variables $X_1, \dots, X_k$. Then to represent the joint probability distribution $P(X_1, \dots, X_k)$ we would need a table with $2^k$ entries. This exponential growth brings several problems:
 \begin{itemize}
     \item Table completely describing a joint probability distribution may be too big to store. That is because the table would hold probability of every possible event separately in its own record.
@@ -265,6 +294,8 @@ Question might be why to use Bayesian networks? First of all, having a complicat
 \end{itemize}
 
 As will be shown later, Bayesian networks couple with the problem of exponential growth of records in probability tables by having several smaller conditional probability distributions (factors) based on dependencies between random variables. Product of all these conditional probabilities (factors) gives the underlaying joint probability distribution which would, if represented directly, require an exponentially bigger table.
+
+
 
 \begin{math_def}\label{def_bayesian_network}
     Bayesian network $G$ is a directed acyclic graph where each node represents a~random variable and oriented edges between nodes express direct dependencies between random variables.
@@ -289,7 +320,7 @@ I have devised a proof that $P(X_1, \dots, X_k)$ induced by a BN $G$ is indeed a
 \end{enumerate}
 
 
-\subsection{Flow of probabilistic influence}
+\section{Flow of probabilistic influence}
 To describe how observing certain facts propagates through a Bayesian network and how it affects probability distributions of unobserved variables on qualitative level, let's introduce \term{flow of probabilistic influence}. Flow of influence also enables us to formally capture conditional dependency and/or independency of random variables in a BN given some facts.
 \begin{math_def}
     Let $G$ be a Bayesian network with nodes $X_1, X_2, \dots, X_k$ and let $\vars{Z}$ be a~set of observed variables. Connected undirected trail $X_a - X_{a+1} - \dots - X_b$ given facts $\vars{Z}$ is active iff
@@ -475,11 +506,11 @@ Complete construction of a BN through cooperation with an expert is problematic 
 
 \todo{metrics\,--\,understand it!}
 
-\subsection{Parameter estimation \todo{(pgm pdf 732)}}
+\section{Parameter estimation}
 Goal of parameter estimation is to supply CPDs to a BN whose structure is already known. In order for the estimation to be reasonably correct, we need to have sufficiently large dataset wrt. complexity of the BN structure.
 
 
-\subsubsection{Maximum likelihood estimation}
+\subsection{Maximum likelihood estimation}
 Maximum likelihood estimation views the dataset $\mathcal{D}$ as a set of independent samples $x_1, \dots, x_m$ taken from a~parametrized probability distribution with parameter $\Theta$. The parameter $\Theta$ can be viewed as a vector of entries of all CPDs if the probability distribution was represented by a BN. Core of the maximum likelihood estimation is to choose $\Theta$ in such a way that the probability of obtaining samples $x_1, \dots, x_m$ from the parametrized distribution is maximal. Formally $\Theta = \arg \max P(\mathcal{D} \mid \Theta)$ where $P(\mathcal{D} \mid \Theta)$ is called \term{likelihood function}.
 
 Let's inspect a simple example of $m$ coin tosses $x_1, \dots, x_m$ with a biased coin for which $P(X = heads) = \theta$ (inspired by~\cite{pgm}). Let's suppose we get $H$ times heads and $T$ times tails. Then we can write $P(x_1,\dots,x_m \mid \theta) = \theta^H (1 - \theta)^T$ because the coin tosses are independent given $\theta$. The task of maximizing the expression $\theta^H (1 - \theta)^T$ is equivalent to maximizing its logarithm $H \cdot \ln(\theta) + T \cdot \ln(1 - \theta)$. The equation $\frac{\partial}{\partial\theta} \ H \cdot \ln(\theta) + T \cdot \ln(1 - \theta) = 0$ yields global maximum $\theta = H / (H + T)$ which is a fairly intuitive conclusion\,--\,number of times we got heads divided by the number of all tosses. Similar formula can be obtained for a~general multinomial distribution.
@@ -488,7 +519,7 @@ Now suppose we want to compute probability distribution $P(X \mid Parents(X))$ f
 Maximum likelihood estimation is, as demonstrated earlier, an intuitive approach when we partition the dataset to disjoint subsets, each for a concrete instantiation of variables $\lbrace X \rbrace \cup Parents(X)$. Then CPD entry $P(X=x_i \mid Parents(X) = \vars{p_i})$ is computed as the ratio $N_{x_i,\vars{p_i}} / N_{\vars{p_i}}$. Potential problem with this approach is that the number of subsets grows exponentially with the number of parents and hence the estimated CPD looses precision. This exponential explosion of possible instantiations is called \term{fragmentation} and it is one of the main problems of learning BNs from data. Because of fragmentation a perfect model capturing all dependencies between variables might be outperformed by a simpler and wrong model just because we didn't have sufficient amount of data to accurately compute CPDs for the more complicated structure\footnote{Such observation has often been made, for example, with the Naïve Bayes model which assumes that any two effect variables are independent given the cause variables. Such assumption is seldom justified, nevertheless Naïve Bayes models have proved themselves to perform well.}~\cite{pgm}. This is a~typical AI problem of overfitting. In extreme cases $N_{x_i,\vars{p_i}}$ could be zero which is in most cases very wrong. This can be prevented by applying the Laplace's correction used in context of Naïve Bayes classifier.
 
 
-\subsubsection{Bayesian estimation}
+\subsection{Bayesian estimation}
 An important drawback of the maximum likelihood estimation presented earlier is that it doesn't really account for the size of the dataset\,--\,small dataset may not have enough samples for every instantiation of every variable and its parents and the dataset might be noisy. The key idea of Bayesian estimation is to view the parameters themselves (ie. CPDs) as random variables with some prior distribution and then, according to the supplied dataset, compute the posterior distribution over parameters which will be our estimated CPDs. So, parameter learning is in this case a type of inference.
 More formally, we define a~prior distribution $P(\Theta)$ over parameters $\Theta$ with some degree of strength of this initial distribution and then, using the Bayes' rule, compute the posterior probability distribution $P(\Theta \mid \mathcal{D}) \propto P(\mathcal{D},\Theta) P(\Theta)$ as we get more empirical data. This way we can, for example, distinguish between rolling a~six three times out of eight throws and rolling a six 300 times out of 800 throws. It is clear that these two datasets tell us something different about the die, although probability of rolling a six, according to maximum likelihood estimation, is $3/8$ in both cases.
 
@@ -543,7 +574,14 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 
 
 
-\subsection{Structure learning}
+\section{Structure learning}
+So far we have seen how to compute CPDs for a given graph structure of a BN based on some dataset. Learning the structure itself is probably the most complicated task. One of the problems is to pick a good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more edges to get a better fit for training data). As we have already discussed, with small dataset we may actually benefit by having a simpler structure. On the other hand, with large dataset we don't want to restrict our hypothesis too much because the dataset is sufficient to correctly learn larger number of parameters.
+
+In this chapter we are going to discuss \term{score-based} methods. These methods use a single metric to evaluate a network structure. Because the problem of finding ideal structure of a~BN is NP-complete, heuristics are usually used instead. Structure learning is basically an optimization task and, in general, works as follows. We have an initial graph structure with fixed set of variables and no edges (no dependencies). Then we try all possibilities of adding an edge an evaluate the change using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The metric then measures both degree of dependency of the variables connected which is desirable, as well as increase of the network complexity which we want to keep low.
+
+\subsection{Likelihood score and BIC score}
+
+%We need to stress out that a fully connected network is the most expressive and can capture joint probability distribution induced by any BN. Let's consider that the dataset has been sampled from a distribution $P*$ represented by a BN with structure $\mathcal{G}$. Then any supergraph of $\mathcal{G}$ 
 
 \begin{itemize}
 	\item Why? Discover the structure (dependencies) or to really use the network to answer queries
@@ -558,6 +596,15 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 
 
 
+\subsection{Bayesian score}
+weird
+
+
+
+
+
+\subsection{Learning specific structures}
+tree structures, general graphs
 
 
 
@@ -567,9 +614,36 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 
 
 
-\section{Algorithms and data structures}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\chapter{Algorithms and data structures}
 
 \todo{implementation of variables, factors, Bayesian networks}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
