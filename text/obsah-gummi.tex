@@ -575,39 +575,80 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 
 
 \section{Structure learning}
-So far we have seen how to compute CPDs for a given graph structure of a BN based on some dataset. Learning the structure itself is probably the most complicated task. One of the problems is to pick a good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more edges to get a better fit for training data). As we have already discussed, with small dataset we may actually benefit by having a simpler structure. On the other hand, with large dataset we don't want to restrict our hypothesis too much because the dataset is sufficient to correctly learn larger number of parameters.
+So far we have seen how to compute CPDs for a given graph structure of a BN based on some dataset. Learning the structure itself can be useful for a number of reasons. For example, we want to create an accurate model of certain domain to be able to perform inference later (medical diagnosis, general classification etc.). Other application could be in the field of knowledge discovery when we are interested in knowing the causal dependencies between random variables (protein-signaling networks~\cite{sachs05}, analysis of critical nodes for traffic congestion etc.).
 
-In this chapter we are going to discuss \term{score-based} methods. These methods use a single metric to evaluate a network structure. Because the problem of finding ideal structure of a~BN is NP-complete, heuristics are usually used instead. Structure learning is basically an optimization task and, in general, works as follows. We have an initial graph structure with fixed set of variables and no edges (no dependencies). Then we try all possibilities of adding an edge an evaluate the change using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The metric then measures both degree of dependency of the variables connected which is desirable, as well as increase of the network complexity which we want to keep low.
+Learning structure of a BN is a complicated task. One of the problems is to pick a~good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more edges to get a better fit for training data). As we have already discussed, with a small dataset we may actually benefit by having a simpler structure. On the other hand, with a large dataset we don't want to restrict our hypothesis too much because the dataset is sufficient to learn higher number of parameters correctly.
+
+In this chapter we are going to discuss \term{score-based} methods of structure learning\,--\,\todo{likelihood score and Bayesian score}. Structure learning is basically a discrete optimization task and for such tasks there are many well known approaches\,--\,simulated annealing, genetic algorithms, evolutionary programming and many others. As discrete optimization methods are not the key topic of this thesis, we will work with simple hill climbing heuristics instead. Nevertheless a common requirement for using any optimization technique is a mechanism that evaluates quality of a candidate solution. Such role plays the score function which we will discuss in detail. \todo{Other than that there also is constraint-based approach which will not be further examined for its limitations.}
+
+
+\subsection{Optimization algorithm}
+In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forrest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, flipping direction or deletion of an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The problem of local maxima is usually addressed by augmenting the simple hill climbing by random restarts or by a tabu list.
+ 
+
 
 \subsection{Likelihood score and BIC score}
+The likelihood score has information-theoretic foundations and basically quantifies how well a given network structure matches our dataset. We assume that for a given structure $\mathcal{G}$ the parameters $\Theta$ are learnt using the maximum likelihood estimation, so the likelihood score really evaluates the hypothesis $(\mathcal{G}, \Theta)$.
 
-%We need to stress out that a fully connected network is the most expressive and can capture joint probability distribution induced by any BN. Let's consider that the dataset has been sampled from a distribution $P*$ represented by a BN with structure $\mathcal{G}$. Then any supergraph of $\mathcal{G}$ 
+Again, the goal is to maximize probability of the data given a hypothesis. Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ and let's examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with two independent variables and structure $X \rightarrow Y$. Then the likelihood scores are computed as follows:
+\begin{eqnarray*}
+    score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x[i]) + \log \hat P(y[i])\Bigr)\\
+    score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x[i]) + \log \hat P(y[i] \mid x[i])\Bigr)
+\end{eqnarray*}
+where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of structure $\mathcal{G}_1$ with dataset $\mathcal{D}$, $x[i]$ is value of variable $X$ in example $\xi_i$ and $\hat P$ denotes the \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle, eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$.
 
-\begin{itemize}
-	\item Why? Discover the structure (dependencies) or to really use the network to answer queries
-	\item fewer edges can generalize better than too many edges
-	\item score-based learning: define score for structure (how well it matches the data)
-	\item $\hat{P}(\cdot)$ is \term{empirical distribution}, ie. simple relative counts (exactly as in maximum likelihood estimation)
-	\item lecture Likelihood scores is pretty good to understand (maybe include the derivation?)
-	\item likelihood score almost always positive (indicates to add an edge)\,--\,avoid overfitting (restrict no of parents or parameters), score that penalizes complexity
-	\item BIC score is likelihood score with a penalty term (for complex structures)
-	\item 
-\end{itemize}
+Now let's examine the difference between having an edge between variables $X$ and $Y$ or not. We obtain the following result (for complete derivation see~\cite[p.~791]{pgm}):
+\begin{eqnarray*}
+   score_L(\mathcal{G}_2 : \mathcal{D}) - score_L(\mathcal{G}_1 : \mathcal{D}) %& = & \sum_{i=1}^m \log \hat P(y[i] \mid x[i]) - \sum_{i=1}^m \log \hat P(y[i]) \\
+     %& = & \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
+     %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
+     %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
+     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)} \\
+     & = & N \cdot I_{\hat P}(X; Y)
+\end{eqnarray*}
+%The first step is to change the logic of the summation from "over the dataset $\xi_1,\dots,\xi_m$" to "over possible instantiations of $X,Y$". Then we express the counts $N_{x,y},N_y$ using size of the dataset $N$ and their empirical probabilities of respective instantiations. After that we can extend the second summation from just over $Y$ to over $X,Y$. The final step is merging the two sums and logarithms.
+The term $I_{\hat P}(X, Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the level of dependency of $Y$ on $X$. It can be proofed~\cite[p.~792]{pgm} that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
+\begin{equation}
+    score_L(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
+\end{equation}
+where $H_{\hat P}(\cdot)$ is a constant relative to the structure of $\mathcal{G}$, so we really need to compare two network structures by the value of the first sum.
+
+\medskip
+The score difference between a superstructure with more edges and its substructure is always non-negative and, in fact, is equal to zero if and only if the two variables $X,Y$ in the dataset $\mathcal{D}$ appear to be perfectly independent which is due to statistical noise almost never true. Therefore the likelihood score itself almost always suggests the greedy heuristics to add an edge which would step by step lead to a fully connected network. This problem can be addressed by thresholding of the score increase or by restraining complexity of the network (maximal number of parents or maximal number of overall network parameters). Another approach is to account for network complexity in the scoring function itself, thus imposing a penalty on complicated structures. This is exactly what the BIC score does.
 
 
 
 \subsection{Bayesian score}
-weird
+The likelihood score discussed earlier never decides to pick a simpler structure over a more complex one. We will discuss a variant of Bayesian score called \term{BIC score} which is, in the end, just the likelihood score extended by a penalty term although theoretical foundations and mathematical derivations leading to the final formulas are entirely different.
 
+%\note{pgm 798 gives nice understanding of the use of gamma function}
 
+The BIC score takes into account both network complexity as well as the size of the dataset and combines these two pieces of information in such a way that with a small dataset the BIC score tends to keep the structure simple and allows only for the strongest dependencies to be be reflected in the network. As the dataset gets larger, the BIC score allows also for a more complicated structure that encodes also weaker dependencies.
+
+The BIC score is given as follows (for complete derivation see~\cite[p.~794]{pgm}):
+\begin{equation}
+    score_{BIC}(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i) - \frac{\log N}{2} Dim[\mathcal{G}]
+\end{equation}
+where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters) and $k$ is a constant relative to $\mathcal{G}$. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a large dataset the penalization increases rather slowly allowing the network to have a more complicated structure with weaker dependencies.
+
+\todo{video, don't be afraid of gamma functions}
 
 
 
 \subsection{Learning specific structures}
-tree structures, general graphs
-
-
-
+tree structures
+\begin{itemize}
+	\item tree has nice math
+	\item sparse parameters (no overfit, for small datasets)
+	\item direction don't matter, so we compute edge weights for every two nodes and find a maximum-weight spanning tree (Kruskal algorithm etc.) in $O(n^2)$
+	\item the algorithm doesn't determine direction of edges
+\end{itemize}
+general graphs
+\begin{itemize}
+	\item begin with random graph, empty, best tree, prior knowledge
+	\item add/remove/reverse an edge
+	\item greedy, best-first search, simulated annealing, \dots
+\end{itemize}
 
 
 
@@ -663,6 +704,9 @@ tree structures, general graphs
 	\item Pedigrees (BUT structure is known).
 	\item Some classification task (eg. $\chi^2$ for dependency analysis as in EVO by Schwarz).
 	\item Document classification, image segmentation (pgm 700).
+	\item traffic situation prediction
+	\item protein networks (how a protein influences another protein)\,--\,"Learning General Graphs: Heuristic Search"
+
 \end{itemize}
 
 
@@ -681,7 +725,8 @@ tree structures, general graphs
 
 
 \begin{itemize}
-	\item Study variants of stochastic sampling methods~\cite{neal93}.
+	\item Study variants of stochastic sampling methods~\cite{neal93} if they seem to be needed.
+	\item Another forms of structure learning (Bayesian learning\,--\,averages over many hypotheses).
 \end{itemize}
 
 
