@@ -37,7 +37,7 @@
 \usepackage{subcaption}
 \newtheorem{math_def}{Definition}[chapter] % 3. parametr zajisti cislovani "<sekce>.<číslo definice>"
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
-\newcommand{\todo}[1]{{\color{red} #1}}
+\newcommand{\todo}[1]{{\color{red}TODO: #1}}
 \newcommand{\uncertain}[1]{{\color{magenta} #1}}
 \newcommand{\note}[1]{{\color{green} #1}}
 \newcommand{\vars}[1]{{\mathbf{#1}}} % matematicke vyrazy - mnozina
@@ -150,7 +150,7 @@ The main advantage of Bayesian networks lies in their inherent property that, th
 
 The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables as well as in terms of structure and to show possible application domains. Inference is narrowed down to stochastic approaches because other ways are very complex. Still all forms of inference will be mentioned at least on the level of basic concept, since it is a fundamental part of theory of Bayesian networks.
 
-\todo{popis jednotlivých kapitol}
+\todo{descriptions for chapters}
 
 
 
@@ -190,7 +190,7 @@ First will be established notation used in this thesis and necessary overview of
 
 
 \section{Philosophical views}
-Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by so called wave function $\Psi$ and $\vert\Psi\vert^2$ describes density probability as a function of space and time coordinates. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory. \todo{cite physics from grammar school?}
+Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by so called wave function $\Psi$ and $\vert\Psi\vert^2$ describes density probability as a function of space and time coordinates. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory. \todo{maybe cite physics book from grammar school?}
 
 Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person into one single category.
 
@@ -379,7 +379,7 @@ There are several types of queries that might be asked in context of a Bayesian 
 
 Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of mathematical description and naive algorithmic implementation but exhibits serious running-time disadvantage\,--\,exponential running time in the number of variables in the worst case. On the other hand, approximate inference methods allow us to answer queries more quickly but precision of the solution may be questionable, especially for very rare events.
 
-\todo{include types of queries\,--\,diagnostic, causal, intercausal, mixed? (Russell, Norvig 2ed page 448 (466 pdf))}
+\todo{maybe show types of queries\,--\,diagnostic, causal, intercausal, mixed?~\cite[p.~448]{russell_norvig_ed2}}
 
 \subsection{Sum-product}
 Probably the simplest method for computing a conditional probability query is called sum-product. The problem at hand is to compute conditional probability distribution $P(\vars{X} \mid \vars{e})$ where $\vars{X}$ is one or more variables, $\vars{e}$ is an assignment to evidence variables $\vars{E}$ and $\vars{Y}$ variables that are neither query nor evidence variables. The query is computed according to Bayes' theorem as follows:
@@ -418,7 +418,7 @@ Variable elimination algorithm can be seen as a somewhat smarter implementation 
 	\item By definition of a conditional probability distribution, it holds for any instantiation of parent variables that $\sum_V P(v \mid Parents(V)) = 1$. So, when computing posterior probability distribution $P(\vars{X} \mid \vars{e})$, any node (factor) $V$ that is not an ancestor of a~query or evidence variable can be omitted because, thanks to the order of elimination of variables, the term $\sum_V P(v \mid Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
 \end{itemize}
 
-\todo{řeči kolem, algoritmus, časová složitost, kliky}
+%\todo{řeči kolem, algoritmus, časová složitost, kliky}
 
 Running time of the variable elimination algorithm in polytrees is $O(n)$~\cite[p.~510]{russell_norvig_ed2}, therefore it is a good method for answering individual queries $P(X \mid \vars{e})$ where $X$ is a single variable. Analogically, we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i \mid \vars{e})$ for all $X_i \in \vars{X}$ and returning $P(\vars{X} \mid \vars{e}) = \prod_i P(X_i \mid \vars{e})$.
 
@@ -478,7 +478,7 @@ where $\alpha$ is a normalizing constant. Note that $MB(\cdot)$ and $Parents(\cd
 
 Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each instantiation of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this instantiation. More formally, MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
 
-\todo{pgm 541+ has good notes of other papers}
+\note{pgm 541+ has good notes of other papers}
 
 \begin{comment}
 $\pi(x)$ is the stationary distribution (ustálený)
@@ -504,7 +504,7 @@ Basically, there are two approaches to creating a BN. First option is to coopera
 
 Complete construction of a BN through cooperation with an expert is problematic because, for a non-trivial BN, the task often requires significant time (several months~\cite{pgm}), the expert might not correctly capture CPDs, especially for nodes with large number of parents and furthermore there might not even be an expert of the target domain at all. On the other hand, automated techniques of model construction are constrained by limited computational power and more importantly by the size of the supplied dataset. As will be shown later, we encounter classic problem of overfitting and bias-variance trade-off present in the whole artificial intelligence and machine learning. In practice we often combine these two approaches in the way that an expert defines structure (all variables and their dependencies) and an automated process determines CPDs by supplied dataset.
 
-\todo{metrics\,--\,understand it!}
+\todo{maybe include general metrics?}
 
 \section{Parameter estimation}
 Goal of parameter estimation is to supply CPDs to a BN whose structure is already known. In order for the estimation to be reasonably correct, we need to have sufficiently large dataset wrt. complexity of the BN structure.
@@ -577,25 +577,25 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 \section{Structure learning}
 So far we have seen how to compute CPDs for a given graph structure of a BN based on some dataset. Learning the structure itself can be useful for a number of reasons. For example, we want to create an accurate model of certain domain to be able to perform inference later (medical diagnosis, general classification etc.). Other application could be in the field of knowledge discovery when we are interested in knowing the causal dependencies between random variables (protein-signaling networks~\cite{sachs05}, analysis of critical nodes for traffic congestion etc.).
 
-Learning structure of a BN is a complicated task. One of the problems is to pick a~good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more edges to get a better fit for training data). As we have already discussed, with a small dataset we may actually benefit by having a simpler structure. On the other hand, with a large dataset we don't want to restrict our hypothesis too much because the dataset is sufficient to learn higher number of parameters correctly.
+Learning structure of a BN is a complicated task. One of the problems is to pick a~good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more dependencies to get a better fit for training data). As we have already discussed, with a small dataset we may actually benefit by having a simpler structure. On the other hand, with a large dataset we don't want to restrict our hypothesis space too much because the dataset is sufficient to learn higher number of parameters correctly.
 
-In this chapter we are going to discuss \term{score-based} methods of structure learning\,--\,\todo{likelihood score and Bayesian score}. Structure learning is basically a discrete optimization task and for such tasks there are many well known approaches\,--\,simulated annealing, genetic algorithms, evolutionary programming and many others. As discrete optimization methods are not the key topic of this thesis, we will work with simple hill climbing heuristics instead. Nevertheless a common requirement for using any optimization technique is a mechanism that evaluates quality of a candidate solution. Such role plays the score function which we will discuss in detail. \todo{Other than that there also is constraint-based approach which will not be further examined for its limitations.}
+In this chapter we are going to discuss \term{score-based} methods of structure learning\,--\,likelihood score and Bayesian score. Structure learning is basically a discrete optimization task and for such tasks there are many well known approaches\,--\,simulated annealing, genetic algorithms, evolutionary programming and many others. As discrete optimization methods are not the key topic of this thesis, we will work with simple hill climbing heuristics instead. Nevertheless a common requirement for using any optimization technique is a mechanism that evaluates quality of a candidate solution. Such role play the score functions which we will discuss in detail. \todo{Other than score-based approach there also is constraint-based approach which will not be further examined for its limitations.}
 
 
 \subsection{Optimization algorithm}
-In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forrest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, flipping direction or deletion of an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The problem of local maxima is usually addressed by augmenting the simple hill climbing by random restarts or by a tabu list.
+In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forrest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, flipping direction or deletion of an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The problem of local maxima is usually addressed by augmenting the hill climbing algorithm by random restarts\ignore{(ie. we make a few random steps regardless the score change)} or by a tabu list\ignore{(ie. a list of forbidden transformations)}.
  
 
 
 \subsection{Likelihood score and BIC score}
 The likelihood score has information-theoretic foundations and basically quantifies how well a given network structure matches our dataset. We assume that for a given structure $\mathcal{G}$ the parameters $\Theta$ are learnt using the maximum likelihood estimation, so the likelihood score really evaluates the hypothesis $(\mathcal{G}, \Theta)$.
 
-Again, the goal is to maximize probability of the data given a hypothesis. Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ and let's examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with two independent variables and structure $X \rightarrow Y$. Then the likelihood scores are computed as follows:
+Again, the goal is to maximize probability of the data given a hypothesis. Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ and let's examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with two independent variables and structure $X \rightarrow Y$. Then their likelihood scores are computed as follows:
 \begin{eqnarray*}
-    score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x[i]) + \log \hat P(y[i])\Bigr)\\
-    score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x[i]) + \log \hat P(y[i] \mid x[i])\Bigr)
+    score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)})\Bigr)\\
+    score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)} \mid x^{(i)})\Bigr)
 \end{eqnarray*}
-where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of structure $\mathcal{G}_1$ with dataset $\mathcal{D}$, $x[i]$ is value of variable $X$ in example $\xi_i$ and $\hat P$ denotes the \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle, eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$.
+where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of structure $\mathcal{G}_1$ with dataset $\mathcal{D}$, $x^{(i)}$ is value of variable $X$ in example $\xi_i$ and $\hat P$ denotes the \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle, eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$.
 
 Now let's examine the difference between having an edge between variables $X$ and $Y$ or not. We obtain the following result (for complete derivation see~\cite[p.~791]{pgm}):
 \begin{eqnarray*}
@@ -603,18 +603,19 @@ Now let's examine the difference between having an edge between variables $X$ an
      %& = & \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
      %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
      %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
-     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)} \\
+     %& = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)} \\
+     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
      & = & N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
 %The first step is to change the logic of the summation from "over the dataset $\xi_1,\dots,\xi_m$" to "over possible instantiations of $X,Y$". Then we express the counts $N_{x,y},N_y$ using size of the dataset $N$ and their empirical probabilities of respective instantiations. After that we can extend the second summation from just over $Y$ to over $X,Y$. The final step is merging the two sums and logarithms.
-The term $I_{\hat P}(X, Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the level of dependency of $Y$ on $X$. It can be proofed~\cite[p.~792]{pgm} that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
+The term $I_{\hat P}(X, Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$ when the variables are dependent to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$ when the variables are independent. It can be proofed (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
 \begin{equation}
     score_L(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
 \end{equation}
-where $H_{\hat P}(\cdot)$ is a constant relative to the structure of $\mathcal{G}$, so we really need to compare two network structures by the value of the first sum.
+where $H_{\hat P}(\cdot)$ is entropy of an individual variable which is a constant relative to the structure of $\mathcal{G}$. So, in order to compare two network structures we need to consider only the values of the first sum.
 
 \medskip
-The score difference between a superstructure with more edges and its substructure is always non-negative and, in fact, is equal to zero if and only if the two variables $X,Y$ in the dataset $\mathcal{D}$ appear to be perfectly independent which is due to statistical noise almost never true. Therefore the likelihood score itself almost always suggests the greedy heuristics to add an edge which would step by step lead to a fully connected network. This problem can be addressed by thresholding of the score increase or by restraining complexity of the network (maximal number of parents or maximal number of overall network parameters). Another approach is to account for network complexity in the scoring function itself, thus imposing a penalty on complicated structures. This is exactly what the BIC score does.
+The difference of likelihood scores between a superstructure with more edges and its substructure is always non-negative and, in fact, is equal to zero if and only if the two variables $X,Y$ in the dataset $\mathcal{D}$ appear to be perfectly independent which is due to statistical noise almost never true. Therefore the likelihood score itself almost always suggests the greedy heuristics to add an edge which would eventually lead to a fully connected network. In other words, the likelihood score is very prone to overfitting. This problem can be addressed by thresholding of the score increase or by restraining complexity of the network (defining maximal number of parents or maximal number of overall network parameters). Another approach is to account for network complexity in the scoring function itself, thus imposing a penalty on complicated structures. The latter is exactly what the BIC score does.
 
 
 
@@ -629,7 +630,7 @@ The BIC score is given as follows (for complete derivation see~\cite[p.~794]{pgm
 \begin{equation}
     score_{BIC}(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i) - \frac{\log N}{2} Dim[\mathcal{G}]
 \end{equation}
-where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters) and $k$ is a constant relative to $\mathcal{G}$. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a large dataset the penalization increases rather slowly allowing the network to have a more complicated structure with weaker dependencies.
+where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters) and the first two sums is the likelihood score. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a large dataset the penalization increases rather slowly allowing the network to have a more complicated structure with weaker dependencies.
 
 \todo{video, don't be afraid of gamma functions}
 
@@ -640,7 +641,7 @@ tree structures
 \begin{itemize}
 	\item tree has nice math
 	\item sparse parameters (no overfit, for small datasets)
-	\item direction don't matter, so we compute edge weights for every two nodes and find a maximum-weight spanning tree (Kruskal algorithm etc.) in $O(n^2)$
+	\item direction don't matter (mutual information is the same because we have only one parent), so we compute edge weights for every two nodes and find a maximum-weight spanning tree (Kruskal algorithm etc.) in $O(n^2)$. Then remove zero weight edges for a forest.
 	\item the algorithm doesn't determine direction of edges
 \end{itemize}
 general graphs
@@ -670,9 +671,14 @@ general graphs
 
 
 
-\chapter{Algorithms and data structures}
-
-\todo{implementation of variables, factors, Bayesian networks}
+\chapter{Implementation}
+This chapter will present the program realization of this thesis. I will describe:
+\begin{itemize}
+	\item What data structures are used for representing factors, CPDs, nodes and the overall Bayesian network.
+	\item Algorithms needed for effective inference and learning including their modifications and tweaks.
+	\item The overall design of the resulting application, a class diagram and description of single classes, their dependencies and responsibilities.
+\end{itemize}
+Extent of this chapter is expected to be 5-10 pages.
 
 
 
@@ -698,19 +704,18 @@ general graphs
 
 
 \chapter{Selected applications}
+This chapter will present collection of selected applications of Bayesian network learning. We will always describe the problem itself, reason why it is interesting, approach to its solution and the achieved results. Currently, candidate applications are the following:
 
+\todo{
 \begin{itemize}
 	\item Medical diagnosis (from a big dataset of patient records)\,--\,structure and CPDs.
 	\item Pedigrees (BUT structure is known).
 	\item Some classification task (eg. $\chi^2$ for dependency analysis as in EVO by Schwarz).
 	\item Document classification, image segmentation (pgm 700).
 	\item traffic situation prediction
-	\item protein networks (how a protein influences another protein)\,--\,"Learning General Graphs: Heuristic Search"
-
+	\item protein networks (how a protein influences another protein)\,--\,lecture "Learning General Graphs: Heuristic Search", dataset at \url{http://www.causality.inf.ethz.ch/repository.php}
 \end{itemize}
-
-
-
+}
 
 
 
@@ -721,12 +726,18 @@ general graphs
 
 
 \chapter{Conclusion}
-\todo{závěr}
-
-
+What I did:
 \begin{itemize}
-	\item Study variants of stochastic sampling methods~\cite{neal93} if they seem to be needed.
-	\item Another forms of structure learning (Bayesian learning\,--\,averages over many hypotheses).
+	\item Basic probability theory and probability theory in context of BNs (hard math).
+	\item Inference methods\,--\,stochastic (weighted sampling, Markov chain Monte-Carlo), exact (variable elimination, Belief-Net-Ask), approximate (message passing methods). Although not all are described in this thesis as they are not the key topic.
+	\item Structure learning
+	\item Attended on-line course Probabilistic Graphical Models taught by professor Daphne Koller at Stanford University.
+	\item Implemented factors and their operations\,--\,enables sum-product and variable elimination inference algorithms.
+\end{itemize}
+What I want to do:
+\begin{itemize}
+	\item Study variants of stochastic sampling methods~\cite{neal93} if the ones described turn out to be unsatisfactory.
+	\item Study modifications of structure learning.
 \end{itemize}
 
 
