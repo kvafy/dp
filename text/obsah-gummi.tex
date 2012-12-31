@@ -87,15 +87,15 @@
   %bud pomoci nasledujicich parametru nebo pomoci vyhrazenych maker (viz dale)
   %===========================================================================
   %Klicova slova
-  keywords.cs={Klíčová slova v českém jazyce.}, %klicova slova v ceskem jazyce
-  keywords.en={Klíčová slova v anglickém jazyce.}, %klicova slova v anglickem jazyce
+  keywords.cs={Bayesovská síť, pravděpodobnost, inference, učení struktury.}, %klicova slova v ceskem jazyce
+  keywords.en={Bayesian network, probability, inference, structure learning.}, %klicova slova v anglickem jazyce
   %Abstract
-  abstract.cs={Výtah (abstrakt) práce v českém jazyce.}, % abstrakt v ceskem jazyce
-  abstract.en={Výtah (abstrakt) práce v anglickém jazyce.}, % abstrakt v anglickem jazyce
+  abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti, později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně pochopení silných a~slabých stránek daných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury.}, % abstrakt v ceskem jazyce
+  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretic part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications suitable for learning a Bayesian network, both in terms of network parameters as well as structure.}, % abstrakt v anglickem jazyce
   %Prohlaseni
-  declaration={Prohlašuji, že jsem tuto bakalářskou práci vypracoval samostatně pod vedením pana ...},
+  declaration={Prohlašuji, že jsem tento semestrální projekt vypracoval samostatně pod vedením pana doc.~Ing. Františka V. Zbořila, CSc.},
   %Podekovani (nepovinne)
-  acknowledgment={Zde je možné uvést poděkování vedoucímu práce a těm, kteří poskytli odbornou pomoc.} % nepovinne
+  acknowledgment={Na tomto místě bych rád poděkoval svému vedoucímu, docentu Františku V. Zbořilovi, za cenné rady, odborné vedení a vstřícný přístup v nesnázích při řešení této práce.} % nepovinne
 }
 
 %Abstrakt (cesky, anglicky)
@@ -153,7 +153,7 @@ The aim of this thesis is to present techniques of learning Bayesian networks, b
 
 \medskip
 
-Chater 2 serves as an introduction to the fundamentals of the probabilistic theory and provides necessary foundations for understanding the rest of this thesis and an overview of the notation used.
+Chater 2 serves as an introduction to the fundamentals of the probabily theory and provides necessary foundations for understanding the rest of this thesis and an overview of the notation used.
 
 Chapter 3 discusses the theory of Bayesian networks. First we explain the main motivation for using Bayesian networks as a model for joint probability distributions. Then we move on to various inference methods and finally discuss model learning techniques in terms of model parameters and in terms of model structure.
 
@@ -202,7 +202,7 @@ First will be established notation used in this thesis and necessary overview of
 
 
 \section{Philosophical views}
-Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by so called wave function $\Psi$ and $\vert\Psi\vert^2$ describes density probability as a function of space and time coordinates. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory. \todo{maybe cite physics book from grammar school?}
+Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by a complex \term{wave function} $\Psi(x,y,z,t)$ and $\vert\Psi(\cdot)\vert^2$ describes \term{density probability} of the particle as a function of spacetime coordinates~\cite[p.~1044]{hrw_physics}. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory.
 
 Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person into one single category.
 
@@ -484,7 +484,7 @@ The likelihood weighting method presented earlier doesn't account well for evide
 
 To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket of $X$ is a minimal set of variables such that $X$ is conditionally independent of all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children $\vars{C}$ of $X$ because there is a direct connection between them and $X$. Furthermore, $MB(X)$ also needs to include parents of $\vars{C}$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$.
 
-The MCMC algorithm~\cite[p.~516]{russell_norvig_2ed} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from current distribution $P(Y \mid MB(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable. The distribution $P(Y \mid MB(Y))$ can be obtained by computing $P(y \mid MB(Y))$ for every $y$ as follows:
+The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from current distribution $P(Y \mid MB(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling another variable. The distribution $P(Y \mid MB(Y))$ can be obtained by computing $P(y \mid MB(Y))$ for every $y$ as follows:
 \begin{equation*}
     P(y \mid MB(Y)) = \alpha \cdot P(y \mid Parents(Y)) \prod_{i} P(c_i \mid Parents(C_i))
 \end{equation*}
@@ -718,7 +718,7 @@ Extent of this chapter is expected to be 5-10 pages.
 
 
 
-\chapter{Selected applications}
+\chapter{Selected applications (in progress)}
 This chapter will present collection of selected applications suitable for Bayesian network learning. We will always describe the problem itself, reason why it is interesting, approach to its solution and the achieved results. Currently, candidate applications are the following:
 
 \todo{
