@@ -153,7 +153,7 @@ The aim of this thesis is to present techniques of learning Bayesian networks, b
 
 \medskip
 
-Chater 2 serves as an introduction to the fundamentals of the probabily theory and provides necessary foundations for understanding the rest of this thesis and an overview of the notation used.
+Chapter 2 serves as an introduction to the fundamentals of the probability theory and provides necessary foundations for understanding the rest of this thesis and an overview of the notation used.
 
 Chapter 3 discusses the theory of Bayesian networks. First we explain the main motivation for using Bayesian networks as a model for joint probability distributions. Then we move on to various inference methods and finally discuss model learning techniques in terms of model parameters and in terms of model structure.
 
@@ -202,7 +202,7 @@ First will be established notation used in this thesis and necessary overview of
 
 
 \section{Philosophical views}
-Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by a complex \term{wave function} $\Psi(x,y,z,t)$ and $\vert\Psi(\cdot)\vert^2$ describes \term{density probability} of the particle as a function of spacetime coordinates~\cite[p.~1044]{hrw_physics}. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory.
+Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by a complex \term{wave function} $\Psi(x,y,z,t)$ and $\vert\Psi(\cdot)\vert^2$ describes \term{density probability} of the particle as a function of space-time coordinates~\cite[p.~1044]{hrw_physics}. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory.
 
 Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person into one single category.
 
@@ -230,7 +230,7 @@ Conditional probability distribution of variables $\vars{X}$ depending on variab
 \section{Factors}
 When reasoning about Bayesian networks we express probability distributions as so called \term{factors}. Factors are interesting for us because factor operations correspond to mathematical operations we need to do with probability distributions in order to answer queries in a~Bayesian network. 
 \begin{math_def}\label{def_factor}
-    Factor $\phi$ is a function $\phi: X_1 \times X_2 \times \dotsm \times X_k \rightarrow \mathbb{R}_0^+$. The non-empy set $\lbrace X_1, X_2, \dots, X_k \rbrace$ is called scope of the factor $\phi$.
+    Factor $\phi$ is a function $\phi: X_1 \times X_2 \times \dotsm \times X_k \rightarrow \mathbb{R}_0^+$. The non-empty set $\lbrace X_1, X_2, \dots, X_k \rbrace$ is called scope of the factor $\phi$.
 \end{math_def}
 According to the definition of a factor and to the definition \ref{def_prob_distribution} of a discrete probability distribution, probability distributions are special cases of factors. They both require their values to be non-negative and, in addition, every probability distribution must sum to one. A~factor, of course, may sum to one too in which case we say it is \term{normalized}.
 
@@ -598,11 +598,11 @@ Other than score-based approach there also is constraint-based approach which wi
 
 
 \subsection{Optimization algorithm}
-In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forrest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, flipping direction or deletion of an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. The problem of local maxima is usually addressed by augmenting the hill climbing algorithm by random restarts\ignore{(ie. we make a few random steps regardless the score change)} or by a tabu list\ignore{(ie. a list of forbidden transformations)}.
+In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forrest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, flipping direction or deletion of an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves.
  
 
 
-\subsection{Likelihood score and BIC score}
+\subsection{Likelihood score}
 The likelihood score has information-theoretic foundations and basically quantifies how well a given network structure matches our dataset. We assume that for a given structure $\mathcal{G}$ the parameters $\Theta$ are learnt using the maximum likelihood estimation, so the likelihood score really evaluates the hypothesis $(\mathcal{G}, \Theta)$.
 
 Again, the goal is to maximize probability of the data given a hypothesis. Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ and let's examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with two independent variables and structure $X \rightarrow Y$. Then their likelihood scores are computed as follows:
@@ -634,8 +634,8 @@ The difference of likelihood scores between a superstructure with more edges and
 
 
 
-\subsection{Bayesian score}
-The likelihood score discussed earlier never decides to pick a simpler structure over a more complex one. We will discuss a variant of Bayesian score called \term{BIC score} which is, in the end, just the likelihood score extended by a penalty term although theoretical foundations and mathematical derivations leading to the final formulas are entirely different.
+\subsection{BIC score}
+The likelihood score discussed earlier never favors a simpler structure over a more complex one. We will discuss a variant of Bayesian score called \term{BIC score} which is, in the end, just the likelihood score extended by a penalty term although theoretical foundations and mathematical derivations leading to the final formulas are entirely different.
 
 %\note{pgm 798 gives nice understanding of the use of gamma function}
 
@@ -647,11 +647,54 @@ The BIC score is given as follows (for complete derivation see~\cite[p.~794]{pgm
 \end{equation}
 where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters) and the first two sums is the likelihood score. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a large dataset the penalization increases rather slowly allowing the network to have a more complicated structure with weaker dependencies.
 
-\todo{video, don't be afraid of gamma functions}
 
 
+\subsection{Bayesian score}
+\todo{see video, read pgm, don't be afraid of gamma functions}
 
-\subsection{Learning specific structures (work in progress)}
+Bayesian score for a graph structure is yet another application of the Bayesian principle encountered in context of parameter estimation\,--\,whatever we are uncertain about should be modeled as a random variable. To state the idea formally, graph structure $\mathcal{G}$ is a random variable for which holds $P(\mathcal{G} \mid \mathcal{D}) = P(\mathcal{D} \mid \mathcal{G}) P(\mathcal{G}) / P(\mathcal{D})$. The denominator is independent of the network structure and parameters, so we can safely consider just the numerator. Further we will consider logarithm of the numerator which is legal because logarithm is a~monotone function. By applying the logarithm we obtain the Bayesian score for structure $\mathcal{G}$ and data $\mathcal{D}$ as
+\begin{equation}\label{eq:bayesian_score_general}
+    score_B(\mathcal{G} : \mathcal{D}) = \log P(\mathcal{D} \mid \mathcal{G}) + \log P(\mathcal{G})
+\end{equation}
+The first term $\log P(\mathcal{D} \mid \mathcal{G})$ can be interpreted in many ways. Suppose that the prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$. One simple and intuitive way to derive a useful expression for $P(\mathcal{D} \mid \mathcal{G})$ is to use the basic chain rule as follows:
+\begin{eqnarray*}
+    P(\mathcal{D} \mid \mathcal{G}) & = & P(\xi_1, \dots, \xi_m \mid \mathcal{G}) \\
+    & = & P(\xi_1 \mid \mathcal{G})
+          \cdot
+          P(\xi_2 \mid \xi_1 \mathcal{G})
+          \cdot
+          P(\xi_3 \mid \xi_1, \xi_2, \mathcal{G})
+          \dotsm
+          P(\xi_m \mid \xi_1, \xi_2,\dots,xi_{m-1}, \mathcal{G}) \\
+    & = & \dots \\
+    & = & \prod_{X_i \in Nodes}
+             \Bigl[
+                \prod_{\vars{p_i} \in Parents(X)}
+                   \Bigl(
+                      \frac{\Gamma(\alpha_{X_i \mid \vars{p_i}})}{\Gamma(\alpha_{X_i \mid \vars{p_i}} + N_{\vars{p_i}})}
+                      \prod_{x \in Val(X_i)} \frac{\Gamma(\alpha_{x \mid \vars{p_i}} + N_{x, \vars{p_i}})}{\Gamma(\alpha_{x \mid \vars{p_i}})}
+                   \Bigr)
+             \Bigr]
+\end{eqnarray*}
+Logarithm of the last expression is sum over family scores.
+
+Structure prior (constant, exponential penalization of graph complexity; penalization is already in the BIC score).
+
+Parameter prior expressed by a BN common for all structures.
+
+
+\subsection{Learning specific structures}
+We already know the necessary specifics of evaluating how well a graph structure matches our data. Now we will discuss specifics of learning two types of structures\,--\,trees/forests and general graphs. 
+
+\subsubsection{Learning a tree structure}
+For a tree structure, the likelihood score or the BIC score don't distinguish between orientations of an edge because every node has at most one parent. Therefore we can for each pair of variables compute the difference of BIC score between the two situations when these two variables are directly connected and when not. Now, if the BIC score difference represents weight of an edge, we can compute the maximal spanning tree using Kruskal's algorithm or similar and finally remove edges with non-positive weights, thereby possibly obtaining a forest. The whole procedure is carried out in $O(n^2)$ time.
+
+The best scoring forest is useful, for example, as a starting point for search of a general graph structure. Trees are also not prone to overfitting because the structure doesn't allow for a complicated hypothesis.
+
+\subsubsection{Learning a general graph \todo{see the video once more}}
+The search for a graph with general structure has already been characterized as an optimization task of maximizing score of the whole structure. The initial structure can be the graph with no edges, the best scoring forest, random graph or structure capturing our prior knowledge and believes regarding the target domain. We explore the space of all hypotheses using some greedy algorithm (best-first-search, hill climbing, tabu search etc.). Of course, other optimization methods are applicable as well (simulated annealing, genetic algorithms etc.). The search uses the following three basic operators: edge addition, edge removal and edge reversal. The problem of local maxima in the context of greedy algorithms is usually addressed by introducing a tabu list or by random restarts making a number of random transformations regardless the score difference\ignore{ (ie. we make a few random steps regardless the score change)}.
+
+\begin{comment}
 tree structures
 \begin{itemize}
 	\item tree has nice math
@@ -665,7 +708,7 @@ general graphs
 	\item add/remove/reverse an edge
 	\item greedy, best-first search, simulated annealing, \dots
 \end{itemize}
-
+\end{comment}
 
 
 
