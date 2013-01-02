@@ -212,7 +212,7 @@ Let's begin by defining what a probability distribution is when there is only on
 \begin{math_def}\label{def_prob_distribution}
     $P(X)$ is discrete probability distribution of discrete random variable $X$ such that:
     \begin{itemize}
-        \item $X$ can be assigned any value from the set $\lbrace x_1, x_2, \dots \rbrace$ which is finite or denumerable.
+        \item $X$ can be assigned any value from the set $Val(X) = \lbrace x_1, x_2, \dots \rbrace$ which is finite or denumerable.
         \item $\forall i: P(X = x_i) \geq 0$
         \item $\Bigl( \sum_i P(X = x_i) \Bigr) = 1$
     \end{itemize}
@@ -415,7 +415,7 @@ Computation of this expression using the sum-product method means performing fou
 	\item renormalizing the resulting factor, obtaining the joint probability distribution $P(\vars{X},\vars{e})$.
 \end{enumerate}
 
-Every item of the sum in numerator, ie. probability of every possible assignment to variables $\vars{Y}$, can be written according to the joint probability distribution represented by a BN (definition~\eqref{eq:bn_joint}) as a~product of conditional probabilities of all variables in given BN. This explains the name of this inference method\,--\,we effectively compute many products of conditional probabilities and sum over variables $\vars{Y}$.
+Every item of the sum in numerator, ie. probability of every possible assignment to variables $\vars{Y}$, can be written according to the joint probability distribution represented by a~BN (definition~\eqref{eq:bn_joint}) as a~product of conditional probabilities of all variables in given BN. This explains the name of this inference method\,--\,we effectively compute many products of conditional probabilities and sum over variables $\vars{Y}$.
 
 Sum-product inference algorithm has, by its nature, exponential running time in the number of variables because it effectively generates the whole joint probability distribution encoded by a given Bayesian network and the size of a table representing any joint probability distribution has been earlier shown to be exponential in the number of variables. Because of this quality, the sum-product method is suitable only for inference in considerably small networks.
 
@@ -647,52 +647,94 @@ The BIC score is given as follows (for complete derivation see~\cite[p.~794]{pgm
 \end{equation}
 where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters) and the first two sums is the likelihood score. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a large dataset the penalization increases rather slowly allowing the network to have a more complicated structure with weaker dependencies.
 
+Note that the BIC score decomposes over the graph $\mathcal{G}$, so when we want to evaluate some structural change, we only need to consider the score difference of nodes affected by this change. This observation is crucial for an effective implementation of structure learning based on local optimization of the score function. 
+
 
 
 \subsection{Bayesian score}
-\todo{see video, read pgm, don't be afraid of gamma functions}
-
-Bayesian score for a graph structure is yet another application of the Bayesian principle encountered in context of parameter estimation\,--\,whatever we are uncertain about should be modeled as a random variable. To state the idea formally, graph structure $\mathcal{G}$ is a random variable for which holds $P(\mathcal{G} \mid \mathcal{D}) = P(\mathcal{D} \mid \mathcal{G}) P(\mathcal{G}) / P(\mathcal{D})$. The denominator is independent of the network structure and parameters, so we can safely consider just the numerator. Further we will consider logarithm of the numerator which is legal because logarithm is a~monotone function. By applying the logarithm we obtain the Bayesian score for structure $\mathcal{G}$ and data $\mathcal{D}$ as
+Bayesian score for a graph structure is yet another application of the Bayesian principle encountered in context of parameter estimation\,--\,whatever we are uncertain about should be modeled as a random variable. To state the idea formally, graph structure $\mathcal{G}$ is a~random variable for which holds $P(\mathcal{G} \mid \mathcal{D}) = P(\mathcal{D} \mid \mathcal{G}) P(\mathcal{G}) / P(\mathcal{D})$. The denominator is independent of the network structure and parameters, so we can safely consider just the numerator. Further we will consider logarithm of the numerator which is perfectly legal because logarithm is a~monotone function. By applying the logarithm we obtain the Bayesian score for structure $\mathcal{G}$ and data $\mathcal{D}$ as:
 \begin{equation}\label{eq:bayesian_score_general}
     score_B(\mathcal{G} : \mathcal{D}) = \log P(\mathcal{D} \mid \mathcal{G}) + \log P(\mathcal{G})
 \end{equation}
-The first term $\log P(\mathcal{D} \mid \mathcal{G})$ can be interpreted in many ways. Suppose that the prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$. One simple and intuitive way to derive a useful expression for $P(\mathcal{D} \mid \mathcal{G})$ is to use the basic chain rule as follows:
+The term $P(\mathcal{D} \mid \mathcal{G})$ in equation~\eqref{eq:bayesian_score_general} is a marginal distribution (because all possible parameter settings $\Theta$ are marginalized out) defined as follows:
+\begin{equation}\label{eq:bayesian_score_marginal}
+    P(\mathcal{D} \mid \mathcal{G})
+    =
+    \int_{\Theta} P(\mathcal{D} \mid \mathcal{G}, \Theta) P(\Theta \mid \mathcal{G}) \ d \Theta
+\end{equation}
+The integral expression can be interpreted as computing the average probability of $\mathcal{D}$ given $\mathcal{G}$ weighted by probabilities of possible parameters settings $\Theta$. So, the Bayesian estimation is more conservative when compared to the BIC score which considers only parameters $\Theta$ computed by the maximum likelihood estimation. Therefore Bayesian score is less prone to overfitting.
+
+The integral in equation~\eqref{eq:bayesian_score_marginal} is very abstract. Fortunately, for a BN with multinomial variables, whose prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$, the expression can be expressed in closed form as follows~\cite[p.~796]{pgm}:
+\begin{equation*}
+    P(\mathcal{D} \mid \mathcal{G})
+    =
+     \prod_{X \in Nodes}
+             \Bigl[
+                \prod_{\vars{p} \in Val(Parents(X))}
+                   \Bigl(
+                      \frac{\Gamma(\alpha_{X \mid \vars{p}})}{\Gamma(\alpha_{X \mid \vars{p}} + N_{\vars{p}})}
+                      \prod_{x \in Val(X)} \frac{\Gamma(\alpha_{x \mid \vars{p}} + N_{x, \vars{p}})}{\Gamma(\alpha_{x \mid \vars{p}})}
+                   \Bigr)
+             \Bigr]
+\end{equation*}
+where $\Gamma$ is the \term{gamma function} which is a continuous generalization of factorial. Gamma function needs to be used because, in general, hyperparameters of a Dirichlet distribution don't necessarily have to be integers.
+\begin{comment}
+The first term $\log P(\mathcal{D} \mid \mathcal{G})$ of equation~\eqref{eq:bayesian_score_general} can be interpreted in many ways. Suppose we have a multinomial distribution over variable $X$ where $Val(X) = \lbrace x_1,\dots,x_k\rbrace$ and suppose that the prior distribution over $X$ is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$. One simple and intuitive way to derive a useful representation for $P(\mathcal{D} \mid \mathcal{G})$ is to use the chain rule and combinatorial derivations as follows~\cite[p.~796]{pgm}:
 \begin{eqnarray*}
     P(\mathcal{D} \mid \mathcal{G}) & = & P(\xi_1, \dots, \xi_m \mid \mathcal{G}) \\
     & = & P(\xi_1 \mid \mathcal{G})
           \cdot
-          P(\xi_2 \mid \xi_1 \mathcal{G})
+          P(\xi_2 \mid \xi_1, \mathcal{G})
           \cdot
           P(\xi_3 \mid \xi_1, \xi_2, \mathcal{G})
           \dotsm
           P(\xi_m \mid \xi_1, \xi_2,\dots,xi_{m-1}, \mathcal{G}) \\
-    & = & \dots \\
+    & = & \frac
+             {
+              \alpha_{x_1} \dotsm (\alpha_{x_1} + N_{x_1} - 1)
+              \ \cdot \ 
+              \alpha_{x_2} \dotsm (\alpha_{x_2} + N_{x_2} - 1)
+              \ \cdot \ 
+              \dotsm
+              \ \cdot \ 
+              \alpha_{x_k} \dotsm (\alpha_{x_k} + N_{x_k} - 1)
+             }
+             {\alpha (\alpha + 1) (\alpha + 2) \dotsm (\alpha + N - 1)} \\
     & = & \prod_{X_i \in Nodes}
              \Bigl[
-                \prod_{\vars{p_i} \in Parents(X)}
+                \prod_{\vars{p_i} \in Val(Parents(X))}
                    \Bigl(
                       \frac{\Gamma(\alpha_{X_i \mid \vars{p_i}})}{\Gamma(\alpha_{X_i \mid \vars{p_i}} + N_{\vars{p_i}})}
                       \prod_{x \in Val(X_i)} \frac{\Gamma(\alpha_{x \mid \vars{p_i}} + N_{x, \vars{p_i}})}{\Gamma(\alpha_{x \mid \vars{p_i}})}
                    \Bigr)
              \Bigr]
 \end{eqnarray*}
-Logarithm of the last expression is sum over family scores.
+where $\Gamma$ is the \term{gamma function} which is a continuous generalization of factorial. Gamma function needs to be used because, in general, hyperparameters of Dirichlet distribution don't need to be integers.
+\end{comment}
 
-Structure prior (constant, exponential penalization of graph complexity; penalization is already in the BIC score).
+\medskip
 
-Parameter prior expressed by a BN common for all structures.
+The structure prior $P(\mathcal{G})$ in the equation~\eqref{eq:bayesian_score_general} allows us to penalize certain structures but its effect is rather minor, especially in asymptotic analysis~\cite[p.~804]{pgm}, because this term doesn't change with the number of samples. Most often we use a uniform prior or a prior that exponentially penalizes complexity of the structure which is useful for sparse datasets.
+
+\medskip
+
+To be able to use Bayesian scores we also need to define prior distribution over parameters $P(\Theta \mid \mathcal{G})$. The key problem is to represent the prior in some space efficient form because the naive approach would be to define a prior for every possible structure $\mathcal{G}$. A~simple approach is to use a fixed Dirichlet distribution $(\alpha',\dots,\alpha')$ which is, unfortunately, from its nature inconsistent in the sense that the equivalent sample size $\alpha = \sum \alpha'$ depends on the number of parents of a node. Another approach is to encode the prior distribution $P'$ by a BN and to infer the terms $\alpha_{x \mid \vars{p}} = \alpha \cdot P'(x, \vars{p})$ as they are needed. The latter option is called the \term{BDe prior}~\cite[p.~806]{pgm} and its main advantage is that we can use a single network to infer prior distribution for any structure $\mathcal{G}$.
+
 
 
 \subsection{Learning specific structures}
 We already know the necessary specifics of evaluating how well a graph structure matches our data. Now we will discuss specifics of learning two types of structures\,--\,trees/forests and general graphs. 
 
-\subsubsection{Learning a tree structure}
-For a tree structure, the likelihood score or the BIC score don't distinguish between orientations of an edge because every node has at most one parent. Therefore we can for each pair of variables compute the difference of BIC score between the two situations when these two variables are directly connected and when not. Now, if the BIC score difference represents weight of an edge, we can compute the maximal spanning tree using Kruskal's algorithm or similar and finally remove edges with non-positive weights, thereby possibly obtaining a forest. The whole procedure is carried out in $O(n^2)$ time.
+\subsubsection{Learning a tree-structured network}
+Let a tree-structured network be any network such that every node has at most one parent. Then for a tree-structured network, the likelihood score or the BIC score don't distinguish orientations of the edges because in this situation is the mutual information for any combination of edge orientations and for any two variables exactly the same. Therefore we can for each pair of variables compute the difference of BIC score between the two situations when these two variables are directly connected and when not. Now, if the BIC score difference represents weight of an edge, we can compute the maximal spanning tree using Kruskal's algorithm or similar and finally remove edges with non-positive weights, thereby possibly obtaining a forest. The whole procedure is carried out in $O(n^2)$ time.
 
 The best scoring forest is useful, for example, as a starting point for search of a general graph structure. Trees are also not prone to overfitting because the structure doesn't allow for a complicated hypothesis.
 
-\subsubsection{Learning a general graph \todo{see the video once more}}
-The search for a graph with general structure has already been characterized as an optimization task of maximizing score of the whole structure. The initial structure can be the graph with no edges, the best scoring forest, random graph or structure capturing our prior knowledge and believes regarding the target domain. We explore the space of all hypotheses using some greedy algorithm (best-first-search, hill climbing, tabu search etc.). Of course, other optimization methods are applicable as well (simulated annealing, genetic algorithms etc.). The search uses the following three basic operators: edge addition, edge removal and edge reversal. The problem of local maxima in the context of greedy algorithms is usually addressed by introducing a tabu list or by random restarts making a number of random transformations regardless the score difference\ignore{ (ie. we make a few random steps regardless the score change)}.
+\subsubsection{Learning a general graph}
+The search for a graph with general structure has already been characterized as an optimization task of maximizing score of the whole structure. We usually explore the space of all hypotheses using some greedy algorithm (best-first-search, hill climbing, tabu search etc.) but, of course, other more sophisticated optimization methods are applicable as well. The search starts with some initial structure which can be graph with no edges, the best scoring forest, random graph or structure capturing our prior knowledge and believes regarding the target domain. The search uses the following three basic operators: edge addition, edge removal and edge reversal. The problem of local maxima in the context of greedy algorithms is usually addressed by introducing a tabu list or by random restarts making a~number of random transformations regardless the score difference. Another problem that often arises is the problem of \term{plateaux} which means that structures with low edit distance often have almost the same or exactly the same score (reversing an edge in a tree etc.). A plateau effectively makes the search space locally "flat" in terms of the score function and the space search algorithm can't pick the right direction to go. It turns out that the problem of plateaux is also solvable by random restarts or by a tabu list~\cite[p.~815]{pgm}.
+
+When considering computational complexity of greedy search, let's remember that the scoring functions are decomposable with the structure of the graph. So, in order to evaluate a structural change, we only need to consider change of scores of the nodes affected by this change and score of the rest of the network remains the same~\cite[p.~818]{pgm}. Furthermore, the state space exploration has local character because the structure changes only locally by applying the edge addition/removal/reversal operators. Therefore, in consequent search steps we often need to reexamine many structural changes again to pick the best one and caching of previously examined changes leads to a significant speedup~\cite[p.~819]{pgm}.
+% SP pgm820 - data structures for caching
 
 \begin{comment}
 tree structures
@@ -733,10 +775,10 @@ general graphs
 This chapter will present the program realization of this thesis. I will describe:
 \begin{itemize}
 	\item What data structures are used for representing factors/CPDs, network nodes and the overall Bayesian network.
-	\item Algorithms needed for effective inference and learning including their modifications and tweaks.
+	\item Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.
 	\item The overall design of the resulting application, a class diagram and description of single classes, their dependencies and responsibilities.
 \end{itemize}
-Extent of this chapter is expected to be 5-10 pages.
+Extent of this chapter is expected to be around 10 pages.
 
 
 
@@ -761,21 +803,33 @@ Extent of this chapter is expected to be 5-10 pages.
 
 
 
-\chapter{Selected applications (in progress)}
-This chapter will present collection of selected applications suitable for Bayesian network learning. We will always describe the problem itself, reason why it is interesting, approach to its solution and the achieved results. Currently, candidate applications are the following:
+\chapter{Selected applications}
+This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, reason why it is interesting, approach to its solution and the achieved results. At the time of writing the term project, candidate applications are the ones described in the rest of this chapter. Extent of this chapter is expected to be 10-15 pages.
 
+\section{ICU alarm network (model learning)}
+The \term{ICU alarm network}\footnote{The ICU alarm network is available at \url{http://www.bnlearn.com/bnrepository/}.} (ICU stands for \term{Intensive care unit}) serves in the world of Bayesian networks as a benchmark for parameter and structure learning algorithms. The network itself has been hand-constructed and tuned in cooperation with the ICU personal. There are two types of goals: (a)~we attempt to learn parameters for a known structure, (b)~we attempt to learn both structure and parameters. Because the network is freely available, the usual course of action is to create a dataset by sampling of the original network, then performing the learning process and finally evaluating the obtained result with the original ICU network. 
+
+
+\section{Crime prediction (knowledge discovery)}
+We are given a dataset\footnote{The dataset \emph{Communities and crime} is available at \url{http://archive.ics.uci.edu/ml/datasets/Communities+and+Crime}.} containing records for various communities across the United States. A single record contains features such as racial representation, income, family completeness, housing etc. and the number of violent crimes. The goal is to find a structure of a BN that will hopefully provide us with better insight into causal dependencies between features and that can potentially help us identify the root causes of crime.
+
+Similar task has been previously inspected as a school project for the "Knowledge Discovery in Databases (2012/2013)" class at BUT FIT by me and Petr Beňas. We learned that transforming each continuous value to membership degrees to three fuzzy sets (low, medium, high) preserves variance of the data which might be useful because the data could be discretized and the learning process would be relatively simple. Knowledge discovery techniques used in the project did not include any probabilistic model.
+
+
+\section{Spam filtering (document classification)}
+Based on a given set of e-mails, we need to preprocess the data and extract relevant features (keywords, sender domain, font color, numbers and currency symbols etc.) to form a feature vector. Some of the features may be hand-crafted, other might be automatically selected, for example by the highest mutual information between a feature $X_i$ and the class variable~$C$. Then we may learn (1) a Naïve Bayesian model and (2) an extension of the naive model which also allows for a limited degree of dependencies between features. Finally, we can analyze the increase in accuracy (if any) of the more complex and more expressive model.
+
+The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}.
+
+\begin{comment}
 \todo{
 \begin{itemize}
 	\item Medical diagnosis (from a big dataset of patient records)\,--\,structure and CPDs.
 	\item Pedigrees (BUT structure is known).
-	\item Some classification task (eg. $\chi^2$ for dependency analysis as in EVO by Schwarz).
-	\item Document classification, image segmentation (pgm 700).
-	\item traffic situation prediction
 	\item protein networks (how a protein influences another protein)\,--\,lecture "Learning General Graphs: Heuristic Search", dataset at \url{http://www.causality.inf.ethz.ch/repository.php}
 \end{itemize}
 }
-
-This chapter is expected to be 10-15 pages long.
+\end{comment}
 
 
 
