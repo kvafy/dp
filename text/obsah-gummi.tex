@@ -591,7 +591,7 @@ Parameter learning methods explained so far deal strictly with table CPDs and as
 \section{Structure learning}
 So far we have seen how to compute CPDs for a given graph structure of a BN based on some dataset. Learning the structure itself can be useful for a number of reasons. For example, we want to create an accurate model of certain domain to be able to perform inference later (medical diagnosis, general classification etc.). Other application could be in the field of knowledge discovery when we are interested in knowing the causal dependencies between random variables (protein-signaling networks~\cite{sachs05}, analysis of critical nodes for traffic congestion etc.).
 
-Learning structure of a BN is a complicated task. One of the problems is to pick a~good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more dependencies to get a better fit for training data). As we have already discussed, with a small dataset we may actually benefit by having a simpler structure. On the other hand, with a large dataset we don't want to restrict our hypothesis space too much because the dataset is sufficient to learn higher number of parameters correctly.
+Learning structure of a BN is a complicated task. One of the problems is to pick a~good trade-off between high bias (restricting complexity of the graph structure) and high variance (allowing more dependencies to get a better fit for training data). As we have already discussed, with a small dataset we may actually benefit by having a simpler structure. On the other hand, with a large dataset we don't want to restrict our hypothesis space too much because the dataset is sufficient to learn higher number of parameters with good accuracy.
 
 In this chapter we are going to discuss \term{score-based} methods of structure learning\,--\,likelihood score and Bayesian score. Structure learning is basically a discrete optimization task and for such tasks there are many well known approaches\,--\,simulated annealing, genetic algorithms, evolutionary programming and many others. As discrete optimization methods are not the key topic of this thesis, we will work with simple hill climbing heuristics instead. Nevertheless a common requirement for using any optimization technique is a mechanism that evaluates quality of a candidate solution. Such role play the score functions which we will discuss in detail.
 Other than score-based approach there also is constraint-based approach which will not be further examined for its limitations. % SP
@@ -623,7 +623,7 @@ Now let's examine the difference between having an edge between variables $X$ an
      & = & N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
 %The first step is to change the logic of the summation from "over the dataset $\xi_1,\dots,\xi_m$" to "over possible instantiations of $X,Y$". Then we express the counts $N_{x,y},N_y$ using size of the dataset $N$ and their empirical probabilities of respective instantiations. After that we can extend the second summation from just over $Y$ to over $X,Y$. The final step is merging the two sums and logarithms.
-The term $I_{\hat P}(X, Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$ when the variables are dependent to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$ when the variables are independent. It can be proofed (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
+The term $I_{\hat P}(X, Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$ when the variables are dependent to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$ when the variables are independent. It can be proved (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
 \begin{equation}
     score_L(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
 \end{equation}
@@ -664,7 +664,7 @@ The term $P(\mathcal{D} \mid \mathcal{G})$ in equation~\eqref{eq:bayesian_score_
 \end{equation}
 The integral expression can be interpreted as computing the average probability of $\mathcal{D}$ given $\mathcal{G}$ weighted by probabilities of possible parameters settings $\Theta$. So, the Bayesian estimation is more conservative when compared to the BIC score which considers only parameters $\Theta$ computed by the maximum likelihood estimation. Therefore Bayesian score is less prone to overfitting.
 
-The integral in equation~\eqref{eq:bayesian_score_marginal} is very abstract. Fortunately, for a BN with multinomial variables, whose prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$, the expression can be expressed in closed form as follows~\cite[p.~796]{pgm}:
+The integral in equation~\eqref{eq:bayesian_score_marginal} is very abstract. Fortunately, for a BN with multinomial variables, whose prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$, the expression can be written in closed form as follows~\cite[p.~796]{pgm}:
 \begin{equation*}
     P(\mathcal{D} \mid \mathcal{G})
     =
@@ -806,8 +806,8 @@ Extent of this chapter is expected to be around 10 pages.
 \chapter{Selected applications}
 This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, reason why it is interesting, approach to its solution and the achieved results. At the time of writing the term project, candidate applications are the ones described in the rest of this chapter. Extent of this chapter is expected to be 10-15 pages.
 
-\section{ICU alarm network (model learning)}
-The \term{ICU alarm network}\footnote{The ICU alarm network is, among others, freely available at The Hebrew University of Jerusalem \ignore{\url{http://www.bnlearn.com/bnrepository/}}\url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}.} (ICU stands for \term{Intensive care unit}) serves in the world of Bayesian networks as a benchmark for parameter and structure learning algorithms. The network itself has been hand-constructed and tuned in cooperation with the ICU personal. There are two types of goals: (a)~we attempt to learn parameters for a known structure, (b)~we attempt to learn both structure and parameters. Because the network is freely available, the usual course of action is to create a dataset by sampling of the original network, then performing the learning process and finally evaluating the obtained result by comparison with the original ICU network. 
+\section{ICU alarm network (general model learning)}
+The \term{ICU alarm network}\footnote{The ICU alarm network is, among others, freely available at The Hebrew University of Jerusalem \ignore{\url{http://www.bnlearn.com/bnrepository/}}\url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}.} (ICU stands for \term{Intensive care unit}) serves in the world of Bayesian networks as a benchmark for parameter and structure learning algorithms. The network itself has been hand-constructed and tuned in cooperation with the ICU personal. There are two types of goals: (a)~we attempt to learn parameters for a known structure, (b)~we attempt to learn both structure and parameters. Because the network is freely available, the usual course of action is to create an artificial dataset by sampling the original network, then performing the learning process and finally evaluating the obtained result by comparison with the original ICU network. 
 
 
 \section{Crime prediction (knowledge discovery)}
@@ -845,7 +845,7 @@ I explained the fundamentals of Bayesian networks, described various methods of 
 
 \medskip
 
-In the summer semester I am going to study the selected application cases in depth and provide a program realization. At first, I am going to attempt to reproduce results achieved by other authors and then possibly apply the presented techniques to other problems or to achieve better results than have been presented. If needed, I will also further study specific variants of model learning (especially~\cite{heckerman96} and~\cite{buntine94}) and stochastic inference (especially~\cite{neal93}). The book~\cite{pgm} provides an extensive list of relevant literature for every topic presented in this thesis.
+In the summer semester I am going to study the selected application cases in depth and provide a program realization. At first, I am going to attempt to reproduce results achieved by other authors and then possibly apply the presented techniques to other problems or to achieve better results than have been presented. If needed, I will also study specific variants of model learning (especially from~\cite{heckerman96} and~\cite{buntine94}) and stochastic inference (especially from~\cite{neal93}). Furthermore, the book~\cite{pgm} provides an extensive list of relevant literature for every topic presented in this thesis.
 
 
 \begin{comment}
