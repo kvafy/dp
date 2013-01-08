@@ -165,6 +165,10 @@ Chapter 5 discusses selected applications suitable for parameter and structure l
 The final chapter summarizes the overall achieved results of this term project and discusses further planned work.
 
 
+\todo{give some more examples for d-separation, or inspect the cases in a little more detail}
+
+\todo{provide examples/proofs for parameter and structure learning formulas\,--\,how do we get to this? (nahrává na směč oponentovi)}
+
 
 
 
@@ -354,7 +358,7 @@ To describe how observing certain facts propagates through a Bayesian network an
 By using d-separation (direction-dependent separation) we can quite elegantly determine if observation of a variable $X$ can or cannot affect distribution of some other random variable. Clearly two random variables that are directly connected are dependent. But we can also examine other than these intuitively obvious relations. Also, please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $\vars{Z}$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
 
 To understand better the notion of active trails and d-separation see examples in Figure~\ref{fig:bn_d-separation}. In Figure~\ref{fig:bn_d-separation_a} you can see a Naïve Bayes model in which all feature variables $X_i$ and $X_j$ are conditionally independent given class variable $C$ because knowing the class variable deactivates all trails between $X_i$ and $X_j$.
-In Figure~\ref{fig:bn_d-separation_b} we can see an activated V-structure R$\rightarrow$T$\leftarrow$A. When we know whether there is a traffic jam then, intuitively, an accident decreases probability of being it in a rush hour because an accident is sufficient to cause a traffic jam by itself. Similarly, if it is not a rush hour then knowing there is a traffic jam increases the probability of there being an accident. This is an example of inter-causal reasoning.
+In Figure~\ref{fig:bn_d-separation_b} we can see an activated V-structure $R\rightarrow T \leftarrow A$. Intuitively, when we know whether there is a traffic jam then an accident decreases probability of being it in a rush hour because an accident is sufficient to cause a traffic jam by itself and, to continue, lower accident probability means lower probability of hearing sirens, hence $R\not\perp H \mid T$. Similarly, if it is not a rush hour then knowing there is a traffic jam increases the probability of there being an accident which causally means higher probability of hearing sirens. The argumentation involving activated V-structures is an example of \term{inter-causal} reasoning.
 
 \begin{figure}[h]
 \begin{center}
@@ -366,7 +370,7 @@ In Figure~\ref{fig:bn_d-separation_b} we can see an activated V-structure R$\rig
     \qquad\qquad\qquad
     \begin{subfigure}[b]{0.4\linewidth}
         \includegraphics[scale=0.4]{fig/bn-d_sep}
-        \caption{$R\not\perp A \mid T$ (active trail R-T-A-H)}
+        \caption{$R\not\perp H \mid T$ (active trail R-T-A-H)}
         \label{fig:bn_d-separation_b}
     \end{subfigure}
     \caption{Examples of d-separation and flow of influence.}
@@ -374,7 +378,7 @@ In Figure~\ref{fig:bn_d-separation_b} we can see an activated V-structure R$\rig
 \end{center}
 \end{figure}
 
-It might be useful to explicitly point out what the notation $P(X_i \mid Parents(X_i))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X_i)$ of a variable $X_i$, the variable is independent of all indirect parents of $X_i$ in the network.
+It might be useful to explicitly point out what the notation $P(X_i \mid Parents(X_i))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X_i)$ of a variable $X_i$, the variable is independent of all its indirect parents in the network.
 
 
 
