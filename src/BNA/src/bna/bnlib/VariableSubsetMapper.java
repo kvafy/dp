@@ -1,8 +1,6 @@
-/*
- * // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
- * // Author:  David Chaloupka (xchalo09)
- * // Created: 2013/02/09
- */
+// Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
+// Author:  David Chaloupka (xchalo09)
+// Created: 2013/02/09
 
 package bna.bnlib;
 

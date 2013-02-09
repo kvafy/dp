@@ -1,15 +1,24 @@
-/*
- * // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
- * // Author:  David Chaloupka (xchalo09)
- * // Created: 2013/xx/xx
- */
+// Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
+// Author:  David Chaloupka (xchalo09)
+// Created: 2013/02/09
 
 package bna.bnlib;
 
 import java.util.Random;
 
 /**
- *
+ * Concrete sampler for weithted sampling.
+ * The sampler works as follows: One sample is produced by sampling all the
+ * variables in the network. So, we perform all actions from samplingActions
+ * in order to produce one sample. samplingActions contains an action for each
+ * network variable when variables are considered in topological order.
+ * The action is dependent on whether it is an evidence variable or other:
+ *  (a) evidence variable E: extract assignment to Parents(E) from the current
+ *      sample and modify sample weight by returning potentially non-one
+ *      double value from WeightedSamplingEvidenceSampleAction.sample(...).
+ *      Also place the observed value of evidence to current assignment vector.
+ *  (b) non-evidence variable X: extract assignment to Parents(X) and sample
+ *      the variable X. Put the sampled value to current sample assignment.
  */
 public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
     private WeightedSamplingSampleAction[] samplingActions;
@@ -55,6 +64,12 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
     protected void initializeSample(int[] allVarsValues) {
     }
 
+    /**
+     * One sample is in weighted sampling produced by sampling all the variables
+     * in the network whilst accumulating the sample weight according to evidence.
+     * @param allVarsValues Assignment to all variables in the network.
+     * @return Weight of the sample
+     */
     @Override
     protected double sample(int[] allVarsValues) {
         double weight = 1.0;
@@ -67,6 +82,7 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
 
 
 
+/** The Command design pattern for sampling of all variables (evidence and non-evidence). */
 abstract class WeightedSamplingSampleAction {
     protected Random rand;
     
@@ -74,9 +90,21 @@ abstract class WeightedSamplingSampleAction {
         this.rand = rand;
     }
     
+    /**
+     * Put value of a variable to the current sample allVarsValues and return
+     * weight change, ie. 1.0 for a non-evidence variable and a general value
+     * for an evidence variable.
+     * @param allVarsValues Current sample (values of variables in the network
+     *                      considered in topological order.
+     * @return Weight change after sampling the variable.
+     */
     public abstract double sample(int[] allVarsValues);
 }
 
+/**
+ * "Sample" an evidence variable - return weight change and put the observed
+ * evidence value to current sample.
+ */
 class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction {
     private Node ENode;
     private int EValue;
@@ -93,33 +121,41 @@ class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction 
     
     @Override
     public double sample(int[] allVarsValues) {
+        // for variable E determine assignment to Parents(E) from allVarsValues
         int[] parentsAssignment = this.allVarsToEParentsMapper.map(allVarsValues);
         int[] nodeAndParentsAssignment = new int[1 + parentsAssignment.length];
         nodeAndParentsAssignment[0] = this.EValue;
         System.arraycopy(parentsAssignment, 0, nodeAndParentsAssignment, 1, parentsAssignment.length);
-        // determine weight change coefficient
+        // determine weight change coefficient, ie. probability of P(E = e, parents(E))
         double weight = this.ENode.getProbability(nodeAndParentsAssignment);
         allVarsValues[this.EIndex] = this.EValue;
         return weight;
     }
 }
 
+/**
+ * Sample a non-evidence variable by extracting assignment of it's parents,
+ * sampling and placing the sampled value to current sample.
+ */
 class WeightedSamplingVariableSampleAction extends WeightedSamplingSampleAction {
     private Node XNode;
     private int XIndex;
     private VariableSubsetMapper allVarsToXParentsMapper;
+    
+    private int[] tmpXParentsAssignment; // to prevent frequent allocation during each sample(...)
     
     public WeightedSamplingVariableSampleAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents, Random rand) {
         super(rand);
         this.XNode = XNode;
         this.XIndex = XVarIndex;
         this.allVarsToXParentsMapper = allVarsToXParents;
+        this.tmpXParentsAssignment = new int[XNode.getParentCount()];
     }
 
     @Override
     public double sample(int[] allVarsValues) {
-        int[] XParentsAssignemnt = this.allVarsToXParentsMapper.map(allVarsValues);
-        int XVal = this.XNode.sampleVariable(XParentsAssignemnt, this.rand);
+        this.allVarsToXParentsMapper.map(allVarsValues, this.tmpXParentsAssignment);
+        int XVal = this.XNode.sampleVariable(this.tmpXParentsAssignment, this.rand);
         allVarsValues[this.XIndex] = XVal;
         return 1.0; // no weight change
     }

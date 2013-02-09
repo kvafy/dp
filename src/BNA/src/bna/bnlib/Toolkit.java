@@ -22,8 +22,7 @@ public class Toolkit {
     
     public static <T> boolean unique(Collection<T> collection) {
         HashSet<T> set = new HashSet<>();
-        for(T obj : collection)
-            set.add(obj);
+        set.addAll(collection);
         return set.size() == collection.size();
     }
     

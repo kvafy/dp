@@ -9,13 +9,15 @@ import java.util.Objects;
 import java.util.Random;
 
 /**
+ * Node of a Bayesian network holding it's variable, CPT as a factor and
+ * connectivity information.
  * Mutable.
  */
 public class Node {
     // associated variables
     private Variable variable;
-    private ArrayList<Node> parents = new ArrayList<Node>();
-    private ArrayList<Node> children = new ArrayList<Node>();
+    private ArrayList<Node> parents = new ArrayList<>();
+    private ArrayList<Node> children = new ArrayList<>();
     
     private Factor factor;
     
@@ -26,7 +28,7 @@ public class Node {
     
     public Node(Variable variable, Factor factor) {
         this.variable = variable;
-        this.factor = factor;
+        this.setFactor(factor);
     }
     
     public Variable getVariable() {
@@ -84,7 +86,11 @@ public class Node {
     }
     
     public void setProbabilityVector(double[] probs) {
-        this.factor = new Factor(this.getScope(), probs);
+        this.setFactor(new Factor(this.getScope(), probs));
+    }
+    
+    private void setFactor(Factor f) {
+        this.factor = f;
     }
     
     /**

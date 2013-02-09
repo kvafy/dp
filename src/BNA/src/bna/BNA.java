@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package bna;
 
 import bna.bnlib.*;
@@ -21,24 +18,25 @@ public class BNA {
             
             
             // weighted sampling P(SPRINKLER | WETGRASS = TRUE)
+            // need 1) BayesianNetworkWeightedSampler
+            //      2) SamplingController
             Variable[] XY = {bn.getVariable("RAIN")};
             Variable[] E = {bn.getVariable("WETGRASS")};
             int[] e = {1};
             BayesianNetworkSampler sampler = new BayesianNetworkWeightedSampler(bn, XY, E, e);
-            SamplingController samplingController = new SamplingController(1000000);
+            SamplingController samplingController = new SamplingController(10000000);
             
             sampler.sample(samplingController);
             
             double[] samples = sampler.getSamplesCounter();
-            // normalize
+            // normalize the result
             double samplesSum = 0;
             for(double s : samples)
                 samplesSum += s;
+            // write out
             System.out.println("sampleCounter:");
             for(double s : samples)
                 System.out.println(String.format(" %.4f", s / samplesSum).replace(',', '.'));
-            
-            //BayesianNetwork bn = BayesianNetwork.loadFromFile("../../icu/cycle.net");
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();

@@ -7,14 +7,16 @@ package bna.bnlib;
 import java.util.Arrays;
 
 /**
- * Saples for P(X | Y, E = e)
+ * Generate saples for P(X | Y, E = e).
+ * This is a general sampler using the template method design pattern; usable
+ * for weighted sampling as well as for MCMC.
  */
 public abstract class BayesianNetworkSampler {
     protected BayesianNetwork bn;
-    private Variable[] sampleVars;
-    protected Variable[] evidenceVars;
-    protected int[] evidenceValues;
-    private AssignmentIndexMapper sampleMapper;
+    private Variable[] sampleVars;     // X union Y
+    protected Variable[] evidenceVars; // E
+    protected int[] evidenceValues;    // which values should "E" variables have
+    private AssignmentIndexMapper sampleMapper; // mapping of assignment sampleVars to index in sampleCounter
     private double[] sampleCounter; // for all instantiations of X,Y
     
     public BayesianNetworkSampler(BayesianNetwork bn, Variable[] XY, Variable[] E, int[] e) {
@@ -34,14 +36,16 @@ public abstract class BayesianNetworkSampler {
             this.sampleCounter[i] = 0.0;
     }
     
+    /** Record a sample with given weight. */
     private void registerSample(int[] sampleVarsValues, double sampleWeight) {
         int assignmentIndex = this.sampleMapper.assignmentToIndex(sampleVarsValues);
         this.sampleCounter[assignmentIndex] += sampleWeight;
     }
     
+    /** Perform sampling according to given controller. */
     public void sample(SamplingController controller) {
         Variable[] allVarsSorted = this.bn.topologicalSort();
-        VariableSubsetMapper targetMapper = new VariableSubsetMapper(allVarsSorted, this.sampleVars);
+        VariableSubsetMapper allVarsToSampleVarsMapper = new VariableSubsetMapper(allVarsSorted, this.sampleVars);
         
         int[] allVarsValues = new int[bn.getVariablesCount()]; // to this array variables are sampled
         int[] sampleVarsValues = new int[this.sampleVars.length];
@@ -50,11 +54,26 @@ public abstract class BayesianNetworkSampler {
         this.initializeSample(allVarsValues);
         while(!controller.stopFlag() && sample < controller.maxSamples()) {
             double sampleWeight = this.sample(allVarsValues);
-            targetMapper.map(allVarsValues, sampleVarsValues);
+            allVarsToSampleVarsMapper.map(allVarsValues, sampleVarsValues);
             this.registerSample(sampleVarsValues, sampleWeight);
             sample++;
         }
     }
+    
+    /**
+     * Get the samples counter for instantiations of X,Y variables.
+     * Mapping between counter index and X,Y instantiation is defined by
+     * sampleMapper accessible via getSamplesAssignmentIndexMapper() method.
+     * @return 
+     */
+    public double[] getSamplesCounter() {
+        return Arrays.copyOf(this.sampleCounter, this.sampleCounter.length);
+    }
+    
+    public AssignmentIndexMapper getSamplesAssignmentIndexMapper() {
+        return this.sampleMapper;
+    }
+    
     
     // Template method for weighted sampling / MCMC
     
@@ -67,13 +86,4 @@ public abstract class BayesianNetworkSampler {
      * @return 
      */
     protected abstract double sample(int[] allVarsValues);
-    
-    
-    public double[] getSamplesCounter() {
-        return Arrays.copyOf(this.sampleCounter, this.sampleCounter.length);
-    }
-    
-    public AssignmentIndexMapper getSamplesAssignmentIndexMapper() {
-        return this.sampleMapper;
-    }
 }

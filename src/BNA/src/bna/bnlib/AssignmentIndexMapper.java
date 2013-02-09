@@ -5,14 +5,16 @@
 package bna.bnlib;
 
 /**
- *
+ * Map between assignment of variables and corresponding index in a linear vector.
  */
-public class AssignmentIndexMapper {
+class AssignmentIndexMapper {
     private Variable[] vars;
+    private int assignmentsCount;
     private int[] access_vector;
     
     public AssignmentIndexMapper(Variable[] variables) {
         this.vars = variables;
+        this.assignmentsCount = Toolkit.cardinality(this.vars);
         // generate access_vector[i] = \prod_{j=0..i-1} scope[j].cardinality
         this.access_vector = new int[variables.length];
         access_vector[0] = 1;
@@ -37,6 +39,8 @@ public class AssignmentIndexMapper {
     }
     
     public int[] indexToAssignment(int index) {
+        if(index < 0 || index >= this.assignmentsCount)
+            throw new BayesianNetworkRuntimeException(String.format("Assignment index %i out of valid range [0, %i).", index, this.assignmentsCount));
         int[] assignment = new int[this.vars.length];
         for(int i = 0 ; i < assignment.length ; i++) {
             assignment[i] = index % this.vars[i].getCardinality();
