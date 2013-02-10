@@ -6,6 +6,8 @@
 
 package bna.bnlib;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -49,6 +51,34 @@ public class Toolkit {
                 return false;
         }
         return true;
+    }
+    
+    public static <T> boolean areDisjoint(Collection<T> set1, Collection<T> set2) {
+        for(Object o : set1) {
+            if(set2.contains((T)o))
+                return false;
+        }
+        return true;
+    }
+    
+    public static <T> T[] union(T[] set1, T[] set2) {
+        ArrayList<T> resultList = new ArrayList<>();
+        for(T o1 : set1)
+            resultList.add(o1);
+        for(T o2 : set2)
+            if(!Toolkit.arrayContains(set1, o2))
+                resultList.add(o2);
+        Class<?> componentType;
+        if(set1.length > 0)
+            componentType = set1[0].getClass();
+        else if(set2.length > 0)
+            componentType = set2[0].getClass();
+        else
+            componentType = Object.class;
+        T[] result = (T[])Array.newInstance(componentType, resultList.size());
+        for(int i = 0 ; i < result.length ; i++)
+            result[i] = resultList.get(i);
+        return result;
     }
     
     public static <T> boolean arrayContains(T[] array, T obj) {

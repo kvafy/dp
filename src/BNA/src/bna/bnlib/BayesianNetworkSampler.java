@@ -5,6 +5,7 @@
 package bna.bnlib;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 
 /**
  * Generate saples for P(X | Y, E = e).
@@ -13,27 +14,63 @@ import java.util.Arrays;
  */
 public abstract class BayesianNetworkSampler {
     protected BayesianNetwork bn;
-    private Variable[] sampleVars;     // X union Y
+    private Variable[] XVars, YVars;
+    private Variable[] XYVars;     // XVars union YVars
     protected Variable[] evidenceVars; // E
     protected int[] evidenceValues;    // which values should "E" variables have
-    private AssignmentIndexMapper sampleMapper; // mapping of assignment sampleVars to index in sampleCounter
-    private double[] sampleCounter; // for all instantiations of X,Y
+    protected Variable[] sampledVars;  // defines all variables that need to be sampled
+                                       // and the sampling order
+    // sampling statistics
+    private AssignmentIndexMapper sampleMapper; // mapping of assignment XYVars to index in sampleCounter
+    private double[] sampleCounter;             // for all instantiations of X,Y (ie. of XYVars)
     
-    public BayesianNetworkSampler(BayesianNetwork bn, Variable[] XY, Variable[] E, int[] e) {
-        // validate inputs
+    public BayesianNetworkSampler(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         Variable[] allVars = bn.getVariables();
-        if(!Toolkit.isSubset(allVars, XY) || !Toolkit.isSubset(allVars, E) || !Toolkit.areDisjoint(XY, E))
+        Variable[] XY = Toolkit.union(X, Y);
+        // validate inputs
+        if(!Toolkit.areDisjoint(X, Y) || !Toolkit.areDisjoint(XY, E)
+                || !Toolkit.isSubset(allVars, XY) || !Toolkit.isSubset(allVars, E))
             throw new BayesianNetworkRuntimeException("Invalid variables specified.");
         
         this.bn = bn;
-        this.sampleVars = XY;
+        this.XVars = X;
+        this.YVars = Y;
+        this.XYVars = XY;
         this.evidenceVars = E;
         this.evidenceValues = e;
         // initialize sampleCounter
-        this.sampleMapper = new AssignmentIndexMapper(this.sampleVars);
+        this.sampleMapper = new AssignmentIndexMapper(this.XYVars);
         this.sampleCounter = new double[Toolkit.cardinality(XY)];
         for(int i = 0 ; i < this.sampleCounter.length ; i++)
             this.sampleCounter[i] = 0.0;
+        
+        this.determineSamplingOrder();
+    }
+    
+    /**
+     * Sampling order must be topological order. Also we can optimize and
+     * not to sample variables such that they are not in (X union Y union E)
+     * and none of their descendants is in (X union Y union E).
+     */
+    private void determineSamplingOrder() {
+        Variable[] XYE = Toolkit.union(this.XYVars, this.evidenceVars);
+        Variable[] topsortedVariables = this.bn.topologicalSort();
+        LinkedList<Variable> mustSampleVariables = new LinkedList<>();
+        // optimization: omit leaf variables not in (X union Y union E)
+        //               and apply recursively until some variable can be ommited
+        for(int i = topsortedVariables.length - 1 ; i >= 0 ; i--) {
+            Variable varI = topsortedVariables[i];
+            Node varINode = this.bn.getNode(varI.getName());
+            Variable[] varIChildren = varINode.getChildVariables();
+            if(Toolkit.arrayContains(XYE, varI))
+                mustSampleVariables.addFirst(varI);
+            else if(!Toolkit.areDisjoint(mustSampleVariables, Arrays.asList(varIChildren)))
+                mustSampleVariables.addFirst(varI);
+        }
+        // we are done, just copy result to this.sampledVars
+        this.sampledVars = new Variable[mustSampleVariables.size()];
+        mustSampleVariables.toArray(this.sampledVars);
+        System.out.println(String.format("debug: #of variables really sampled is %d", this.sampledVars.length));
     }
     
     /** Record a sample with given weight. */
@@ -44,40 +81,40 @@ public abstract class BayesianNetworkSampler {
     
     /** Perform sampling according to given controller. */
     public void sample(SamplingController controller) {
-        Variable[] allVarsSorted = this.bn.topologicalSort();
-        VariableSubsetMapper allVarsToSampleVarsMapper = new VariableSubsetMapper(allVarsSorted, this.sampleVars);
+        //Variable[] allVarsSorted = this.bn.topologicalSort();
+        VariableSubsetMapper allVarsToSampleVarsMapper = new VariableSubsetMapper(this.sampledVars, this.XYVars);
         
-        int[] allVarsValues = new int[bn.getVariablesCount()]; // to this array variables are sampled
-        int[] sampleVarsValues = new int[this.sampleVars.length];
+        int[] sampledVarsValues = new int[this.sampledVars.length]; // to this array variables are sampled
+        int[] XYVarsValues = new int[this.XYVars.length];
         
         int sample = 0;
-        this.initializeSample(allVarsValues);
+        this.initializeSample(sampledVarsValues);
         while(!controller.stopFlag() && sample < controller.maxSamples()) {
-            double sampleWeight = this.sample(allVarsValues);
-            allVarsToSampleVarsMapper.map(allVarsValues, sampleVarsValues);
-            this.registerSample(sampleVarsValues, sampleWeight);
+            double sampleWeight = this.sample(sampledVarsValues);
+            allVarsToSampleVarsMapper.map(sampledVarsValues, XYVarsValues);
+            this.registerSample(XYVarsValues, sampleWeight);
             sample++;
         }
     }
     
     /**
-     * Get the samples counter for instantiations of X,Y variables.
-     * Mapping between counter index and X,Y instantiation is defined by
-     * sampleMapper accessible via getSamplesAssignmentIndexMapper() method.
-     * @return 
+     * Get the samples counter for instantiations of X,Y variables (just raw counters).
      */
-    public double[] getSamplesCounter() {
-        return Arrays.copyOf(this.sampleCounter, this.sampleCounter.length);
+    public Factor getSamplesCounter() {
+        return new Factor(this.XYVars, sampleCounter);
     }
     
-    public AssignmentIndexMapper getSamplesAssignmentIndexMapper() {
-        return this.sampleMapper;
+    /**
+     * Get the samples counter for instantiations of X,Y variables (normalized for X variables).
+     */
+    public Factor getSamplesCounterNormalized() {
+        return this.getSamplesCounter().normalizeByFirstNVariables(this.XVars.length);
     }
     
     
     // Template method for weighted sampling / MCMC
     
-    protected abstract void initializeSample(int[] allVarsValues);
+    protected abstract void initializeSample(int[] sampledVarsValues);
     
     /**
      * Read values of currently assigned variables, write the one sampled and
@@ -85,5 +122,5 @@ public abstract class BayesianNetworkSampler {
      * @param allVarsValues
      * @return 
      */
-    protected abstract double sample(int[] allVarsValues);
+    protected abstract double sample(int[] sampledVarsValues);
 }

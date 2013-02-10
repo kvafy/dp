@@ -10,16 +10,16 @@ package bna.bnlib;
 class AssignmentIndexMapper {
     private Variable[] vars;
     private int assignmentsCount;
-    private int[] access_vector;
+    private int[] accessVector;
     
     public AssignmentIndexMapper(Variable[] variables) {
         this.vars = variables;
         this.assignmentsCount = Toolkit.cardinality(this.vars);
-        // generate access_vector[i] = \prod_{j=0..i-1} scope[j].cardinality
-        this.access_vector = new int[variables.length];
-        access_vector[0] = 1;
+        // generate accessVector[i] = \prod_{j=0..i-1} scope[j].cardinality
+        this.accessVector = new int[variables.length];
+        accessVector[0] = 1;
         for(int i = 1 ; i < variables.length ; i++)
-            access_vector[i] = access_vector[i - 1] * variables[i - 1].getCardinality();
+            accessVector[i] = accessVector[i - 1] * variables[i - 1].getCardinality();
     }
     
     public int assignmentToIndex(int[] assignment) {
@@ -34,7 +34,7 @@ class AssignmentIndexMapper {
         // index computation
         int index = 0;
         for(int i = 0 ; i < assignment.length ; i++)
-            index += this.access_vector[i] * assignment[i];
+            index += this.accessVector[i] * assignment[i];
         return index;
     }
     

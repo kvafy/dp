@@ -23,16 +23,15 @@ import java.util.Random;
 public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
     private WeightedSamplingSampleAction[] samplingActions;
 
-    public BayesianNetworkWeightedSampler(BayesianNetwork bn, Variable[] XY, Variable[] E, int[] e) {
-        super(bn, XY, E, e);
+    public BayesianNetworkWeightedSampler(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+        super(bn, X, Y, E, e);
         Random rand = new Random();
-        Variable[] allVarsSorted = bn.topologicalSort();
         // generate sampling actions
-        this.samplingActions = new WeightedSamplingSampleAction[bn.getVariablesCount()];
-        for(int i = 0 ; i < allVarsSorted.length ; i++) {
-            Variable varI = allVarsSorted[i];
+        this.samplingActions = new WeightedSamplingSampleAction[this.sampledVars.length];
+        for(int i = 0 ; i < this.sampledVars.length ; i++) {
+            Variable varI = this.sampledVars[i];
             Node varINode = this.bn.getNode(varI.getName());
-            VariableSubsetMapper allVarsToIParentsMapper = new VariableSubsetMapper(allVarsSorted, varINode.getParentVariables());
+            VariableSubsetMapper allVarsToIParentsMapper = new VariableSubsetMapper(this.sampledVars, varINode.getParentVariables());
             WeightedSamplingSampleAction actionI;
             
             if(Toolkit.arrayContains(E, varI)) {
@@ -42,7 +41,7 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
                 // - add known value of evidence variable => EValue,parents(EValue) assignment
                 // - read probability of that assignment from factor for ENode
                 actionI = new WeightedSamplingEvidenceSampleAction(varINode,
-                                                                   Toolkit.indexOf(allVarsSorted, varI),
+                                                                   Toolkit.indexOf(this.sampledVars, varI),
                                                                    varIValue,
                                                                    allVarsToIParentsMapper,
                                                                    rand);
@@ -52,7 +51,7 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
                 // - map allVarsValues to Parents(X) values
                 // - for assignment of parents sample value for X
                 actionI = new WeightedSamplingVariableSampleAction(varINode,
-                                                                   Toolkit.indexOf(allVarsSorted, varI),
+                                                                   Toolkit.indexOf(this.sampledVars, varI),
                                                                    allVarsToIParentsMapper,
                                                                    rand);
             }
@@ -61,7 +60,7 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
     }
     
     @Override
-    protected void initializeSample(int[] allVarsValues) {
+    protected void initializeSample(int[] sampledVarsValues) {
     }
 
     /**
@@ -71,10 +70,10 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
      * @return Weight of the sample
      */
     @Override
-    protected double sample(int[] allVarsValues) {
+    protected double sample(int[] sampledVarsValues) {
         double weight = 1.0;
         for(WeightedSamplingSampleAction action : this.samplingActions)
-            weight *= action.sample(allVarsValues);
+            weight *= action.sample(sampledVarsValues);
         return weight;
     }
 

@@ -17,26 +17,22 @@ public class BNA {
             BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
             
             
-            // weighted sampling P(SPRINKLER | WETGRASS = TRUE)
+            // weighted sampling P(RAIN | WETGRASS = TRUE)
             // need 1) BayesianNetworkWeightedSampler
             //      2) SamplingController
-            Variable[] XY = {bn.getVariable("RAIN")};
+            Variable[] X = {bn.getVariable("RAIN")};
+            Variable[] Y = {};
             Variable[] E = {bn.getVariable("WETGRASS")};
             int[] e = {1};
-            BayesianNetworkSampler sampler = new BayesianNetworkWeightedSampler(bn, XY, E, e);
-            SamplingController samplingController = new SamplingController(10000000);
+            BayesianNetworkSampler sampler = new BayesianNetworkWeightedSampler(bn, X, Y, E, e);
+            SamplingController samplingController = new SamplingController(100000);
             
             sampler.sample(samplingController);
             
-            double[] samples = sampler.getSamplesCounter();
-            // normalize the result
-            double samplesSum = 0;
-            for(double s : samples)
-                samplesSum += s;
+            Factor samples = sampler.getSamplesCounterNormalized();
             // write out
             System.out.println("sampleCounter:");
-            for(double s : samples)
-                System.out.println(String.format(" %.4f", s / samplesSum).replace(',', '.'));
+            System.out.println(samples.toString());
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();

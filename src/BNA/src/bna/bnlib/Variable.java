@@ -26,6 +26,7 @@ public class Variable {
     public Variable(String name, Collection<String> values) {
         this.name = name;
         this.values = new String[values.size()];
+        values.toArray(this.values);
     }
     
     public String getName() {

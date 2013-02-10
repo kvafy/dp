@@ -51,6 +51,13 @@ public class Node {
         return this.children.toArray(childrenArray);
     }
     
+    public Variable[] getChildVariables() {
+        Variable[] childrenArray = new Variable[this.children.size()];
+        for(int i = 0 ; i < this.children.size() ; i++)
+            childrenArray[i] = this.children.get(i).getVariable();
+        return childrenArray;
+    }
+    
     public double getProbability(int[] assignment) {
         return this.factor.getProbability(assignment);
     }
