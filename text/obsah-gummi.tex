@@ -68,8 +68,8 @@
 \projectinfo{
   %Prace
   project=DP,            %typ prace BP/SP/DP/DR
-  year=2012,             %rok
-  date=\today,          %datum odevzdani
+  year=2013,             %rok
+  date=\today,           %datum odevzdani
   %Nazev prace
   title.cs={Aplikace Bayesovských sítí},  %nazev prace v cestine
   title.en={Bayesian Networks Applications}, %nazev prace v anglictine
@@ -91,29 +91,13 @@
   keywords.en={Bayesian network, probability, inference, structure learning.}, %klicova slova v anglickem jazyce
   %Abstract
   abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti, později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně pochopení silných a~slabých stránek daných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury.}, % abstrakt v ceskem jazyce
-  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretic part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications suitable for learning a Bayesian network, both in terms of network parameters as well as structure.}, % abstrakt v anglickem jazyce
+  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications suitable for learning a Bayesian network, both in terms of network parameters as well as structure.}, % abstrakt v anglickem jazyce
   %Prohlaseni
-  declaration={Prohlašuji, že jsem tento semestrální projekt vypracoval samostatně pod vedením pana doc.~Ing. Františka V. Zbořila, CSc.},
+  declaration={Prohlašuji, že jsem tuto diplomovou práci vypracoval samostatně pod vedením pana doc.~Ing. Františka V. Zbořila, CSc.},
   %Podekovani (nepovinne)
   acknowledgment={Na tomto místě bych rád poděkoval svému vedoucímu, docentu Františku V. Zbořilovi, za cenné rady, odborné vedení a vstřícný přístup v nesnázích při řešení této práce.} % nepovinne
 }
 
-%Abstrakt (cesky, anglicky)
-%\abstract[cs]{Do tohoto odstavce bude zapsán výtah (abstrakt) práce v českém jazyce.}
-%\abstract[en]{Do tohoto odstavce bude zapsán výtah (abstrakt) práce v anglickém jazyce.}
-
-%Klicova slova (cesky, anglicky)
-%\keywords[cs]{Sem budou zapsána jednotlivá klíčová slova v českém jazyce, oddělená čárkami.}
-%\keywords[en]{Sem budou zapsána jednotlivá klíčová slova v anglickém jazyce, oddělená čárkami.}
-
-%Prohlaseni
-%\declaration{Prohlašuji, že jsem tuto bakalářskou práci vypracoval samostatně pod vedením pana X...
-%Další informace mi poskytli...
-%Uvedl jsem všechny literární prameny a publikace, ze kterých jsem čerpal.}
-
-%Podekovani (nepovinne)
-%\acknowledgment{V této sekci je možno uvést poděkování vedoucímu práce a těm, kteří poskytli odbornou pomoc
-%(externí zadavatel, konzultant, apod.).}
 
 \begin{document}
   % Vysazeni titulnich stran
@@ -164,10 +148,11 @@ Chapter 5 discusses selected applications suitable for parameter and structure l
 
 The final chapter summarizes the overall achieved results of this term project and discusses further planned work.
 
-
-\todo{give some more examples for d-separation, or inspect the cases in a little more detail}
-
-\todo{provide examples/proofs for parameter and structure learning formulas\,--\,how do we get to this? (nahrává na směč oponentovi)}
+\todo{Zbořil's notes on the term project
+\begin{itemize}
+	\item give some more examples for d-separation, or inspect the cases in a little more detail [done]
+	\item provide examples/proofs for parameter and structure learning formulas\,--\,how do we get to this? (nahrává na směč oponentovi)
+\end{itemize} }
 
 
 
@@ -357,28 +342,37 @@ To describe how observing certain facts propagates through a Bayesian network an
 
 By using d-separation (direction-dependent separation) we can quite elegantly determine if observation of a variable $X$ can or cannot affect distribution of some other random variable. Clearly two random variables that are directly connected are dependent. But we can also examine other than these intuitively obvious relations. Also, please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $\vars{Z}$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
 
-To understand better the notion of active trails and d-separation see examples in Figure~\ref{fig:bn_d-separation}. In Figure~\ref{fig:bn_d-separation_a} you can see a Naïve Bayes model in which all feature variables $X_i$ and $X_j$ are conditionally independent given class variable $C$ because knowing the class variable deactivates all trails between $X_i$ and $X_j$.
-In Figure~\ref{fig:bn_d-separation_b} we can see an activated V-structure $R\rightarrow T \leftarrow A$. Intuitively, when we know whether there is a traffic jam then an accident decreases probability of being it in a rush hour because an accident is sufficient to cause a traffic jam by itself and, to continue, lower accident probability means lower probability of hearing sirens, hence $R\not\perp H \mid T$. Similarly, if it is not a rush hour then knowing there is a traffic jam increases the probability of there being an accident which causally means higher probability of hearing sirens. The argumentation involving activated V-structures is an example of \term{inter-causal} reasoning.
+To understand better the notion of active trails and d-separation we will use examples in Figure~\ref{fig:bn_d-separation}. In Figure~\ref{fig:bn_d-separation_a} you can see a Naïve Bayes model in which all feature variables $X_i$ and $X_j$ are conditionally independent given class variable $C$ because knowing the class variable deactivates all trails between $X_i$ and $X_j$.
+In Figure~\ref{fig:bn_d-separation_traffic} we can see an activated V-structure $R\rightarrow T \leftarrow A$, provided the variable $T$ is observed. Intuitively, when we know whether there is a traffic jam then an accident decreases probability of being it in a rush hour because an accident is sufficient to cause a traffic jam by itself, formally $R \not\perp A \mid T$. To go one step further, if it is not a rush hour then knowing there is a~traffic jam increases the probability of there being an accident which causally means higher probability of hearing sirens, hence $R\not\perp H \mid T$. The argumentation involving activated V-structures is an example of \term{inter-causal} reasoning (causes with common effect are conditionally dependent given the effect variable).
+In Figure~\ref{fig:bn_d-separation_abstract} we will examine three more complicated cases of interest. The first selected case is $A \not\perp C \mid B, G$ because of the active trail $A-D-F-G-F-C$ (node $F$ is twice on the trail which is perfectly legal). The second selected case is $A \perp F \mid B, D$ because both possible trails between $A$ and $F$ are deactivated. The third selected case is $E \not\perp B \mid F, C$ because there is an active trail $E-F-D-A-B$.
 
-\begin{figure}[h]
 \begin{center}
-    \begin{subfigure}[b]{0.4\linewidth}
+\begin{figure}[h]
+    \begin{subfigure}[b]{0.42\linewidth}
         \includegraphics[scale=0.4]{fig/bn-naive-bayes}
-        \caption{$\forall i \neq j: X_i \perp X_j \mid C$}
+        \caption{General Naïve Bayes model in which holds $\forall i \neq j: X_i \perp X_j \mid C$}
         \label{fig:bn_d-separation_a}
     \end{subfigure}
     \qquad\qquad\qquad
-    \begin{subfigure}[b]{0.4\linewidth}
-        \includegraphics[scale=0.4]{fig/bn-d_sep}
-        \caption{$R\not\perp H \mid T$ (active trail R-T-A-H)}
-        \label{fig:bn_d-separation_b}
+    \begin{subfigure}[b]{0.42\linewidth}
+        \includegraphics[scale=0.4]{fig/bn-d_sep-traffic}
+        \caption{Example of an activated V-structure, $R\not\perp H \mid T$ (active trail $R-T-A-H$)}
+        \label{fig:bn_d-separation_traffic}
     \end{subfigure}
-    \caption{Examples of d-separation and flow of influence.}
+  
+    \begin{subfigure}[b]{0.42\linewidth}
+        \vspace{0.5cm}
+        \includegraphics[scale=0.4]{fig/bn-d_sep-abstract}
+        \caption{A more complicated network with multiple possible trails and other interesting cases.}
+        \label{fig:bn_d-separation_abstract}
+    \end{subfigure}
+    
+    \caption{Networks for demonstration of d-separation and flow of influence.}
     \label{fig:bn_d-separation}
-\end{center}
 \end{figure}
+\end{center}
 
-It might be useful to explicitly point out what the notation $P(X_i \mid Parents(X_i))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X_i)$ of a variable $X_i$, the variable is independent of all its indirect parents in the network.
+It might be useful to explicitly point out what the notation $P(X_i \mid Parents(X_i))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X_i)$ of a variable $X_i$, the variable is independent of all its indirect parents in the network. In Markov chain Monte-Carlo sampling we will also introduce so called \term{Markov blanket} of variable $X$ which is minimal set of variables such that $X$ is conditionally independent on any other variable in the network given its Markov blanket.
 
 
 
