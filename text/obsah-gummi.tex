@@ -480,9 +480,22 @@ An important drawback of importance sampling is that it doesn't account well for
 \subsection{Markov Chain Monte Carlo}
 The likelihood weighting method presented earlier doesn't account well for evidences in or near leaf nodes, ie. for so called \term{evidential reasoning}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way, the information about all evidence variables propagates through the network and with time we get closer to the true posterior probability distribution.
 
-To explain how the MCMC algorithm works we first need to introduce \term{Markov blanket} of a~variable $X$, denoted $MB(X)$. The Markov blanket of $X$ is a minimal set of variables such that $X$ is conditionally independent of all other variables given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children $\vars{C}$ of $X$ because there is a direct connection between them and $X$. Furthermore, $MB(X)$ also needs to include parents of $\vars{C}$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$.
+To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is a minimal set of variables such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket is defined as follows:
+\begin{equation*}
+MB(X) = Parents(X) \cup Children(X) \cup \bigcup_{C \in Children(X)} Parents(C)
+\end{equation*}
 
-The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from the current distribution $P(Y \mid mb(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(Y \mid mb(Y))$ can be obtained by computing $P(y \mid mb(Y))$ for every $y$ as follows:
+\begin{center}
+\begin{figure}[h]
+    \begin{center}
+    \includegraphics[scale=0.45]{fig/bn-markov_blanket}
+    \end{center}
+    \caption{Markov blanket $MB(X)$ of variable $X$.}
+    \label{fig:bn-markov-blanket}
+\end{figure}
+\end{center}
+
+The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from the current distribution $P(Y \mid mb(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(Y \mid mb(Y))$ needed for resampling of variable $Y$ can be obtained by computing $P(y \mid mb(Y))$ for every $y$ as follows:
 \begin{equation*}
     P(y \mid mb(Y)) = \alpha \cdot P(y \mid parents(Y)) \prod_{i} P(c_i \mid parents(C_i))
 \end{equation*}

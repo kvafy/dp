@@ -2,7 +2,9 @@ Téma diplomky: Praktické (a skutečně použitelné) aplikace metod umělé
                inteligence/strojového učení
 
 Latex tricks
-* ps2pdf -dEPSCrop <eps-file>
+* dia -> eps -> pdf
+  export in DIA to eps file
+  $ ps2pdf -dEPSCrop <eps-file>
 
 
 Bayes applications
