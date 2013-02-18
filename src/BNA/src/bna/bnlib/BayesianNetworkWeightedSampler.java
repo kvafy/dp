@@ -4,6 +4,8 @@
 
 package bna.bnlib;
 
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -61,6 +63,33 @@ public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
             }
             this.samplingActions[i] = actionI;
         }
+    }
+    
+    /**
+     * In weighted sampling we can optimize and not to sample variables such
+     * that they are not in (X union Y union E) and also none of their descendants
+     * is in (X union Y union E). These variables are ommited and not sampled at all.
+     */
+    @Override
+    protected Variable[] filterVariablesToSample(Variable[] unfilteredSampledVariables) {
+        Variable[] XYE = Toolkit.union(this.XYVars, this.EVars);
+        LinkedList<Variable> mustSampleVariables = new LinkedList<>();
+        // optimization: omit leaf variables not in (X union Y union E)
+        //               and apply recursively until some variable can be ommited
+        for(int i = unfilteredSampledVariables.length - 1 ; i >= 0 ; i--) {
+            Variable varI = unfilteredSampledVariables[i];
+            Node varINode = this.bn.getNode(varI.getName());
+            Variable[] varIChildren = varINode.getChildVariables();
+            if(Toolkit.arrayContains(XYE, varI))
+                mustSampleVariables.addFirst(varI);
+            else if(!Toolkit.areDisjoint(mustSampleVariables, Arrays.asList(varIChildren)))
+                mustSampleVariables.addFirst(varI);
+        }
+        // we are done
+        Variable[] mustSampleVariablesArray = new Variable[mustSampleVariables.size()];
+        mustSampleVariables.toArray(mustSampleVariablesArray);
+        //System.out.println(String.format("debug: #of variables really sampled is %d", mustSampleVariablesArray.length));
+        return mustSampleVariablesArray;
     }
     
     @Override

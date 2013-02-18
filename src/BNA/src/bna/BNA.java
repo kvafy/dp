@@ -19,28 +19,24 @@ public class BNA {
             System.out.println("");
             
             
-            
-            final int SAMPLES_COUNT = 100000;
-            // weighted sampling P(RAIN | WETGRASS = TRUE)
-            // need 1) BayesianNetworkWeightedSampler
-            //      2) SamplingController
-            System.out.println("Weighted sampling...");
+            // sampling and its variants
+            final int SAMPLES_COUNT = 1000000;
             Variable[] X = {bn.getVariable("RAIN")};
             Variable[] Y = {};
             Variable[] E = {bn.getVariable("WETGRASS")};
             int[] e = {1};
+            
+            // weighted sampling P(RAIN | WETGRASS = TRUE)
+            // need 1) BayesianNetworkWeightedSampler
+            //      2) SamplingController
+            System.out.println("Weighted sampling...");
             BayesianNetworkSampler weightedSampler = new BayesianNetworkWeightedSampler(bn, X, Y, E, e);
             SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT);
-            
             weightedSampler.sample(weightedSamplingController);
-            
             Factor weightedSamples = weightedSampler.getSamplesCounterNormalized();
-            // write out
             System.out.println("sampleCounter:");
             System.out.println(weightedSamples.toString());
             System.out.println("");
-            
-            
             
             // MCMC sampling P(RAIN | WETGRASS = TRUE)
             // need 1) BayesianNetworkWeightedSampler
@@ -48,9 +44,7 @@ public class BNA {
             System.out.println("MCMC sampling...");
             BayesianNetworkSampler mcmcSampler = new BayesianNetworkMCMCSampler(bn, X, Y, E, e);
             SamplingController mcmcSamplingController = new SamplingController(SAMPLES_COUNT);
-            
             mcmcSampler.sample(mcmcSamplingController);
-            
             Factor mcmcSamples = mcmcSampler.getSamplesCounterNormalized();
             // write out
             System.out.println("sampleCounter:");

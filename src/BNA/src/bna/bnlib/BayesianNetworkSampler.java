@@ -19,8 +19,9 @@ public abstract class BayesianNetworkSampler {
     protected Variable[] XYVars;     // XVars union YVars
     protected Variable[] EVars; // evidence variables
     protected int[] EVals;      // concrete values of evidence variables
-    protected Variable[] sampledVars;  // defines all variables that need to be sampled
-                                       // and the sampling order
+    protected Variable[] sampledVars;  // defines all variables for that we need
+                                       // to keep track of their current assignment
+                                       // and the sampling order of these variables
     protected Random rand = new Random();;
     // sampling statistics
     private AssignmentIndexMapper sampleMapper; // mapping of assignment XYVars to index in sampleCounter
@@ -50,30 +51,17 @@ public abstract class BayesianNetworkSampler {
     }
     
     /**
-     * Sampling order must primarily be topological order.
-     * Also we can optimize and not to produceSample variables such that they
-     * are not in (X union Y union E) and also none of their descendants
-     * is in (X union Y union E).
+     * Sampling order defines list of variables that need to be sampled.
+     * The sampling order primarily has be topological order. Other criteria
+     * are method-specific.
      */
     private void determineSamplingOrder() {
-        Variable[] XYE = Toolkit.union(this.XYVars, this.EVars);
         Variable[] topsortedVariables = this.bn.topologicalSort();
-        LinkedList<Variable> mustSampleVariables = new LinkedList<>();
-        // optimization: omit leaf variables not in (X union Y union E)
-        //               and apply recursively until some variable can be ommited
-        for(int i = topsortedVariables.length - 1 ; i >= 0 ; i--) {
-            Variable varI = topsortedVariables[i];
-            Node varINode = this.bn.getNode(varI.getName());
-            Variable[] varIChildren = varINode.getChildVariables();
-            if(Toolkit.arrayContains(XYE, varI))
-                mustSampleVariables.addFirst(varI);
-            else if(!Toolkit.areDisjoint(mustSampleVariables, Arrays.asList(varIChildren)))
-                mustSampleVariables.addFirst(varI);
-        }
-        // we are done, just copy result to this.sampledVars
-        this.sampledVars = new Variable[mustSampleVariables.size()];
-        mustSampleVariables.toArray(this.sampledVars);
-        System.out.println(String.format("debug: #of variables really sampled is %d", this.sampledVars.length));
+        // optimization: certain sampling methods may allow for certain variables
+        //               to be ommited in the sampling process (as if they
+        //               we not present in the BN)
+        Variable[] mustSampleVariables = this.filterVariablesToSample(topsortedVariables);
+        this.sampledVars = mustSampleVariables;
     }
     
     /** Record a sampleNumber with given weight. */
@@ -115,6 +103,15 @@ public abstract class BayesianNetworkSampler {
     
     
     // Template method pattern for weighted sampling / MCMC
+    
+    /**
+     * Determine variables that really need to be sampled (this is default implementation).
+     * The method must preserve relative order of given variables.
+     */
+    protected Variable[] filterVariablesToSample(Variable[] unfilteredSampledVariables) {
+        Variable[] mustSampleVariables = unfilteredSampledVariables;
+        return mustSampleVariables;
+    }
     
     protected abstract void initializeSample(int[] sampledVarsValues);
     
