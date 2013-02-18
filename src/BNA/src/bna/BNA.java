@@ -2,6 +2,7 @@
 package bna;
 
 import bna.bnlib.*;
+import bna.bnlib.sampling.*;
 
 /**
  * Class for on-the-fly testing and playing with the bnlib package.
@@ -33,8 +34,8 @@ public class BNA {
             // weighted sampling P(RAIN | WETGRASS = TRUE)
             System.out.println("Weighted sampling...");
             timeStart = System.currentTimeMillis();
-            BayesianNetworkWeightedSampleProducer weightedSampleProducer = new BayesianNetworkWeightedSampleProducer(bn, X, Y, E, e);
-            BayesianNetworkQuerySampler weightedQuerySampler = new BayesianNetworkQuerySampler(weightedSampleProducer);
+            WeightedSampleProducer weightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
+            QuerySampler weightedQuerySampler = new QuerySampler(weightedSampleProducer);
             SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT);
             weightedQuerySampler.sample(weightedSamplingController);
             Factor weightedSamples = weightedQuerySampler.getSamplesCounterNormalized();
@@ -46,8 +47,8 @@ public class BNA {
             // MCMC sampling P(RAIN | WETGRASS = TRUE)
             System.out.println("MCMC sampling...");
             timeStart = System.currentTimeMillis();
-            BayesianNetworkMCMCSampleProducer mcmcSampleProducer = new BayesianNetworkMCMCSampleProducer(bn, X, Y, E, e);
-            BayesianNetworkQuerySampler mcmcQuerySampler = new BayesianNetworkQuerySampler(mcmcSampleProducer);
+            MCMCSampleProducer mcmcSampleProducer = new MCMCSampleProducer(bn, X, Y, E, e);
+            QuerySampler mcmcQuerySampler = new QuerySampler(mcmcSampleProducer);
             SamplingController mcmcSamplingController = new SamplingController(SAMPLES_COUNT);
             mcmcQuerySampler.sample(mcmcSamplingController);
             Factor mcmcSamples = mcmcQuerySampler.getSamplesCounterNormalized();
@@ -64,8 +65,8 @@ public class BNA {
             //      - maybe the shared java.util.Random is the bottleneck
             System.out.println("Multithreaded weighted sampling...");
             timeStart = System.currentTimeMillis();
-            BayesianNetworkWeightedSampleProducer sharedWeightedSampleProducer = new BayesianNetworkWeightedSampleProducer(bn, X, Y, E, e);
-            BayesianNetworkQuerySamplerMultithreaded weightedQuerySamplerMultithreaded = new BayesianNetworkQuerySamplerMultithreaded(sharedWeightedSampleProducer, THREAD_COUNT);
+            WeightedSampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
+            QuerySamplerMultithreaded weightedQuerySamplerMultithreaded = new QuerySamplerMultithreaded(sharedWeightedSampleProducer, THREAD_COUNT);
             SamplingController weightedSamplingMultithreadedController = new SamplingController(SAMPLES_COUNT);
             weightedQuerySamplerMultithreaded.sample(weightedSamplingMultithreadedController);
             Factor weightedSamplesMultithreaded = weightedQuerySamplerMultithreaded.getSamplesCounterNormalized();

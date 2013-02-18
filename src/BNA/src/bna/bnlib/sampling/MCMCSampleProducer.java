@@ -2,12 +2,11 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/18
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
+import bna.bnlib.*;
 import java.util.ArrayList;
 import java.util.Random;
-
-
 
 
 /**
@@ -19,17 +18,17 @@ import java.util.Random;
  * the rest of the MB(X) doesn't need to be accounted for when computing
  * the distribution P(X | MB(X) = a).
  */
-public class BayesianNetworkMCMCSampleProducer extends BayesianNetworkSampleProducer {
+public class MCMCSampleProducer extends SampleProducer {
     private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<>();
     
-    public BayesianNetworkMCMCSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    public MCMCSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         this.generateResamplingActions();
     }
     
     @Override
-    public BayesianNetworkSampleProducer cloneWithNewRandomObject() {
-        return new BayesianNetworkMCMCSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
+    public SampleProducer cloneWithNewRandomObject() {
+        return new MCMCSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
     }
     
     private void generateResamplingActions() {
@@ -46,7 +45,7 @@ public class BayesianNetworkMCMCSampleProducer extends BayesianNetworkSampleProd
     /** Initializes the sample by a single weighted sampling pass. */
     @Override
     protected void initializeSample(int[] sampledVarsValues) {
-        BayesianNetworkWeightedSampleProducer weightedSampler = new BayesianNetworkWeightedSampleProducer(
+        WeightedSampleProducer weightedSampler = new WeightedSampleProducer(
                 this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
         // the variable values are preserved after the following call
         weightedSampler.produceSample(sampledVarsValues);

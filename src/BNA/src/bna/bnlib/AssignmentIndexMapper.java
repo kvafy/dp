@@ -7,7 +7,7 @@ package bna.bnlib;
 /**
  * Map between assignment of variables and corresponding index in a linear vector.
  */
-class AssignmentIndexMapper {
+public class AssignmentIndexMapper {
     private Variable[] vars;
     private int assignmentsCount;
     private int[] accessVector;

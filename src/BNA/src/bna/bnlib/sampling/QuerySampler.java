@@ -2,21 +2,22 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/08
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
+import bna.bnlib.*;
 import java.util.Arrays;
 
 
 /**
  * Generates samples for a probabilistic query P(X | Y, E = e) and computes the statistics as a factor of variables X union Y.
  */
-public class BayesianNetworkQuerySampler implements BayesianNetworkSampler {
-    private BayesianNetworkSampleProducer sampleProducer;
+public class QuerySampler implements Sampler {
+    private SampleProducer sampleProducer;
     // sampling statistics
     private AssignmentIndexMapper sampleMapper; // mapping of assignment XYVars to index in sampleCounter
     private double[] sampleCounter;             // for all instantiations of X,Y (ie. of XYVars)
     
-    public BayesianNetworkQuerySampler(BayesianNetworkSampleProducer sampleProducer) {
+    public QuerySampler(SampleProducer sampleProducer) {
         this.sampleProducer = sampleProducer;
         // initialize sampleCounter
         this.sampleMapper = new AssignmentIndexMapper(this.sampleProducer.XYVars);

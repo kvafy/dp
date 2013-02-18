@@ -3,8 +3,9 @@
 // Created: 2013/02/06
 
 
-package bna.bnlib;
+package bna.bnlib.io;
 
+import bna.bnlib.*;
 import java.util.Map;
 
 /**

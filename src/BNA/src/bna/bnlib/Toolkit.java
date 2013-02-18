@@ -1,8 +1,6 @@
-/*
- * // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
- * // Author:  David Chaloupka (xchalo09)
- * // Created: 2013/06/02
- */
+// Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
+// Author:  David Chaloupka (xchalo09)
+// Created: 2013/02/06
 
 package bna.bnlib;
 
@@ -12,8 +10,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
 
+
 /**
- *
+ * General purpose functions that are inconvinient to be placed elsewhere.
  */
 public class Toolkit {
     /** Maximal difference of two double values that are considered equal. */

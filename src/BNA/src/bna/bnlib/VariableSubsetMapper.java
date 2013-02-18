@@ -4,10 +4,11 @@
 
 package bna.bnlib;
 
+
 /**
  * Map assignment of a superset of variables to assignment of their subset.
  */
-class VariableSubsetMapper {
+public class VariableSubsetMapper {
     private int[] mapping; // subset -> index in superset
     
     public VariableSubsetMapper(Variable[] superset, Variable[] subset)  {

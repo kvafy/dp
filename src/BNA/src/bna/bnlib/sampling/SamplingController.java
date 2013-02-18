@@ -1,10 +1,8 @@
-/*
- * // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
- * // Author:  David Chaloupka (xchalo09)
- * // Created: 2013/xx/xx
- */
+// Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
+// Author:  David Chaloupka (xchalo09)
+// Created: 2013/02/09
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
 /**
  * To control the sampling process, possibly in context of more threads.
@@ -29,5 +27,4 @@ public class SamplingController {
     public void setStopFlag() {
         this.stopFlag = true;
     }
-
 }

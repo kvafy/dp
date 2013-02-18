@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+import bna.bnlib.io.*;
 import java.util.ArrayList;
 
 /**

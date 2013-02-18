@@ -5,7 +5,8 @@
 package bna.bnlib;
 
 /**
- * Base exception class for all the operations with Bayesian networks.
+ * Base exception class for all serious operations with Bayesian networks.
+ * This exception has to be declared to be thrown.
  */
 public class BayesianNetworkException extends Exception {
     public BayesianNetworkException() {

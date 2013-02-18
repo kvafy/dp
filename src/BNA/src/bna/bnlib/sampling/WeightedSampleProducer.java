@@ -2,13 +2,12 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/09
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
+import bna.bnlib.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
-
-
 
 
 /**
@@ -30,10 +29,10 @@ import java.util.Random;
  *      the variable X. Put the sampled value to current produceSample assignment
  *      sampledVarsValues.
  */
-public class BayesianNetworkWeightedSampleProducer extends BayesianNetworkSampleProducer {
+public class WeightedSampleProducer extends SampleProducer {
     private WeightedSamplingSampleAction[] samplingActions;
 
-    public BayesianNetworkWeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    public WeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         // generate sampling actions for all variables that need to be sampled
         this.samplingActions = new WeightedSamplingSampleAction[this.sampledVars.length];
@@ -69,8 +68,8 @@ public class BayesianNetworkWeightedSampleProducer extends BayesianNetworkSample
     }
     
     @Override
-    public BayesianNetworkSampleProducer cloneWithNewRandomObject() {
-        return new BayesianNetworkWeightedSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
+    public SampleProducer cloneWithNewRandomObject() {
+        return new WeightedSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
     }
     
     /**

@@ -2,8 +2,9 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/18
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
+import bna.bnlib.*;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -11,17 +12,17 @@ import java.io.IOException;
 /**
  * Sampler for creating an artificial dataset from given BN and writing it to a file on the fly.
  */
-public class BayesianNetworkDatasetCreationSampler implements BayesianNetworkSampler {
+public class DatasetCreationSampler implements Sampler {
     private String outputFilename;
-    private BayesianNetworkSampleProducer sampleProducer;
+    private SampleProducer sampleProducer;
     private static final String RECORD_SEPARATOR = ";";
     private static final String VARIABLE_VALUE_SEPARATOR = "|";
 
-    public BayesianNetworkDatasetCreationSampler(BayesianNetwork bn, String outputFilename) {
+    public DatasetCreationSampler(BayesianNetwork bn, String outputFilename) {
         this.outputFilename = outputFilename;
         // generate a weighted sample producer that will sample all variables in the network,
         // ie. for a query P(AllVariables)
-        this.sampleProducer = new BayesianNetworkWeightedSampleProducer(
+        this.sampleProducer = new WeightedSampleProducer(
                 bn,
                 bn.getVariables(),
                 new Variable[0],

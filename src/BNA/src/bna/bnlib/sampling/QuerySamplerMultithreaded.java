@@ -2,24 +2,26 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/18
 
-package bna.bnlib;
+package bna.bnlib.sampling;
+
+import bna.bnlib.*;
 
 
 /**
- * Multithreaded implementation of BayesianNetworkQuerySampler.
+ * Multithreaded implementation of QuerySampler.
  * In order for the sampling to be efficient, we need to create a sample producer
  * for each thread, so that they will not share their Random objects. This is
  * imperative:
  *    (1) For performance (aproximately 3x faster than with a shared Random object)
  *    (2) For result validity (java.util.Random doesn't appear to be threadsafe)
  */
-public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetworkSampler {
-    private BayesianNetworkSampleProducer sampleProducer;
+public class QuerySamplerMultithreaded implements Sampler {
+    private SampleProducer sampleProducer;
     private int threadcount;
     private Factor sampleCounter;
     
     
-    public BayesianNetworkQuerySamplerMultithreaded(BayesianNetworkSampleProducer sampleProducer, int threadcount) {
+    public QuerySamplerMultithreaded(SampleProducer sampleProducer, int threadcount) {
         if(threadcount <= 0)
             throw new BayesianNetworkRuntimeException("Number of threads must be non-negative.");
         
@@ -36,7 +38,7 @@ public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetwork
             SamplingThread threadI = new SamplingThread() {
                 @Override
                 public void run() {
-                    BayesianNetworkQuerySampler querySampler = new BayesianNetworkQuerySampler(sampleProducer.cloneWithNewRandomObject());
+                    QuerySampler querySampler = new QuerySampler(sampleProducer.cloneWithNewRandomObject());
                     querySampler.sample(shareController);
                     this.sampleCounter = querySampler.getSamplesCounter(); // store samples of this thread
                 }
@@ -81,6 +83,7 @@ public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetwork
         return this.sampleCounter.normalizeByFirstNVariables(this.sampleProducer.XVars.length);
     }
 }
+
 
 
 /** A thread which stores results of sampling in an instance variable. */

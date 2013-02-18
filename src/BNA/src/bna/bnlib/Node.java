@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
 
+
 /**
  * Node of a Bayesian network holding it's variable, CPT as a factor and
  * connectivity information.

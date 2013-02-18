@@ -2,8 +2,9 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/18
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
+import bna.bnlib.*;
 import java.util.Random;
 
 
@@ -13,7 +14,7 @@ import java.util.Random;
  * This is a general sampler using the template method design pattern; usable
  * for weighted sampling and MCMC sampling.
  */
-public abstract class BayesianNetworkSampleProducer {
+public abstract class SampleProducer {
     // !!! beware: members of this class are accessed within classes BayesianNetworkQuerySampler
     //             and BayesianNetworkDatasetCreationSampler, so be careful
     //             with changing their semantics
@@ -27,7 +28,7 @@ public abstract class BayesianNetworkSampleProducer {
                                        // and the sampling order of these variables
     protected Random rand = new Random();
     
-    public BayesianNetworkSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    public SampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         Variable[] allVars = bn.getVariables();
         Variable[] XY = Toolkit.union(X, Y);
         // validate inputs
@@ -51,7 +52,7 @@ public abstract class BayesianNetworkSampleProducer {
      * threads, so we implement this method, that clones sample producer
      * which is guaranteed to have a brand new Radnom object.
      */
-    public abstract BayesianNetworkSampleProducer cloneWithNewRandomObject();
+    public abstract SampleProducer cloneWithNewRandomObject();
     
     /**
      * Sampling order defines list of variables that need to be sampled.

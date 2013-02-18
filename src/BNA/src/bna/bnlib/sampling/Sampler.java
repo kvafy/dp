@@ -2,12 +2,12 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/18
 
-package bna.bnlib;
+package bna.bnlib.sampling;
 
 /**
  * The most general sampler of a BN.
  */
-public interface BayesianNetworkSampler {
+public interface Sampler {
 
     public void sample(SamplingController controller);
 }

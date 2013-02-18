@@ -2,8 +2,9 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/06
 
-package bna.bnlib;
+package bna.bnlib.io;
 
+import bna.bnlib.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
