@@ -68,6 +68,11 @@ public class BayesianNetworkWeightedSampleProducer extends BayesianNetworkSample
         }
     }
     
+    @Override
+    public BayesianNetworkSampleProducer cloneWithNewRandomObject() {
+        return new BayesianNetworkWeightedSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
+    }
+    
     /**
      * In weighted sampling we can optimize and not to sample variables such
      * that they are not in (X union Y union E) and also none of their descendants
@@ -122,6 +127,10 @@ abstract class WeightedSamplingSampleAction {
     protected Random rand;
     
     public WeightedSamplingSampleAction(Random rand) {
+        this.rand = rand;
+    }
+    
+    public final void setRandomGenerator(Random rand) {
         this.rand = rand;
     }
     

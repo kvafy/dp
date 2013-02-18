@@ -14,6 +14,9 @@ import java.util.Random;
  * for weighted sampling and MCMC sampling.
  */
 public abstract class BayesianNetworkSampleProducer {
+    // !!! beware: members of this class are accessed within classes BayesianNetworkQuerySampler
+    //             and BayesianNetworkDatasetCreationSampler, so be careful
+    //             with changing their semantics
     protected BayesianNetwork bn;
     protected Variable[] XVars, YVars;
     protected Variable[] XYVars; // XVars union YVars
@@ -41,6 +44,14 @@ public abstract class BayesianNetworkSampleProducer {
         
         this.determineSamplingOrder();
     }
+    
+    /**
+     * Most of the variables of a sample producer are read-only and created within constructor.
+     * However the radnom generator cannot be effectively shared among multiple
+     * threads, so we implement this method, that clones sample producer
+     * which is guaranteed to have a brand new Radnom object.
+     */
+    public abstract BayesianNetworkSampleProducer cloneWithNewRandomObject();
     
     /**
      * Sampling order defines list of variables that need to be sampled.

@@ -4,7 +4,7 @@ package bna;
 import bna.bnlib.*;
 
 /**
- *
+ * Class for on-the-fly testing and playing with the bnlib package.
  */
 public class BNA {
 
@@ -23,8 +23,8 @@ public class BNA {
             
             
             // sampling and its variants
-            final int SAMPLES_COUNT = 1000000;
-            final int THREAD_COUNT = 4;
+            final int SAMPLES_COUNT = 10000000;
+            final int THREAD_COUNT = 2;
             Variable[] X = {bn.getVariable("RAIN")};
             Variable[] Y = {};
             Variable[] E = {bn.getVariable("WETGRASS")};
@@ -58,6 +58,10 @@ public class BNA {
             System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));
             
             // multithreaded weighted sampling P(RAIN | WETGRASS = TRUE)
+            // somehow lousy results (inaccurate, far better is single-threaded result)
+            //      - [apears to be the cause] maybe Random is not thread safe
+            // TODO slow
+            //      - maybe the shared java.util.Random is the bottleneck
             System.out.println("Multithreaded weighted sampling...");
             timeStart = System.currentTimeMillis();
             BayesianNetworkWeightedSampleProducer sharedWeightedSampleProducer = new BayesianNetworkWeightedSampleProducer(bn, X, Y, E, e);

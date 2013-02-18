@@ -6,7 +6,12 @@ package bna.bnlib;
 
 
 /**
- *
+ * Multithreaded implementation of BayesianNetworkQuerySampler.
+ * In order for the sampling to be efficient, we need to create a sample producer
+ * for each thread, so that they will not share their Random objects. This is
+ * imperative:
+ *    (1) For performance (aproximately 3x faster than with a shared Random object)
+ *    (2) For result validity (java.util.Random doesn't appear to be threadsafe)
  */
 public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetworkSampler {
     private BayesianNetworkSampleProducer sampleProducer;
@@ -25,16 +30,15 @@ public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetwork
     @Override
     public void sample(SamplingController controller) {
         // initialize threads
-        final BayesianNetworkSampleProducer sharedSampleProducer = this.sampleProducer;
         final SamplingController shareController = controller;
         SamplingThread[] threadpool = new SamplingThread[this.threadcount];
         for(int i = 0 ; i < this.threadcount ; i++) {
             SamplingThread threadI = new SamplingThread() {
                 @Override
                 public void run() {
-                    BayesianNetworkQuerySampler querySampler = new BayesianNetworkQuerySampler(sharedSampleProducer);
+                    BayesianNetworkQuerySampler querySampler = new BayesianNetworkQuerySampler(sampleProducer.cloneWithNewRandomObject());
                     querySampler.sample(shareController);
-                    this.sampleCounter = querySampler.getSamplesCounter();
+                    this.sampleCounter = querySampler.getSamplesCounter(); // store samples of this thread
                 }
             };
             threadpool[i] = threadI;
@@ -47,20 +51,19 @@ public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetwork
                 t.join();
             }
             catch(InterruptedException iex) {
-                iex.printStackTrace();
-                // TODO better?
+                iex.printStackTrace(); // TODO better?
             }
         }
-        // combine the results
+        // combine the results of all threads
         this.sampleCounter = this.combineResults(threadpool);
     }
     
     private Factor combineResults(SamplingThread[] threads) {
-        // extract the factors with subresults
+        // extract the subresults as factors
         Factor[] subresults = new Factor[threads.length];
         for(int i = 0 ; i < threads.length ; i++)
             subresults[i] = threads[i].sampleCounter;
-        // combine
+        // combine to produce the final result
         return Factor.sumFactors(subresults);
     }
     
@@ -80,7 +83,7 @@ public class BayesianNetworkQuerySamplerMultithreaded implements BayesianNetwork
 }
 
 
-
+/** A thread which stores results of sampling in an instance variable. */
 class SamplingThread extends Thread {
     public Factor sampleCounter;
 }

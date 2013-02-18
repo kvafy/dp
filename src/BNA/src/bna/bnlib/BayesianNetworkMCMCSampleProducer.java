@@ -27,6 +27,11 @@ public class BayesianNetworkMCMCSampleProducer extends BayesianNetworkSampleProd
         this.generateResamplingActions();
     }
     
+    @Override
+    public BayesianNetworkSampleProducer cloneWithNewRandomObject() {
+        return new BayesianNetworkMCMCSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
+    }
+    
     private void generateResamplingActions() {
         for(Variable varToResample : this.sampledVars) {
             if(!Toolkit.arrayContains(this.EVars, varToResample)) {
