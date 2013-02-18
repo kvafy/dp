@@ -74,7 +74,7 @@ public class Factor implements Iterable<int[]> {
         return this.values.length == cardinalityByScope;
     }
     
-    /** Iterate over all possible assignemnts to variables in scope of this factor. */
+    /** Iterate over all possible assignments to variables in scope of this factor. */
     @Override
     public Iterator<int[]> iterator() {
         return new AssignmentIterator(this.scope);

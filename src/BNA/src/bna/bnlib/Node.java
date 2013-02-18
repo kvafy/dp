@@ -39,6 +39,10 @@ public class Node {
         return this.parents.size();
     }
     
+    public int getChildrenCount() {
+        return this.children.size();
+    }
+    
     public Variable[] getParentVariables() {
         Variable[] parentsArray = new Variable[this.parents.size()];
         for(int i = 0 ; i < this.parents.size() ; i++)
@@ -74,14 +78,7 @@ public class Node {
             probabilities[i] = this.factor.getProbability(assignment);
         }
         // sample
-        double rnd = random.nextDouble();
-        double probabilitiesScan = 0;
-        for(int i = 0 ; i < probabilities.length ; i++) {
-            probabilitiesScan += probabilities[i];
-            if(rnd <= probabilitiesScan)
-                return i;
-        }
-        throw new BayesianNetworkRuntimeException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
+        return Toolkit.randomIndex(probabilities, 1.0, random);
     }
     
     public void addParent(Node parent) {

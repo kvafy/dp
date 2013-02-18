@@ -107,8 +107,7 @@ public class BayesianNetwork {
                 return bn;
             }
             // read unsuccesfull => try another reader
-            catch(BayesianNetworkException bnex) {} 
-            catch(BayesianNetworkRuntimeException bnrex) {}
+            catch(BayesianNetworkException | BayesianNetworkRuntimeException bnex) {}
         }
         throw new BayesianNetworkException("Unable to read file \"" + filename + "\" (unknown format or corrupted file).");
     }
@@ -117,11 +116,38 @@ public class BayesianNetwork {
         return this.getNode(variableName).getVariable();
     }
     
+    public Variable[] getVariableParents(Variable variable) {
+        return this.getNode(variable).getParentVariables();
+    }
+    
+    public Variable[] getVariableChildren(Variable variable) {
+        return this.getNode(variable).getChildVariables();
+    }
+    
+    public int getVariableParentsCount(Variable variable) {
+        return this.getNode(variable).getParentCount();
+    }
+    
+    public int getVariableChildrenCount(Variable variable) {
+        return this.getNode(variable).getChildrenCount();
+    }
+    
+    public Variable[] getVariableMarkovBlanket(Variable variable) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
     public Node getNode(String variableName) {
         for(Node n : this.nodes)
             if(n.getVariable().getName().equals(variableName))
                 return n;
         throw new BayesianNetworkRuntimeException("Node with variable \"" + variableName + "\" is not in the network.");
+    }
+    
+    public Node getNode(Variable variable) {
+        for(Node n : this.nodes)
+            if(n.getVariable().equals(variable))
+                return n;
+        throw new BayesianNetworkRuntimeException("Node with variable \"" + variable.getName() + "\" is not in the network.");
     }
     
     /** Is there a node with variable v? */

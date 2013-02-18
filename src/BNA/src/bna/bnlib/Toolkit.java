@@ -10,11 +10,22 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Random;
 
 /**
  *
  */
 public class Toolkit {
+    /** Maximal difference of two double values that are considered equal. */
+    public static final double DOUBLE_EPS = 1e-4;
+    
+    private static Random rand = new Random();
+    
+    
+    public static boolean doubleEquals(double a, double b) {
+        return Math.abs(a - b) <= Toolkit.DOUBLE_EPS;
+    }
+    
     public static <T> boolean unique(T[] array) {
         HashSet<T> set = new HashSet<>();
         for(T obj : array)
@@ -99,5 +110,37 @@ public class Toolkit {
             if(array[i] == obj)
                 return i;
         return -1;
+    }
+    
+    /**
+     * Return a valid random index to array uniformDistribution according to
+     * uniform distribution defined by array uniformDistribution containing
+     * values for respective indices (higher value on index i means higher
+     * probability of returning i). Sum of the uniformDistribution array is sum.
+     * 
+     * @param uniformDistribution Array whose values define probabilities of
+     *                            returning respective indices.
+     * @param sum Sum of all values in the uniformDistribution array (this
+     *            parameter is needed only to speed up the computation).
+     * @param rand Random generator to be used.
+     * @return Valid random index to array uniformDistribution according
+     *         to uniform distribution defined by uniformDistribution values.
+     */
+    public static int randomIndex(double[] uniformDistribution, double sum, Random rand) {
+        boolean divideBySum = !Toolkit.doubleEquals(sum, 1.0);
+        double rnd = rand.nextDouble();
+        double probabilitiesScan = 0;
+        for(int i = 0 ; i < uniformDistribution.length ; i++) {
+            double probI = divideBySum ? uniformDistribution[i] / sum : uniformDistribution[i];
+            probabilitiesScan += probI;
+            if(rnd <= probabilitiesScan)
+                return i;
+        }
+        if(Toolkit.doubleEquals(1.0, probabilitiesScan)) {
+            // we are within the epsilon tolerance
+            return uniformDistribution.length - 1;
+        }
+        // if the uniformDistribution are normalized, it shouldn't come to this
+        throw new BayesianNetworkRuntimeException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
     }
 }

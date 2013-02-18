@@ -14,25 +14,48 @@ public class BNA {
     public static void main(String[] args) {
         try {
             // load BN from file
+            System.out.println("Loading a network from file...");
             BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            System.out.println("");
             
             
+            
+            final int SAMPLES_COUNT = 100000;
             // weighted sampling P(RAIN | WETGRASS = TRUE)
             // need 1) BayesianNetworkWeightedSampler
             //      2) SamplingController
+            System.out.println("Weighted sampling...");
             Variable[] X = {bn.getVariable("RAIN")};
             Variable[] Y = {};
             Variable[] E = {bn.getVariable("WETGRASS")};
             int[] e = {1};
-            BayesianNetworkSampler sampler = new BayesianNetworkWeightedSampler(bn, X, Y, E, e);
-            SamplingController samplingController = new SamplingController(100000);
+            BayesianNetworkSampler weightedSampler = new BayesianNetworkWeightedSampler(bn, X, Y, E, e);
+            SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT);
             
-            sampler.sample(samplingController);
+            weightedSampler.sample(weightedSamplingController);
             
-            Factor samples = sampler.getSamplesCounterNormalized();
+            Factor weightedSamples = weightedSampler.getSamplesCounterNormalized();
             // write out
             System.out.println("sampleCounter:");
-            System.out.println(samples.toString());
+            System.out.println(weightedSamples.toString());
+            System.out.println("");
+            
+            
+            
+            // MCMC sampling P(RAIN | WETGRASS = TRUE)
+            // need 1) BayesianNetworkWeightedSampler
+            //      2) SamplingController
+            System.out.println("MCMC sampling...");
+            BayesianNetworkSampler mcmcSampler = new BayesianNetworkMCMCSampler(bn, X, Y, E, e);
+            SamplingController mcmcSamplingController = new SamplingController(SAMPLES_COUNT);
+            
+            mcmcSampler.sample(mcmcSamplingController);
+            
+            Factor mcmcSamples = mcmcSampler.getSamplesCounterNormalized();
+            // write out
+            System.out.println("sampleCounter:");
+            System.out.println(mcmcSamples.toString());
+            System.out.println("");
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();
