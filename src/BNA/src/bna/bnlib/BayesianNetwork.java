@@ -12,14 +12,12 @@ import java.util.ArrayList;
  */
 public class BayesianNetwork {
     private Node[] nodes;
-    private boolean validated;      // the network has to be validated before first use
     
     
     public BayesianNetwork(Variable[] variables) {
         this.nodes = new Node[variables.length];
         for(int i = 0 ; i < variables.length ; i++)
             this.nodes[i] = new Node(variables[i]);
-        this.validated = false;
     }
     
     
@@ -66,7 +64,6 @@ public class BayesianNetwork {
         this.validateAcyclicity();
         this.validateVariableUniqueness();
         this.validateFactors();
-        this.validated = true;
     }
     
     private void validateAcyclicity() throws BayesianNetworkException {
@@ -106,9 +103,12 @@ public class BayesianNetwork {
         for(BayesianNetworkFileReader reader : readers) {
             try {
                 BayesianNetwork bn = reader.load();
+                bn.validate();
                 return bn;
             }
-            catch(BayesianNetworkException bnex) {} // read unsuccesfull, try another reader
+            // read unsuccesfull => try another reader
+            catch(BayesianNetworkException bnex) {} 
+            catch(BayesianNetworkRuntimeException bnrex) {}
         }
         throw new BayesianNetworkException("Unable to read file \"" + filename + "\" (unknown format or corrupted file).");
     }

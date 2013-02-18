@@ -35,8 +35,6 @@ public abstract class BayesianNetworkFileReader {
             Double[] probVector = probabilities.get(var);
             bn.setCPT(var, probVector);
         }
-        // 5) validate the whole network
-        bn.validate();
         
         return bn;
     }

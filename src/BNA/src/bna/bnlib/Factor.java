@@ -116,7 +116,7 @@ public class Factor implements Iterable<int[]> {
             this.toString_appendNTimes(sb, "=", columnWidths[i] + 2); // column one-space padding on both sides
         }
         this.toString_appendNTimes(sb, "=", TO_STRING_COLUMN_SEPARATOR.length());
-        this.toString_appendNTimes(sb, "=", columnWidths[this.scope.length]);
+        this.toString_appendNTimes(sb, "=", columnWidths[this.scope.length] + 2);
     }
     
     private void toString_appendNTimes(StringBuilder sb, String s, int count) {

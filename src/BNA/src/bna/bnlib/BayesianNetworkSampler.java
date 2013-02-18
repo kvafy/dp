@@ -6,6 +6,7 @@ package bna.bnlib;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
 
 /**
  * Generate saples for P(X | Y, E = e).
@@ -14,12 +15,13 @@ import java.util.LinkedList;
  */
 public abstract class BayesianNetworkSampler {
     protected BayesianNetwork bn;
-    private Variable[] XVars, YVars;
-    private Variable[] XYVars;     // XVars union YVars
-    protected Variable[] evidenceVars; // E
-    protected int[] evidenceValues;    // which values should "E" variables have
+    protected Variable[] XVars, YVars;
+    protected Variable[] XYVars;     // XVars union YVars
+    protected Variable[] EVars; // evidence variables
+    protected int[] EVals;      // concrete values of evidence variables
     protected Variable[] sampledVars;  // defines all variables that need to be sampled
                                        // and the sampling order
+    protected Random rand = new Random();;
     // sampling statistics
     private AssignmentIndexMapper sampleMapper; // mapping of assignment XYVars to index in sampleCounter
     private double[] sampleCounter;             // for all instantiations of X,Y (ie. of XYVars)
@@ -36,8 +38,8 @@ public abstract class BayesianNetworkSampler {
         this.XVars = X;
         this.YVars = Y;
         this.XYVars = XY;
-        this.evidenceVars = E;
-        this.evidenceValues = e;
+        this.EVars = E;
+        this.EVals = e;
         // initialize sampleCounter
         this.sampleMapper = new AssignmentIndexMapper(this.XYVars);
         this.sampleCounter = new double[Toolkit.cardinality(XY)];
@@ -48,12 +50,13 @@ public abstract class BayesianNetworkSampler {
     }
     
     /**
-     * Sampling order must be topological order. Also we can optimize and
-     * not to sample variables such that they are not in (X union Y union E)
-     * and none of their descendants is in (X union Y union E).
+     * Sampling order must primarily be topological order.
+     * Also we can optimize and not to produceSample variables such that they
+     * are not in (X union Y union E) and also none of their descendants
+     * is in (X union Y union E).
      */
     private void determineSamplingOrder() {
-        Variable[] XYE = Toolkit.union(this.XYVars, this.evidenceVars);
+        Variable[] XYE = Toolkit.union(this.XYVars, this.EVars);
         Variable[] topsortedVariables = this.bn.topologicalSort();
         LinkedList<Variable> mustSampleVariables = new LinkedList<>();
         // optimization: omit leaf variables not in (X union Y union E)
@@ -73,7 +76,7 @@ public abstract class BayesianNetworkSampler {
         System.out.println(String.format("debug: #of variables really sampled is %d", this.sampledVars.length));
     }
     
-    /** Record a sample with given weight. */
+    /** Record a sampleNumber with given weight. */
     private void registerSample(int[] sampleVarsValues, double sampleWeight) {
         int assignmentIndex = this.sampleMapper.assignmentToIndex(sampleVarsValues);
         this.sampleCounter[assignmentIndex] += sampleWeight;
@@ -81,19 +84,18 @@ public abstract class BayesianNetworkSampler {
     
     /** Perform sampling according to given controller. */
     public void sample(SamplingController controller) {
-        //Variable[] allVarsSorted = this.bn.topologicalSort();
-        VariableSubsetMapper allVarsToSampleVarsMapper = new VariableSubsetMapper(this.sampledVars, this.XYVars);
+        VariableSubsetMapper sampledVarsToXYVarsMapper = new VariableSubsetMapper(this.sampledVars, this.XYVars);
         
         int[] sampledVarsValues = new int[this.sampledVars.length]; // to this array variables are sampled
         int[] XYVarsValues = new int[this.XYVars.length];
         
-        int sample = 0;
+        int sampleNumber = 0;
         this.initializeSample(sampledVarsValues);
-        while(!controller.stopFlag() && sample < controller.maxSamples()) {
-            double sampleWeight = this.sample(sampledVarsValues);
-            allVarsToSampleVarsMapper.map(sampledVarsValues, XYVarsValues);
+        while(!controller.stopFlag() && sampleNumber < controller.maxSamples()) {
+            double sampleWeight = this.produceSample(sampledVarsValues);
+            sampledVarsToXYVarsMapper.map(sampledVarsValues, XYVarsValues);
             this.registerSample(XYVarsValues, sampleWeight);
-            sample++;
+            sampleNumber++;
         }
     }
     
@@ -112,7 +114,7 @@ public abstract class BayesianNetworkSampler {
     }
     
     
-    // Template method for weighted sampling / MCMC
+    // Template method pattern for weighted sampling / MCMC
     
     protected abstract void initializeSample(int[] sampledVarsValues);
     
@@ -122,5 +124,5 @@ public abstract class BayesianNetworkSampler {
      * @param allVarsValues
      * @return 
      */
-    protected abstract double sample(int[] sampledVarsValues);
+    protected abstract double produceSample(int[] sampledVarsValues);
 }
