@@ -37,11 +37,13 @@
 \usepackage{subcaption}
 \newtheorem{math_def}{Definition}[chapter] % 3. parametr zajisti cislovani "<sekce>.<číslo definice>"
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
+\newcommand{\srccode}[1]{{\tt #1}}         % fragment zdrojaku v textu
+\newcommand{\vars}[1]{{\bold{#1}}}         % matematicke vyrazy - mnozina promennych
+\newcommand{\ignore}[1]{}                  % komentar v radku
 \newcommand{\todo}[1]{{\color{red}TODO: #1}}
 \newcommand{\uncertain}[1]{{\color{magenta} #1}}
 \newcommand{\note}[1]{{\color{green} #1}}
-\newcommand{\vars}[1]{{\mathbf{#1}}} % matematicke vyrazy - mnozina
-\newcommand{\ignore}[1]{} % komentar v radku
+
 % SP komentar co se hodi zohlednit ve finalni diplomce
 
 
@@ -482,22 +484,22 @@ The likelihood weighting method presented earlier doesn't account well for evide
 
 To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is a minimal set of variables such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket is defined as follows:
 \begin{equation*}
-MB(X) = Parents(X) \cup Children(X) \cup \bigcup_{C \in Children(X)} Parents(C)
+MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! Parents(C)
 \end{equation*}
 
 \begin{center}
 \begin{figure}[h]
     \begin{center}
-    \includegraphics[scale=0.45]{fig/bn-markov_blanket}
+    \includegraphics[scale=0.4]{fig/bn-markov_blanket}
     \end{center}
-    \caption{Markov blanket $MB(X)$ of variable $X$.}
+    \caption{Markov blanket $MB(X)$ of variable $X$ consists of all variables in this figure except $X$.}
     \label{fig:bn-markov-blanket}
 \end{figure}
 \end{center}
 
 The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from the current distribution $P(Y \mid mb(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(Y \mid mb(Y))$ needed for resampling of variable $Y$ can be obtained by computing $P(y \mid mb(Y))$ for every $y$ as follows:
 \begin{equation*}
-    P(y \mid mb(Y)) = \alpha \cdot P(y \mid parents(Y)) \prod_{i} P(c_i \mid parents(C_i))
+    P(y \mid mb(Y)) = \alpha \cdot P(y \mid parents(Y)) \!\!\!\!\!\!\!\! \prod_{C_i \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! P(c_i \mid parents(C_i))
 \end{equation*}
 where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of respective variables in the current sample.
 
@@ -789,12 +791,46 @@ This chapter will present the program realization of this thesis. I will describ
 	\item Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.
 	\item The overall design of the resulting application, a class diagram and description of single classes, their dependencies and responsibilities.
 \end{itemize}
-Extent of this chapter is expected to be around 10 pages.
+\todo{Extent of this chapter is expected to be around 10 pages.}
+
+
+
+\section{Data structures}
+\todo{\srccode{Factor, Node, BayesianNetwork} etc.}
 
 
 
 
 
+
+
+
+\section{Auxiliary objects}
+\todo{Toolkit, the two mappers}
+
+
+
+
+
+
+
+\section{Sampling}
+\todo{Weighted sampling can prune the leaf nodes not in $X \cup Y \cup E$ and none of their descendants in this set $\Rightarrow$ faster computation}
+
+\todo{MCMC resampling of variable $X$: the distribution $P(X \mid mb(X)$ is computed only by products of $P(x) P(children(X))$ instead of the whole Markov blanket}
+
+
+\subsection{Multithreaded sampling}
+\todo{\srccode{java.util.Random} cannot be shared among threads because it (1)~degrades computation with $n$ threads to virtually running the sampling $n$-times in a single thread and (2)~\srccode{Random} doesn't appear to be thread safe as it leads to invalid results when shared among threads (synchronized implementation of \srccode{Radnom} was proved to solve this issue)}
+
+
+
+
+
+
+
+\section{Structure learning}
+\todo{Could use Warshall algorithm to determine which edges can be added/deleted/reversed without the need to try such modification and consequently check for acyclicity}
 
 
 
