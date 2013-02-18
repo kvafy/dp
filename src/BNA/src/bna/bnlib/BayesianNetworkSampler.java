@@ -1,125 +1,13 @@
 // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
 // Author:  David Chaloupka (xchalo09)
-// Created: 2013/02/08
+// Created: 2013/02/18
 
 package bna.bnlib;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Random;
-
 /**
- * Generate saples for P(X | Y, E = e).
- * This is a general sampler using the template method design pattern; usable
- * for weighted sampling as well as for MCMC.
+ * The most general sampler of a BN.
  */
-public abstract class BayesianNetworkSampler {
-    protected BayesianNetwork bn;
-    protected Variable[] XVars, YVars;
-    protected Variable[] XYVars;     // XVars union YVars
-    protected Variable[] EVars; // evidence variables
-    protected int[] EVals;      // concrete values of evidence variables
-    protected Variable[] sampledVars;  // defines all variables for that we need
-                                       // to keep track of their current assignment
-                                       // and the sampling order of these variables
-    protected Random rand = new Random();;
-    // sampling statistics
-    private AssignmentIndexMapper sampleMapper; // mapping of assignment XYVars to index in sampleCounter
-    private double[] sampleCounter;             // for all instantiations of X,Y (ie. of XYVars)
-    
-    public BayesianNetworkSampler(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
-        Variable[] allVars = bn.getVariables();
-        Variable[] XY = Toolkit.union(X, Y);
-        // validate inputs
-        if(!Toolkit.areDisjoint(X, Y) || !Toolkit.areDisjoint(XY, E)
-                || !Toolkit.isSubset(allVars, XY) || !Toolkit.isSubset(allVars, E))
-            throw new BayesianNetworkRuntimeException("Invalid variables specified.");
-        
-        this.bn = bn;
-        this.XVars = X;
-        this.YVars = Y;
-        this.XYVars = XY;
-        this.EVars = E;
-        this.EVals = e;
-        // initialize sampleCounter
-        this.sampleMapper = new AssignmentIndexMapper(this.XYVars);
-        this.sampleCounter = new double[Toolkit.cardinality(XY)];
-        for(int i = 0 ; i < this.sampleCounter.length ; i++)
-            this.sampleCounter[i] = 0.0;
-        
-        this.determineSamplingOrder();
-    }
-    
-    /**
-     * Sampling order defines list of variables that need to be sampled.
-     * The sampling order primarily has be topological order. Other criteria
-     * are method-specific.
-     */
-    private void determineSamplingOrder() {
-        Variable[] topsortedVariables = this.bn.topologicalSort();
-        // optimization: certain sampling methods may allow for certain variables
-        //               to be ommited in the sampling process (as if they
-        //               we not present in the BN)
-        Variable[] mustSampleVariables = this.filterVariablesToSample(topsortedVariables);
-        this.sampledVars = mustSampleVariables;
-    }
-    
-    /** Record a sampleNumber with given weight. */
-    private void registerSample(int[] sampleVarsValues, double sampleWeight) {
-        int assignmentIndex = this.sampleMapper.assignmentToIndex(sampleVarsValues);
-        this.sampleCounter[assignmentIndex] += sampleWeight;
-    }
-    
-    /** Perform sampling according to given controller. */
-    public void sample(SamplingController controller) {
-        VariableSubsetMapper sampledVarsToXYVarsMapper = new VariableSubsetMapper(this.sampledVars, this.XYVars);
-        
-        int[] sampledVarsValues = new int[this.sampledVars.length]; // to this array variables are sampled
-        int[] XYVarsValues = new int[this.XYVars.length];
-        
-        int sampleNumber = 0;
-        this.initializeSample(sampledVarsValues);
-        while(!controller.stopFlag() && sampleNumber < controller.maxSamples()) {
-            double sampleWeight = this.produceSample(sampledVarsValues);
-            sampledVarsToXYVarsMapper.map(sampledVarsValues, XYVarsValues);
-            this.registerSample(XYVarsValues, sampleWeight);
-            sampleNumber++;
-        }
-    }
-    
-    /**
-     * Get the samples counter for instantiations of X,Y variables (just raw counters).
-     */
-    public Factor getSamplesCounter() {
-        return new Factor(this.XYVars, sampleCounter);
-    }
-    
-    /**
-     * Get the samples counter for instantiations of X,Y variables (normalized for X variables).
-     */
-    public Factor getSamplesCounterNormalized() {
-        return this.getSamplesCounter().normalizeByFirstNVariables(this.XVars.length);
-    }
-    
-    
-    // Template method pattern for weighted sampling / MCMC
-    
-    /**
-     * Determine variables that really need to be sampled (this is default implementation).
-     * The method must preserve relative order of given variables.
-     */
-    protected Variable[] filterVariablesToSample(Variable[] unfilteredSampledVariables) {
-        Variable[] mustSampleVariables = unfilteredSampledVariables;
-        return mustSampleVariables;
-    }
-    
-    protected abstract void initializeSample(int[] sampledVarsValues);
-    
-    /**
-     * Read values of currently assigned variables, write the one sampled and
-     * and return weight change.
-     * @param allVarsValues
-     * @return 
-     */
-    protected abstract double produceSample(int[] sampledVarsValues);
+public interface BayesianNetworkSampler {
+
+    public void sample(SamplingController controller);
 }

@@ -74,6 +74,22 @@ public class Factor implements Iterable<int[]> {
         return this.values.length == cardinalityByScope;
     }
     
+    public static Factor sumFactors(Factor[] factors) {
+        if(factors == null || factors.length == 0)
+            throw new BayesianNetworkRuntimeException("The factors array must be non-empty.");
+        
+        Factor factorsRepresentant = factors[0];
+        double[] valuesSumVector = new double[factorsRepresentant.getCardinality()];
+        for(int[] assignment : factorsRepresentant) {
+            double sumForAssignment = 0;
+            for(Factor f : factors)
+                sumForAssignment += f.getProbability(assignment);
+            int assignmentIndex = factorsRepresentant.mapper.assignmentToIndex(assignment);
+            valuesSumVector[assignmentIndex] = sumForAssignment;
+        }
+        return new Factor(factorsRepresentant.getScope(), valuesSumVector);
+    }
+    
     /** Iterate over all possible assignments to variables in scope of this factor. */
     @Override
     public Iterator<int[]> iterator() {

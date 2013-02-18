@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 
+
+
+
 /**
  * Concrete implementation of sampler for weighted sampling.
  * The sampler works as follows: We compute a topological sort of all variables
@@ -27,10 +30,10 @@ import java.util.Random;
  *      the variable X. Put the sampled value to current produceSample assignment
  *      sampledVarsValues.
  */
-public class BayesianNetworkWeightedSampler extends BayesianNetworkSampler {
+public class BayesianNetworkWeightedSampleProducer extends BayesianNetworkSampleProducer {
     private WeightedSamplingSampleAction[] samplingActions;
 
-    public BayesianNetworkWeightedSampler(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    public BayesianNetworkWeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         // generate sampling actions for all variables that need to be sampled
         this.samplingActions = new WeightedSamplingSampleAction[this.sampledVars.length];

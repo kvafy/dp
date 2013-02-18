@@ -7,6 +7,9 @@ package bna.bnlib;
 import java.util.ArrayList;
 import java.util.Random;
 
+
+
+
 /**
  * Concrete implementation of sampler for Markov chain Monte-Carlo sampling.
  * Formally, in order to resample variable X given current sample (ie. assigment)
@@ -16,10 +19,10 @@ import java.util.Random;
  * the rest of the MB(X) doesn't need to be accounted for when computing
  * the distribution P(X | MB(X) = a).
  */
-public class BayesianNetworkMCMCSampler extends BayesianNetworkSampler {
+public class BayesianNetworkMCMCSampleProducer extends BayesianNetworkSampleProducer {
     private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<>();
     
-    public BayesianNetworkMCMCSampler(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    public BayesianNetworkMCMCSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         this.generateResamplingActions();
     }
@@ -38,7 +41,7 @@ public class BayesianNetworkMCMCSampler extends BayesianNetworkSampler {
     /** Initializes the sample by a single weighted sampling pass. */
     @Override
     protected void initializeSample(int[] sampledVarsValues) {
-        BayesianNetworkWeightedSampler weightedSampler = new BayesianNetworkWeightedSampler(
+        BayesianNetworkWeightedSampleProducer weightedSampler = new BayesianNetworkWeightedSampleProducer(
                 this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
         // the variable values are preserved after the following call
         weightedSampler.produceSample(sampledVarsValues);
@@ -104,7 +107,7 @@ class MCMCResamplingAction {
         //         prob[i] *= P(v | parents(varToResample))
         // resample resampledVar by prob vector and put the resampled value to sampledVarsValues
         
-        double probSum = 0;
+        double probSum = 0; // keep track of probabilities sum for sampling of the final distribution
         
         for(int i = 0 ; i < this.resampledVarAssignmentProb.length ; i++) {
             // ~ for each possible assignmnet i of variable resampledVar
