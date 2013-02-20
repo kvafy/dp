@@ -18,8 +18,6 @@ public class Toolkit {
     /** Maximal difference of two double values that are considered equal. */
     public static final double DOUBLE_EPS = 1e-4;
     
-    private static Random rand = new Random();
-    
     
     public static boolean doubleEquals(double a, double b) {
         return Math.abs(a - b) <= Toolkit.DOUBLE_EPS;
@@ -128,6 +126,7 @@ public class Toolkit {
     public static int randomIndex(double[] uniformDistribution, double sum, Random rand) {
         boolean divideBySum = !Toolkit.doubleEquals(sum, 1.0);
         double rnd = rand.nextDouble();
+        //double rnd =java.util.concurrent.ThreadLocalRandom.current().nextDouble();
         double probabilitiesScan = 0;
         for(int i = 0 ; i < uniformDistribution.length ; i++) {
             double probI = divideBySum ? uniformDistribution[i] / sum : uniformDistribution[i];

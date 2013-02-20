@@ -32,14 +32,14 @@ public class QuerySamplerMultithreaded implements Sampler {
     @Override
     public void sample(SamplingController controller) {
         // initialize threads
-        final SamplingController shareController = controller;
+        final SamplingController sharedController = controller;
         SamplingThread[] threadpool = new SamplingThread[this.threadcount];
         for(int i = 0 ; i < this.threadcount ; i++) {
             SamplingThread threadI = new SamplingThread() {
                 @Override
                 public void run() {
                     QuerySampler querySampler = new QuerySampler(sampleProducer.cloneWithNewRandomObject());
-                    querySampler.sample(shareController);
+                    querySampler.sample(sharedController);
                     this.sampleCounter = querySampler.getSamplesCounter(); // store samples of this thread
                 }
             };

@@ -73,7 +73,7 @@ public class Node {
         double[] probabilities = new double[this.variable.getCardinality()];
         int[] assignment = new int[1 + assignmentOfParents.length];
         System.arraycopy(assignmentOfParents, 0, assignment, 1, assignmentOfParents.length);
-        // read probability of all possible assignments of first variable given others
+        // read probability of all possible assignments of the first variable in the factor given others
         for(int i = 0 ; i < this.variable.getCardinality() ; i++) {
             assignment[0] = i;
             probabilities[i] = this.factor.getProbability(assignment);
