@@ -60,12 +60,13 @@ public class MCMCSampleProducer extends SampleProducer {
 
 
 class MCMCResamplingAction {
-    // cached values for faster computation
     // vector of probabilities P(resampledVar = 0,1,2,... | mb(resampledVar))
-    private double[] resampledVarAssignmentProb;
+    //private double[] resampledVarAssignmentProb;
     // index of the value, which is resampled by this action, in the sampledVarsValues array
     // passed to the resample(...) method
     private int resampledVarIndexInSampledVars;
+    // variable to be resampled by this MCMC action
+    private Variable resampledVar;
     // variables from which are computed probabilities in resampledVarAssignmentProb
     // (resampledVar and its children) as product of probability of each variable
     // having the concrete value in current sample
@@ -75,7 +76,8 @@ class MCMCResamplingAction {
     
     
     public MCMCResamplingAction(BayesianNetwork bn, Variable[] sampledVars, Variable resampledVar) {
-        this.resampledVarAssignmentProb = new double[resampledVar.getCardinality()];
+        this.resampledVar = resampledVar;
+        //this.resampledVarAssignmentProb = new double[resampledVar.getCardinality()];
         this.resampledVarIndexInSampledVars = Toolkit.indexOf(sampledVars, resampledVar);
         // nodes (variables) needed to compute the distribution P(resampledVar | currentSample)
         this.significantNodes = new Node[1 + bn.getVariableChildrenCount(resampledVar)];
@@ -103,22 +105,25 @@ class MCMCResamplingAction {
         //         prob[i] *= P(v | parents(varToResample))
         // resample resampledVar by prob vector and put the resampled value to sampledVarsValues
         
-        double probSum = 0; // keep track of probabilities sum for sampling of the final distribution
+        // keep track of probabilities sum for quicker sampling of the final distribution
+        double probSum = 0;
+        // vector of probabilities P(resampledVar = 0,1,2,... | mb(resampledVar))
+        double[] resampledVarAssignmentProb = new double[resampledVar.getCardinality()];
         
-        for(int i = 0 ; i < this.resampledVarAssignmentProb.length ; i++) {
+        for(int i = 0 ; i < resampledVarAssignmentProb.length ; i++) {
             // ~ for each possible assignmnet i of variable resampledVar
             sampledVarsValues[this.resampledVarIndexInSampledVars] = i;
-            this.resampledVarAssignmentProb[i] = 1.0;
+            resampledVarAssignmentProb[i] = 1.0;
             for(int j = 0 ; j < this.significantNodes.length ; j++) {
                 Node nodeJ = this.significantNodes[j];
                 VariableSubsetMapper sampledVarsTovarJAndParentsMapper = this.sampledVarsToSignificantVarAndParentsMappers[j];
                 int[] probVarJAndParentsAssignment = sampledVarsTovarJAndParentsMapper.map(sampledVarsValues);
-                this.resampledVarAssignmentProb[i] *= nodeJ.getProbability(probVarJAndParentsAssignment);
+                resampledVarAssignmentProb[i] *= nodeJ.getProbability(probVarJAndParentsAssignment);
             }
-            probSum += this.resampledVarAssignmentProb[i];
+            probSum += resampledVarAssignmentProb[i];
         }
         // finally resample the variable
-        int resampledAssignment = Toolkit.randomIndex(this.resampledVarAssignmentProb, probSum, ThreadLocalRandom.current());
+        int resampledAssignment = Toolkit.randomIndex(resampledVarAssignmentProb, probSum, ThreadLocalRandom.current());
         sampledVarsValues[this.resampledVarIndexInSampledVars] = resampledAssignment;
     }
 }
