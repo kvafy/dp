@@ -9,26 +9,29 @@ import bna.bnlib.*;
 
 /**
  * Multithreaded implementation of QuerySampler.
- * In order for the sampling to be efficient, we need to create a sample producer
- * for each thread, so that they will not share their Random objects. This is
- * imperative:
- *    (1) For performance (aproximately 3x faster than with a shared Random object)
- *    (2) For result validity (java.util.Random doesn't appear to be threadsafe)
+ * In order for the sampling to be efficient and correct, we need to have
+ * a Random object for each thread separately. That is easily accomplished
+ * by using java.util.concurrent.ThreadLocalRandom.
  */
 public class QuerySamplerMultithreaded implements Sampler {
-    private SampleProducer sampleProducer;
+    private SampleProducer sharedSampleProducer;
     private int threadcount;
     private Factor sampleCounter;
     
     
-    public QuerySamplerMultithreaded(SampleProducer sampleProducer, int threadcount) {
+    public QuerySamplerMultithreaded(SampleProducer sharedSampleProducer, int threadcount) {
         if(threadcount <= 0)
             throw new BayesianNetworkRuntimeException("Number of threads must be non-negative.");
         
-        this.sampleProducer = sampleProducer;
+        this.sharedSampleProducer = sharedSampleProducer;
         this.threadcount = threadcount;
     }
 
+    /** A sampling thread which stores results of sampling in an instance variable. */
+    class SamplingThread extends Thread {
+        public Factor sampleCounter;
+    }
+    
     @Override
     public void sample(SamplingController controller) {
         // initialize threads
@@ -38,7 +41,7 @@ public class QuerySamplerMultithreaded implements Sampler {
             SamplingThread threadI = new SamplingThread() {
                 @Override
                 public void run() {
-                    QuerySampler querySampler = new QuerySampler(sampleProducer.cloneWithNewRandomObject());
+                    QuerySampler querySampler = new QuerySampler(sharedSampleProducer);
                     querySampler.sample(sharedController);
                     this.sampleCounter = querySampler.getSamplesCounter(); // store samples of this thread
                 }
@@ -80,13 +83,6 @@ public class QuerySamplerMultithreaded implements Sampler {
      * Get the samples counter for instantiations of X,Y variables (normalized for X variables).
      */
     public Factor getSamplesCounterNormalized() {
-        return this.sampleCounter.normalizeByFirstNVariables(this.sampleProducer.XVars.length);
+        return this.sampleCounter.normalizeByFirstNVariables(this.sharedSampleProducer.XVars.length);
     }
-}
-
-
-
-/** A thread which stores results of sampling in an instance variable. */
-class SamplingThread extends Thread {
-    public Factor sampleCounter;
 }

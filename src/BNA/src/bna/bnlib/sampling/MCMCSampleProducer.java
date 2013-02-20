@@ -5,8 +5,8 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayList;
-import java.util.Random;
 
 
 /**
@@ -26,17 +26,12 @@ public class MCMCSampleProducer extends SampleProducer {
         this.generateResamplingActions();
     }
     
-    @Override
-    public SampleProducer cloneWithNewRandomObject() {
-        return new MCMCSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
-    }
-    
     private void generateResamplingActions() {
         for(Variable varToResample : this.sampledVars) {
             if(!Toolkit.arrayContains(this.EVars, varToResample)) {
                 // we can resample any variable except evidence variables which
                 // doesn't make sense
-                MCMCResamplingAction action = new MCMCResamplingAction(this.bn, this.rand, this.sampledVars, varToResample);
+                MCMCResamplingAction action = new MCMCResamplingAction(this.bn, this.sampledVars, varToResample);
                 this.resamplingActions.add(action);
             }
         }
@@ -55,7 +50,7 @@ public class MCMCSampleProducer extends SampleProducer {
     @Override
     protected double produceSample(int[] sampledVarsValues) {
         // TODO maybe sequentially instead of at random ??
-        int actionIndex = this.rand.nextInt(this.resamplingActions.size());
+        int actionIndex = ThreadLocalRandom.current().nextInt(this.resamplingActions.size());
         MCMCResamplingAction action = this.resamplingActions.get(actionIndex);
         action.resample(sampledVarsValues);
         return 1.0; // MCMC doesn't use weights for samples
@@ -65,7 +60,6 @@ public class MCMCSampleProducer extends SampleProducer {
 
 
 class MCMCResamplingAction {
-    private Random rand;
     // cached values for faster computation
     // vector of probabilities P(resampledVar = 0,1,2,... | mb(resampledVar))
     private double[] resampledVarAssignmentProb;
@@ -80,9 +74,7 @@ class MCMCResamplingAction {
     private VariableSubsetMapper[] sampledVarsToSignificantVarAndParentsMappers;
     
     
-    public MCMCResamplingAction(BayesianNetwork bn, Random rand, Variable[] sampledVars, Variable resampledVar) {
-        this.rand = rand;
-        
+    public MCMCResamplingAction(BayesianNetwork bn, Variable[] sampledVars, Variable resampledVar) {
         this.resampledVarAssignmentProb = new double[resampledVar.getCardinality()];
         this.resampledVarIndexInSampledVars = Toolkit.indexOf(sampledVars, resampledVar);
         // nodes (variables) needed to compute the distribution P(resampledVar | currentSample)
@@ -126,7 +118,7 @@ class MCMCResamplingAction {
             probSum += this.resampledVarAssignmentProb[i];
         }
         // finally resample the variable
-        int resampledAssignment = Toolkit.randomIndex(this.resampledVarAssignmentProb, probSum, this.rand);
+        int resampledAssignment = Toolkit.randomIndex(this.resampledVarAssignmentProb, probSum, ThreadLocalRandom.current());
         sampledVarsValues[this.resampledVarIndexInSampledVars] = resampledAssignment;
     }
 }

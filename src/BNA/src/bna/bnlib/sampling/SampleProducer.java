@@ -5,7 +5,6 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import java.util.Random;
 
 
 /**
@@ -26,7 +25,6 @@ public abstract class SampleProducer {
     protected Variable[] sampledVars;  // defines all variables for that we need
                                        // to keep track of their current assignment
                                        // and the sampling order of these variables
-    protected Random rand = new Random();
     
     public SampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         Variable[] allVars = bn.getVariables();
@@ -45,14 +43,6 @@ public abstract class SampleProducer {
         
         this.determineSamplingOrder();
     }
-    
-    /**
-     * Most of the variables of a sample producer are read-only and created within constructor.
-     * However the radnom generator cannot be effectively shared among multiple
-     * threads, so we implement this method, that clones sample producer
-     * which is guaranteed to have a brand new Radnom object.
-     */
-    public abstract SampleProducer cloneWithNewRandomObject();
     
     /**
      * Sampling order defines list of variables that need to be sampled.

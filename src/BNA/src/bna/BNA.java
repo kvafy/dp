@@ -15,6 +15,7 @@ public class BNA {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        //playing_sampling();
         benchmarkSampling_sequentialVSMultithreaded();
     }
     
@@ -31,8 +32,8 @@ public class BNA {
             
             
             // sampling and its variants
-            final int SAMPLES_COUNT = 10000000;
-            final int THREAD_COUNT = 2;
+            final int SAMPLES_COUNT = 20000000;
+            final int THREAD_COUNT = 3;
             Variable[] X = {bn.getVariable("RAIN")};
             Variable[] Y = {};
             Variable[] E = {bn.getVariable("WETGRASS")};

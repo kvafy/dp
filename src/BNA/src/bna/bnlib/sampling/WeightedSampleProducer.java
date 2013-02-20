@@ -5,9 +5,9 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Random;
 
 
 /**
@@ -51,8 +51,7 @@ public class WeightedSampleProducer extends SampleProducer {
                 actionI = new WeightedSamplingEvidenceSampleAction(varINode,
                                                                    Toolkit.indexOf(this.sampledVars, varI),
                                                                    varIValue,
-                                                                   allVarsToIParentsMapper,
-                                                                   this.rand);
+                                                                   allVarsToIParentsMapper);
             }
             else {
                 // action: produceSample variable by it's parents current assignment
@@ -60,16 +59,10 @@ public class WeightedSampleProducer extends SampleProducer {
                 // - for assignment of parents produceSample value for X
                 actionI = new WeightedSamplingVariableSampleAction(varINode,
                                                                    Toolkit.indexOf(this.sampledVars, varI),
-                                                                   allVarsToIParentsMapper,
-                                                                   this.rand);
+                                                                   allVarsToIParentsMapper);
             }
             this.samplingActions[i] = actionI;
         }
-    }
-    
-    @Override
-    public SampleProducer cloneWithNewRandomObject() {
-        return new WeightedSampleProducer(this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
     }
     
     /**
@@ -123,15 +116,6 @@ public class WeightedSampleProducer extends SampleProducer {
 
 /** The Command design pattern for sampling of all variables (evidence and non-evidence). */
 abstract class WeightedSamplingSampleAction {
-    protected Random rand;
-    
-    public WeightedSamplingSampleAction(Random rand) {
-        this.rand = rand;
-    }
-    
-    public final void setRandomGenerator(Random rand) {
-        this.rand = rand;
-    }
     
     /**
      * Put value of a variable to the current produceSample allVarsValues and return
@@ -154,8 +138,7 @@ class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction 
     private int EIndex;
     private VariableSubsetMapper allVarsToEParentsMapper;
     
-    public WeightedSamplingEvidenceSampleAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEParents, Random rand) {
-        super(rand);
+    public WeightedSamplingEvidenceSampleAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEParents) {
         this.ENode = evidenceNode;
         this.EValue = evidenceVal;
         this.EIndex = evidenceVarIndex;
@@ -185,20 +168,16 @@ class WeightedSamplingVariableSampleAction extends WeightedSamplingSampleAction 
     private int XIndex;
     private VariableSubsetMapper allVarsToXParentsMapper;
     
-    private int[] tmpXParentsAssignment; // to prevent frequent allocation during each produceSample(...)
-    
-    public WeightedSamplingVariableSampleAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents, Random rand) {
-        super(rand);
+    public WeightedSamplingVariableSampleAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents) {
         this.XNode = XNode;
         this.XIndex = XVarIndex;
         this.allVarsToXParentsMapper = allVarsToXParents;
-        this.tmpXParentsAssignment = new int[XNode.getParentCount()];
     }
 
     @Override
     public double sample(int[] sampledVarsValues) {
-        this.allVarsToXParentsMapper.map(sampledVarsValues, this.tmpXParentsAssignment);
-        int XVal = this.XNode.sampleVariable(this.tmpXParentsAssignment, this.rand);
+        int[] XParentsAssignment = this.allVarsToXParentsMapper.map(sampledVarsValues);
+        int XVal = this.XNode.sampleVariable(XParentsAssignment, ThreadLocalRandom.current());
         sampledVarsValues[this.XIndex] = XVal;
         return 1.0; // no weight change
     }
