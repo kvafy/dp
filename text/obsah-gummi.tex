@@ -35,14 +35,16 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{changepage}
 \newtheorem{math_def}{Definition}[chapter] % 3. parametr zajisti cislovani "<sekce>.<číslo definice>"
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
 \newcommand{\srccode}[1]{{\tt #1}}         % fragment zdrojaku v textu
 \newcommand{\vars}[1]{{\bold{#1}}}         % matematicke vyrazy - mnozina promennych
 \newcommand{\ignore}[1]{}                  % komentar v radku
-\newcommand{\todo}[1]{{\color{red}TODO: #1}}
-\newcommand{\uncertain}[1]{{\color{magenta} #1}}
-\newcommand{\note}[1]{{\color{green} #1}}
+\newcommand{\todo}[1]{{\color{red}#1}}
+\newcommand{\uncertain}[1]{{\color{magenta}#1}}
+\newcommand{\note}[1]{{\color{green}#1}}
 
 % SP komentar co se hodi zohlednit ve finalni diplomce
 
@@ -65,26 +67,26 @@
 \fi
 \fi
 
-%Informace o praci/projektu
+% Informace o praci/projektu
 %---------------------------------------------------------------------------
 \projectinfo{
-  %Prace
-  project=DP,            %typ prace BP/SP/DP/DR
-  year=2013,             %rok
-  date=\today,           %datum odevzdani
-  %Nazev prace
-  title.cs={Aplikace Bayesovských sítí},  %nazev prace v cestine
-  title.en={Bayesian Networks Applications}, %nazev prace v anglictine
-  %Autor
-  author={David Chaloupka},   %jmeno prijmeni autora
-  author.title.p=Bc., %titul pred jmenem (nepovinne)
-  %author.title.a=PhD, %titul za jmenem (nepovinne)
-  %Ustav
+  % Prace
+  project=DP,            % typ prace BP/SP/DP/DR
+  year=2013,             % rok
+  date=\today,           % datum odevzdani
+  % Nazev prace
+  title.cs={Aplikace Bayesovských sítí},     % nazev prace v cestine
+  title.en={Bayesian Networks Applications}, % nazev prace v anglictine
+  % Autor
+  author={David Chaloupka},   % jmeno prijmeni autora
+  author.title.p=Bc.,         % titul pred jmenem (nepovinne)
+  %author.title.a=PhD,        % titul za jmenem (nepovinne)
+  % Ustav
   department=UITS, % doplnte prislusnou zkratku: UPSY/UIFS/UITS/UPGM
-  %Skolitel
-  supervisor=František V. Zbořil, %jmeno prijmeni skolitele
-  supervisor.title.p=doc.~Ing.,   %titul pred jmenem (nepovinne)
-  supervisor.title.a={CSc.},    %titul za jmenem (nepovinne)
+  % Skolitel
+  supervisor=František V. Zbořil, % jmeno prijmeni skolitele
+  supervisor.title.p=doc.~Ing.,   % titul pred jmenem (nepovinne)
+  supervisor.title.a={CSc.},      % titul za jmenem (nepovinne)
   %Klicova slova, abstrakty, prohlaseni a podekovani je mozne definovat 
   %bud pomoci nasledujicich parametru nebo pomoci vyhrazenych maker (viz dale)
   %===========================================================================
@@ -463,7 +465,7 @@ Problem is that for a very unlikely event we may not generate a single sample an
 \subsubsection{Rejection sampling}
 Direct sampling presented earlier doesn't allow for any evidence. Rejection sampling could be viewed as a simple extension of direct sampling for computing posterior probability distribution $P(\vars{X} \mid \vars{e})$. The idea is to exclude samples inconsistent with evidence $\vars{e}$ meaning that when an evidence variable is instantiated during the production of a sample, the sample is discarded unless the randomly assigned value corresponds with the observed value. Then $P(\vars{x} \mid \vars{e}) = N_{\vars{x},\vars{e}} / N_{\vars{e}}$. This simple approach bears the disadvantage that if the observed evidence is very unlikely then many samples get discarded and hence a lot of computational time is wasted because rejected samples don't contribute to the final probability distribution estimate. Unfortunately, when considering somewhat uniform distribution, the probability $P(\vars{e})$ decreases exponentially with the number of observed variables (eg. with symptoms of a patient) and by the same rationale the number of samples that are not rejected decreases just as rapidly.
 
-\subsubsection{Likelihood weighting}
+\subsubsection{Likelihood weighting (TODO $P(\vars{X} \mid \todo{\vars{Y}}, \vars{e})$)}
 Rejection sampling described earlier can theoretically be used for answering queries of the form $P(\vars{X} \mid \vars{e})$ but the number of rejected samples may be unbearable in practice. Likelihood weighting method copes with this problem by forcing every sample to be consistent with observed evidence. Then, of course, not every sample is equally likely, so we cannot determine $P(\vars{x} \mid \vars{e})$ by simply dividing number of samples $N_{\vars{x},\vars{e}}$ by $N_\vars{e}$. For each sample $\vars{x},\vars{y},\vars{e}$ we need additional information which is the probability of assigning values $\vars{e}$ to evidence variables given values of their parents in the current sample~\cite[p.~514]{russell_norvig_ed2}. Formally written, weight of a sample $\vars{x},\vars{y},\vars{e}$ is $w_{\vars{x},\vars{y},\vars{e}} = \prod_\vars{E} P(e \mid parents(E)) = \prod_\vars{E} P(e \mid \vars{x,y})$.
 
 The sampling algorithm needs to be changed in the following way. When generating a~new sample, we set weight of the current sample to 1. Then, for a non-evidence variable we proceed as before\,--\,randomly assign a value according to the probability distribution of that variable and according to values assigned to its parents. When we encounter an evidence variable $E_i$, we set it to value $e_i$ according to the evidence $\vars{e}$ and multiply weight of the current sample by $P(e_i \mid parents(E_i))$. The final probability distribution is computed as follows:
@@ -497,9 +499,9 @@ MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C \in Childre
 \end{figure}
 \end{center}
 
-The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $Y$ we resample this variable from the current distribution $P(Y \mid mb(Y))$ producing a new sample with value of variable $Y$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(Y \mid mb(Y))$ needed for resampling of variable $Y$ can be obtained by computing $P(y \mid mb(Y))$ for every $y$ as follows:
+The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $V$ we resample this variable from the current distribution $P(V \mid mb(V))$ producing a new sample with value of variable $V$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(V \mid mb(V))$ needed for resampling of variable $V$ can be obtained by computing $P(v \mid mb(V))$ for every $v$ as follows:
 \begin{equation*}
-    P(y \mid mb(Y)) = \alpha \cdot P(y \mid parents(Y)) \!\!\!\!\!\!\!\! \prod_{C_i \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! P(c_i \mid parents(C_i))
+    P(v \mid mb(V)) = \alpha \cdot P(v \mid parents(V)) \!\!\!\!\!\!\!\! \prod_{C_i \in Children(V)} \!\!\!\!\!\!\!\!\!\!\!\! P(c_i \mid parents(C_i))
 \end{equation*}
 where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of respective variables in the current sample.
 
@@ -791,12 +793,14 @@ This chapter will present the program realization of this thesis. I will describ
 	\item Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.
 	\item The overall design of the resulting application, a class diagram and description of single classes, their dependencies and responsibilities.
 \end{itemize}
-\todo{Extent of this chapter is expected to be around 10 pages.}
+The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will sometimes describe the inter-class dependencies in terms of names of used design patterns as described in~\cite{head_first_design_patterns}.
+
+\todo{Extent of this chapter is expected to be about 10 pages.}
 
 
 
 \section{Data structures}
-\todo{\srccode{Factor, Node, BayesianNetwork} etc.}
+\todo{\srccode{Variable, Factor, Node, BayesianNetwork} etc.}
 
 
 
@@ -815,13 +819,131 @@ This chapter will present the program realization of this thesis. I will describ
 
 
 \section{Sampling}
+Sampling is implemented by classes in the \srccode{bna.bnlib.sampling} package. Basically, there are two parallel hierarchies of objects which will be further described in detail (see also class diagram in \todo{Figure~\ref{todo}}).
+
+One family of objects with common base class \srccode{SampleProducer} aims to provide samples from a general distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ where $\vars{X} \neq \emptyset$. Two sampling approaches are implemented\,--\,weighted sampling (class \srccode{WeightedSampleProducer}) and Markov chain Monte-Carlo (class \srccode{MCMCSampleProducer}).
+
+Concern of the second family of objects, that share common interface \srccode{Sampler}, is what to do with generated samples. We can maintain statistics from a sufficient number of samples and in the end compute an approximation of the real distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ (class \srccode{QuerySampler}); the same task may be carried out in multiple threads at once (class \srccode{QuerySamplerMultithreaded}). Another goal might be to create an artificial dataset by sampling all the variables in a given BN and to write samples obtained to a file (class \srccode{DatasetCreationSampler}). Dataset creation is useful when benchmarking learning algorithms for Bayesian networks\,--\,we already have a BN and we attempt to learn that network again based just on dataset of chosen size, finally we compare the network just learnt with the original one according to some metric.
+
+
+
+\subsection{Weighted sampling}
+
 \todo{Weighted sampling can prune the leaf nodes not in $X \cup Y \cup E$ and none of their descendants in this set $\Rightarrow$ faster computation}
 
+
+\subsection{MCMC sampling}
 \todo{MCMC resampling of variable $X$: the distribution $P(X \mid mb(X)$ is computed only by products of $P(x) P(children(X))$ instead of the whole Markov blanket}
 
 
-\subsection{Multithreaded sampling}
-\todo{\srccode{java.util.Random} cannot be shared among threads because it (1)~degrades computation with $n$ threads to virtually running the sampling $n$-times in a single thread and (2)~\srccode{Random} doesn't appear to be thread safe as it leads to invalid results when shared among threads (synchronized implementation of \srccode{Radnom} was proved to solve this issue)}
+\subsection{Multi-threaded sampling}
+Class \srccode{QuerySamplerMultithreaded} is a multi-threaded variant of class \srccode{QuerySampler} and also aims to compute an approximation of distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ through computing statistical properties of samples obtained from a given BN. We pass to the constructor of \srccode{QuerySamplerMultithreaded} a~\srccode{SampleProducer} object that provides samples on demand and the requested number of threads, the sampler instance creates and executes threads that perform sampling in parallel and finally their results are combined.
+
+Speedup of the multi-threaded variant has been measured on multiple computers with different processors (see Table~\ref{tbl:sampling_multithread_speedup}). On a multi-processor system the speedup is significant, eg. on an 8 core system the speedup is according to measurements virtually 2 for two threads and about 3.8 for four threads.
+
+\begin{table}[htb]
+    \begin{center}
+    \catcode`\-=12
+    \begin{adjustwidth}{-0.85cm}{-0.75cm} % table wider than the text column would not be centered
+    {\small
+    % sprinkler network & weighted sampling
+    \begin{subfigure}[b]{\linewidth}
+        \begin{tabular}{|c|l|r|r|r|r|r|r|}
+            % header
+            \cline{3-8}
+            \multicolumn{2}{c|}{} & \multicolumn{6}{c|}{\textbf{Number of threads}}\\
+            \cline{3-8}
+            \multicolumn{2}{c|}{} & 1 & 2 & 3 & 4 & 6 & 8\\ % #threads
+            % my notebook Samsung 300V
+            \hline
+            \textbf{Intel i5-2450M} & \textbf{Samples/second}
+                & 3.068e6 & 5.564e6 & 6.061e6 & 5.481e6 & 5.537e6 & 5.521e6\\
+            \cline{2-8}
+            \textbf{(2.5 GHz, 2 cores)} & \textbf{Speedup}
+                & 1.00 & 1.81 & 1.98 & 1.79 & 1.80 & 1.80\\
+            % merlin
+            \hline \hline
+            \textbf{2x Opteron 2387} & \textbf{Samples/second}
+                & 2.429e6 & 4.765e6 & 6.911e6 & 9.160e6 & 10.803e6 & 11.672e6\\
+            \cline{2-8}
+            \textbf{(2.8 GHz, 4 cores)} & \textbf{Speedup}
+                & 1.00 & 1.96 & 2.85 & 3.77 & 4.45 & 4.81\\
+            % krok
+            \hline \hline
+            \textbf{Xeon E5-2640} & \textbf{Samples/second}
+                & 1.977e6 & 4.106e6 & 5.867e6 & 7.307e6 & 9.190e6 & 10.739e6\\
+            \cline{2-8}
+            \textbf{(2.5 GHz, 6 cores)} & \textbf{Speedup}
+                & 1.00 & 2.07 & 2.97 & 3.70 & 4.65 & 5.43\\
+            % empty record
+%            \hline \hline
+%            \textbf{CPU id} & \textbf{Samples/second}
+%                & sa1 & sa2 & sa3 & sa4 & sa6 & sa8\\
+%            \cline{2-8}
+%            \textbf{(cores info)} & \textbf{Speedup}
+%                & 1.00 & sp2 & sp3 & sp4 & sp6 & sp8\\
+            % final bottom line
+            \hline
+        \end{tabular}
+        \caption{Weighted sampling of the classical \uv{sprinkler network} for query $P(Rain \mid WetGrass = true)$.}
+    \end{subfigure}
+    
+    \bigskip
+    % ICU network & weighted sampling
+    \begin{subfigure}[b]{\linewidth}
+        \begin{tabular}{|c|l|r|r|r|r|r|r|}
+            % header
+            \cline{3-8}
+            \multicolumn{2}{c|}{} & \multicolumn{6}{c|}{\textbf{Number of threads}}\\
+            \cline{3-8}
+            \multicolumn{2}{c|}{} & 1 & 2 & 3 & 4 & 6 & 8\\ % #threads
+            % my notebook Samsung 300V
+            \hline
+            \textbf{Intel i5-2450M} & \textbf{Samples/second}
+                & 6.807e5 & 10.734e5 & 11.472e5 & 12.447e5 & 12.317e5 & 12.174e5\\
+            \cline{2-8}
+            \textbf{(2.5 GHz, 2 cores)} & \textbf{Speedup}
+                & 1.00 & 1.57 & 1.69 & 1.83 & 1.81 & 1.79\\
+            % merlin
+            \hline \hline
+            \textbf{2x Opteron 2387} & \textbf{Samples/second}
+                & 4.880e5 & 9.786e5 & 13.718e5 & 18.237e5 & 26.643e5 & 32.237e5\\
+            \cline{2-8}
+            \textbf{(2.8 GHz, 4 cores)} & \textbf{Speedup}
+                & 1.00 & 2.00 & 2.81 & 3.73 & 5.46 & 6.61\\
+            % krok
+            \hline \hline
+            \textbf{Xeon E5-2640} & \textbf{Samples/second}
+                & 4.384e5 & 9.398e5 & 13.775e5 & 17.493e5 & 23.337e5 & 27.361e5\\
+            \cline{2-8}
+            \textbf{(2.5 GHz, 6 cores)} & \textbf{Speedup}
+                & 1.00 & 2.14 & 3.14 & 3.99 & 5.32 & 6.24\\
+            % empty record
+%            \hline \hline
+%            \textbf{CPU id} & \textbf{Samples/second}
+%                & sa1 & sa2 & sa3 & sa4 & sa6 & sa8\\
+%            \cline{2-8}
+%            \textbf{(cores info)} & \textbf{Speedup}
+%                & 1.00 & sp2 & sp3 & sp4 & sp6 & sp8\\
+            % final bottom line
+            \hline
+        \end{tabular}
+        \caption{Weighted sampling of the \uv{ICU alarm network} for query $P(PVSAT \mid ECO2, SAO2 = high)$.}
+    \end{subfigure}
+    }
+    \end{adjustwidth}
+    \caption{Benchmark results of multi-threaded sampling speedup on various processors. Each value $samples/second$ was computed as follows: 20 million samples divided by the median computation time of sampling from total of 25 runs.
+    \ignore{Median was used because sometimes the computation was really slow (typically the very first sampling)}\\
+    The first machine is my notebook and the others are student servers merlin and krok at the university.
+    }
+    \label{tbl:sampling_multithread_speedup}
+    \end{center}
+\end{table}
+
+\medskip
+During implementation there have been some difficulties regarding thread-safety and sharing of resources among threads. The main problem turned out to be that an instance of \srccode{java.util.Random} (further just \srccode{Random}) cannot be shared among multiple threads because the key method \srccode{Random.next(int bits)} for generating pseudorandom bits is synchronized and sharing of a \srccode{Random} instance among $n$ threads degrades computation time to virtually running the sampling $n$-times sequentially. The problem is easily solved by using \srccode{java.util.concurrent.ThreadLocalRandom} class that provides the caller with a~thread-local instance of \srccode{Random} on demand. Still, generating of random data itself is the bottleneck of sampling.
+
+Also, we cannot save time by storing references to dynamically allocated objects (eg. arrays) holding intermediate results if theses objects aren't read only, since concurrent threads would rewrite each others values. Fortunately, it turns out that frequent memory allocation for such intermediate results in Java doesn't introduce a bottleneck.
 
 
 
@@ -831,6 +953,15 @@ This chapter will present the program realization of this thesis. I will describ
 
 \section{Structure learning}
 \todo{Could use Warshall algorithm to determine which edges can be added/deleted/reversed without the need to try such modification and consequently check for acyclicity}
+
+
+
+
+
+
+\section{User interface}
+
+
 
 
 
