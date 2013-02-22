@@ -74,8 +74,8 @@ public class Digraph {
 }
 
 class DigraphNode {
-    ArrayList<DigraphNode> in = new ArrayList<>();
-    ArrayList<DigraphNode> out = new ArrayList<>();
+    ArrayList<DigraphNode> in = new ArrayList<DigraphNode>();
+    ArrayList<DigraphNode> out = new ArrayList<DigraphNode>();
     Object data; // the user data
     Object algorithmData;
     

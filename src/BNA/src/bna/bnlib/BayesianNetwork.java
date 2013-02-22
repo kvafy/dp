@@ -75,7 +75,7 @@ public class BayesianNetwork {
     }
     
     private void validateVariableUniqueness() throws BayesianNetworkException {
-        ArrayList<String> names = new ArrayList<>();
+        ArrayList<String> names = new ArrayList<String>();
         for(Node n : this.nodes)
             names.add(n.getVariable().getName());
         if(!Toolkit.unique(names))
@@ -108,7 +108,8 @@ public class BayesianNetwork {
                 return bn;
             }
             // read unsuccesfull => try another reader
-            catch(BayesianNetworkException | BayesianNetworkRuntimeException bnex) {}
+            catch(BayesianNetworkException bnex) {}
+            catch(BayesianNetworkRuntimeException bnex) {}
         }
         throw new BayesianNetworkException("Unable to read file \"" + filename + "\" (unknown format or corrupted file).");
     }

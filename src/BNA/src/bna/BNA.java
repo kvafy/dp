@@ -76,7 +76,7 @@ public class BNA {
             timeStart = System.currentTimeMillis();
             WeightedSampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
             QuerySamplerMultithreaded weightedQuerySamplerMultithreaded = new QuerySamplerMultithreaded(sharedWeightedSampleProducer, THREAD_COUNT);
-            SamplingController weightedSamplingMultithreadedController = new SamplingController(SAMPLES_COUNT);
+            SamplingController weightedSamplingMultithreadedController = new SamplingController(SAMPLES_COUNT / THREAD_COUNT);
             weightedQuerySamplerMultithreaded.sample(weightedSamplingMultithreadedController);
             Factor weightedSamplesMultithreaded = weightedQuerySamplerMultithreaded.getSamplesCounterNormalized();
             System.out.println("sampleCounter:");
@@ -101,15 +101,15 @@ public class BNA {
     
     private static void benchmarkSampling_sequentialVSMultithreaded() {
         /* test settings */
-        // which network to sample
-        NetworkVariant networkVariant = NetworkVariant.SprinklerNet;
+        // which network to sample and what sampling method to use
+        NetworkVariant networkVariant = NetworkVariant.ICUNet;
         SamplingVariant samplingVariant = SamplingVariant.WeightedSampling;
-        // how many samples to generate
+        // how many samples to generate in a single run
         final int SAMPLES_COUNT = 16 * 3 * 208400*2; // cca 20.000.000 but dividible by any used threadcount
         // how many runs to compute an average from
-        final int RUNS_COUNT = 3;//25;
+        final int RUNS_COUNT = 25;
         // how many threads
-        final int[] THREAD_COUNTS = {2};//{1, 2, 3, 4, 6, 8, 16};
+        final int[] THREAD_COUNTS = {1, 2, 3, 4, 6, 8};
         
         
         /* testing */
@@ -127,6 +127,7 @@ public class BNA {
                     networkFile = "../../networks/sprinkler.net";
                     networkName = "sprinkler_net";
                     bn = BayesianNetwork.loadFromFile(networkFile);
+                    // P(Rain | WetGrass = true)
                     X = new Variable[] {bn.getVariable("RAIN")};
                     Y = new Variable[] {};
                     E = new Variable[] {bn.getVariable("WETGRASS")};
@@ -134,15 +135,18 @@ public class BNA {
                     break;
                     
                 case ICUNet:
-                    networkFile = "../../networks/icu.net";
+                    networkFile = "../../networks/alarm.net";
                     networkName = "icu_net";
                     bn = BayesianNetwork.loadFromFile(networkFile);
-                    // TODO
-                    /*X = new Variable[] {bn.getVariable("RAIN")};
-                    Y = new Variable[] {};
-                    E = new Variable[] {bn.getVariable("WETGRASS")};
-                    e = new int[] {1};*/
-                    //break;
+                    // P(PVSAT | ECO2, SAO2 = high)
+                    //  - PVSAT ~ PVS   ( "LOW" "NORMAL" "HIGH" )
+                    //  - EXPCO2 ~ ECO2 ( "ZERO" "LOW" "NORMAL" "HIGH" )
+                    //  - SAO2          ( "LOW" "NORMAL" "HIGH" )
+                    X = new Variable[] {bn.getVariable("PVSAT")};
+                    Y = new Variable[] {bn.getVariable("EXPCO2")};
+                    E = new Variable[] {bn.getVariable("SAO2")};
+                    e = new int[] {2};
+                    break;
                 default:
                     throw new RuntimeException("unsupported network variant for benchmark");
             }
@@ -166,9 +170,9 @@ public class BNA {
             System.out.println(String.format("test for \"%s\" on network \"%s\":", samplingVariantName, networkName));
             int samplesPerSecondSingleThread = 0;
             for(int threadcount : THREAD_COUNTS) {
-                LinkedList<Double> runningTimes = new LinkedList<>();
+                LinkedList<Double> runningTimes = new LinkedList<Double>();
                 System.out.print(String.format("- run times for %d thread(s):", threadcount));
-                for(int i = 0 ; i < RUNS_COUNT ; i++) {
+                while(runningTimes.size() < RUNS_COUNT) {
                     long timeStart, timeEnd;
                     Sampler sampler;
                     sampler = new QuerySamplerMultithreaded(sampleProducer, threadcount); // also for a single thread
@@ -178,10 +182,9 @@ public class BNA {
                     timeEnd = System.currentTimeMillis();
                     // statistics
                     runningTimes.add((timeEnd - timeStart) / 1000.0);
-                    System.out.print(String.format(" %.2f", runningTimes.getLast()));
+                    System.out.print(String.format(" %.3f", runningTimes.getLast()));
                 }
                 int samplesPerRun = SAMPLES_COUNT;
-                //double timePerRun = computeAverageWithoutExtremes(runningTimes);
                 double timePerRun = computeMedian(runningTimes);
                 int samplesPerSecond = (int)(samplesPerRun / timePerRun);
                 if(threadcount == 1) {
@@ -194,12 +197,15 @@ public class BNA {
                         threadcount, samplesPerSecond, ((double)samplesPerSecond) / samplesPerSecondSingleThread));
             }
         }
-        catch(BayesianNetworkException | BayesianNetworkRuntimeException bnex) {
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+        catch(BayesianNetworkRuntimeException bnex) {
             bnex.printStackTrace();
         }
     }
     
-    private static double computeAverageWithoutExtremes(LinkedList<Double> values) {
+    /*private static double computeAverageWithoutExtremes(LinkedList<Double> values) {
         final double DROP_EXTREMES = 0.1; // drop 10 % of extreme values
         
         values = new LinkedList<>(values); // make a local copy
@@ -215,16 +221,15 @@ public class BNA {
         for(double x : values)
             sum += x;
         return sum / values.size();
-    }
+    }*/
     
     private static double computeMedian(LinkedList<Double> values) {
-        values = new LinkedList<>(values); // make a local copy
+        values = new LinkedList<Double>(values); // make a local copy
         Collections.sort(values);
-        
         if(values.size() % 2 == 1)
             return values.get(values.size() / 2);
         else
-            return (values.get(values.size() / 2) + values.get(values.size() / 2 + 1)) / 2;
+            return (values.get(values.size() / 2 - 1) + values.get(values.size() / 2)) / 2;
     }
     
     enum NetworkVariant {SprinklerNet, ICUNet}

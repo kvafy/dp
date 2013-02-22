@@ -24,14 +24,14 @@ public class Toolkit {
     }
     
     public static <T> boolean unique(T[] array) {
-        HashSet<T> set = new HashSet<>();
+        HashSet<T> set = new HashSet<T>();
         for(T obj : array)
             set.add(obj);
         return set.size() == array.length;
     }
     
     public static <T> boolean unique(Collection<T> collection) {
-        HashSet<T> set = new HashSet<>();
+        HashSet<T> set = new HashSet<T>();
         set.addAll(collection);
         return set.size() == collection.size();
     }
@@ -70,7 +70,7 @@ public class Toolkit {
     }
     
     public static <T> T[] union(T[] set1, T[] set2) {
-        ArrayList<T> resultList = new ArrayList<>();
+        ArrayList<T> resultList = new ArrayList<T>();
         for(T o1 : set1)
             resultList.add(o1);
         for(T o2 : set2)
@@ -83,6 +83,7 @@ public class Toolkit {
             componentType = set2[0].getClass();
         else
             componentType = Object.class;
+        // overcome the "generic array creation" problem
         T[] result = (T[])Array.newInstance(componentType, resultList.size());
         for(int i = 0 ; i < result.length ; i++)
             result[i] = resultList.get(i);

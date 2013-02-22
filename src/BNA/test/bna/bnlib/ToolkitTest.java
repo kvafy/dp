@@ -51,7 +51,7 @@ public class ToolkitTest {
     @Test
     public void testUnique_Collection() {
         System.out.println("unique");
-        Collection<Integer> collection = new java.util.ArrayList<>();
+        Collection<Integer> collection = new java.util.ArrayList<Integer>();
         collection.add(1);
         collection.add(2);
         collection.add(3);

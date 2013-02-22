@@ -17,8 +17,8 @@ import java.util.Random;
 public class Node {
     // associated variables
     private Variable variable;
-    private ArrayList<Node> parents = new ArrayList<>();
-    private ArrayList<Node> children = new ArrayList<>();
+    private ArrayList<Node> parents = new ArrayList<Node>();
+    private ArrayList<Node> children = new ArrayList<Node>();
     
     private Factor factor;
     

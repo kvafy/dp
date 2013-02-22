@@ -5,7 +5,7 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import java.util.concurrent.ThreadLocalRandom;
+//import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayList;
 
 
@@ -19,7 +19,7 @@ import java.util.ArrayList;
  * the distribution P(X | MB(X) = a).
  */
 public class MCMCSampleProducer extends SampleProducer {
-    private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<>();
+    private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<MCMCResamplingAction>();
     
     public MCMCSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
@@ -60,8 +60,6 @@ public class MCMCSampleProducer extends SampleProducer {
 
 
 class MCMCResamplingAction {
-    // vector of probabilities P(resampledVar = 0,1,2,... | mb(resampledVar))
-    //private double[] resampledVarAssignmentProb;
     // index of the value, which is resampled by this action, in the sampledVarsValues array
     // passed to the resample(...) method
     private int resampledVarIndexInSampledVars;
@@ -77,7 +75,6 @@ class MCMCResamplingAction {
     
     public MCMCResamplingAction(BayesianNetwork bn, Variable[] sampledVars, Variable resampledVar) {
         this.resampledVar = resampledVar;
-        //this.resampledVarAssignmentProb = new double[resampledVar.getCardinality()];
         this.resampledVarIndexInSampledVars = Toolkit.indexOf(sampledVars, resampledVar);
         // nodes (variables) needed to compute the distribution P(resampledVar | currentSample)
         this.significantNodes = new Node[1 + bn.getVariableChildrenCount(resampledVar)];

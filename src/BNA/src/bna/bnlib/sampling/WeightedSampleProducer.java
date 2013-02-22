@@ -5,9 +5,10 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import java.util.concurrent.ThreadLocalRandom;
+//import java.util.concurrent.ThreadLocalRandom;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
 
 
 /**
@@ -73,7 +74,7 @@ public class WeightedSampleProducer extends SampleProducer {
     @Override
     protected Variable[] filterVariablesToSample(Variable[] unfilteredSampledVariables) {
         Variable[] XYE = Toolkit.union(this.XYVars, this.EVars);
-        LinkedList<Variable> mustSampleVariables = new LinkedList<>();
+        LinkedList<Variable> mustSampleVariables = new LinkedList<Variable>();
         // optimization: omit leaf variables not in (X union Y union E)
         //               and apply recursively until some variable can be ommited
         for(int i = unfilteredSampledVariables.length - 1 ; i >= 0 ; i--) {
@@ -105,9 +106,10 @@ public class WeightedSampleProducer extends SampleProducer {
      */
     @Override
     protected double produceSample(int[] sampledVarsValues) {
+        Random rand = ThreadLocalRandom.current(); // just one look-up per sample
         double weight = 1.0;
         for(WeightedSamplingSampleAction action : this.samplingActions)
-            weight *= action.sample(sampledVarsValues);
+            weight *= action.sample(sampledVarsValues, rand);
         return weight;
     }
 }
@@ -123,9 +125,10 @@ abstract class WeightedSamplingSampleAction {
      * for an evidence variable.
      * @param allVarsValues Current produceSample (values of variables in the network
      *                      considered in topological order.
+     * @param rand Random data generator (is passed for performance).
      * @return Weight change after sampling the variable.
      */
-    public abstract double sample(int[] allVarsValues);
+    public abstract double sample(int[] allVarsValues, Random rand);
 }
 
 /**
@@ -146,7 +149,7 @@ class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction 
     }
     
     @Override
-    public double sample(int[] sampledVarsValues) {
+    public double sample(int[] sampledVarsValues, Random rand) {
         // for variable E determine assignment to Parents(E) from sampledVarsValues
         int[] parentsAssignment = this.allVarsToEParentsMapper.map(sampledVarsValues);
         int[] nodeAndParentsAssignment = new int[1 + parentsAssignment.length];
@@ -175,9 +178,10 @@ class WeightedSamplingVariableSampleAction extends WeightedSamplingSampleAction 
     }
 
     @Override
-    public double sample(int[] sampledVarsValues) {
+    public double sample(int[] sampledVarsValues, Random rand) {
         int[] XParentsAssignment = this.allVarsToXParentsMapper.map(sampledVarsValues);
-        int XVal = this.XNode.sampleVariable(XParentsAssignment, ThreadLocalRandom.current());
+        //int XVal = this.XNode.sampleVariable(XParentsAssignment, ThreadLocalRandom.current());
+        int XVal = this.XNode.sampleVariable(XParentsAssignment, rand);
         sampledVarsValues[this.XIndex] = XVal;
         return 1.0; // no weight change
     }

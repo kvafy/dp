@@ -21,9 +21,9 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     public BayesianNetworkNetFileReader(String filename) {
         super(filename);
         this.parsed = false;
-        this.variables = new ArrayList<>();
-        this.parents = new HashMap<>();
-        this.probabilities = new HashMap<>();
+        this.variables = new ArrayList<Variable>();
+        this.parents = new HashMap<String, String[]>();
+        this.probabilities = new HashMap<String, Double[]>();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
             // }
             while(scanner.hasNext("node")) {
                 String nodeName;
-                ArrayList<String> nodeValues = new ArrayList<>();
+                ArrayList<String> nodeValues = new ArrayList<String>();
                 
                 scanner.next("node");
                 nodeName = scanner.next();
@@ -93,7 +93,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
                 scanner.next("potential");
                 //scanner.next("\\(");
                 String var = scanner.next();
-                ArrayList<String> varParentsList = new ArrayList<>();
+                ArrayList<String> varParentsList = new ArrayList<String>();
                 if(scanner.hasNext("\\|")) {
                     scanner.next("\\|");
                     String token;
@@ -106,7 +106,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
                 scanner.next("\\{");
                 scanner.next("data");
                 scanner.next("=");
-                ArrayList<Double> probabilityList = new ArrayList<>();
+                ArrayList<Double> probabilityList = new ArrayList<Double>();
                 while(true) {
                     String token = scanner.next();
                     if(token.equals(";"))
