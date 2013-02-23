@@ -63,6 +63,7 @@ public abstract class SampleProducer {
     
     /**
      * Determine variables that really need to be sampled (this is default implementation).
+     * Hook of the template method determineSamplingOrder().
      * The method must preserve relative order of given variables.
      */
     protected Variable[] filterVariablesToSample(Variable[] unfilteredSampledVariables) {

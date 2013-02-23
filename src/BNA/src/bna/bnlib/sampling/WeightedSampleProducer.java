@@ -18,12 +18,12 @@ import java.util.Random;
  * their descendants is in this set.
  * One same is produced by sampling all the variables left after pruning in
  * topological order, one variable at a time. Sampling action of a single
- * variable is implemented as an abstract WeightedSamplingSampleAction. So, we
+ * variable is implemented as an abstract WeightedSamplingAction. So, we
  * perform all actions in samplingActions array in order to produce one sample.
  * The sampling action is dependent on whether it is an evidence variable or other:
  *  (a) evidence variable E: extract assignment to Parents(E) from the current
  *      sampledVarsValues and modify sample weight by returning potentially non-one
- *      double value (!= 1.0) from WeightedSamplingEvidenceSampleAction.produceSample(...).
+ *      double value (!= 1.0) from WeightedSamplingEvidenceAction.produceSample(...).
  *      Also place the observed value of evidence to current assignment vector
  *      sampledVarsValues.
  *  (b) non-evidence variable X: extract assignment to Parents(X) and sample
@@ -31,17 +31,17 @@ import java.util.Random;
  *      sampledVarsValues.
  */
 public class WeightedSampleProducer extends SampleProducer {
-    private WeightedSamplingSampleAction[] samplingActions;
+    private WeightedSamplingAction[] samplingActions;
 
     public WeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         // generate sampling actions for all variables that need to be sampled
-        this.samplingActions = new WeightedSamplingSampleAction[this.sampledVars.length];
+        this.samplingActions = new WeightedSamplingAction[this.sampledVars.length];
         for(int i = 0 ; i < this.sampledVars.length ; i++) {
             Variable varI = this.sampledVars[i];
             Node varINode = this.bn.getNode(varI.getName());
             VariableSubsetMapper allVarsToIParentsMapper = new VariableSubsetMapper(this.sampledVars, varINode.getParentVariables());
-            WeightedSamplingSampleAction actionI;
+            WeightedSamplingAction actionI;
             
             if(Toolkit.arrayContains(E, varI)) {
                 // action: adjust produceSample weight and write the evidence value
@@ -49,7 +49,7 @@ public class WeightedSampleProducer extends SampleProducer {
                 // - map allVarsValues to Parents(ENode) values
                 // - add known value of evidence variable => EValue,parents(EValue) assignment
                 // - read probability of that assignment from factor for ENode
-                actionI = new WeightedSamplingEvidenceSampleAction(varINode,
+                actionI = new WeightedSamplingEvidenceAction(varINode,
                                                                    Toolkit.indexOf(this.sampledVars, varI),
                                                                    varIValue,
                                                                    allVarsToIParentsMapper);
@@ -58,7 +58,7 @@ public class WeightedSampleProducer extends SampleProducer {
                 // action: produceSample variable by it's parents current assignment
                 // - map allVarsValues to Parents(X) values
                 // - for assignment of parents produceSample value for X
-                actionI = new WeightedSamplingVariableSampleAction(varINode,
+                actionI = new WeightedSamplingVariableAction(varINode,
                                                                    Toolkit.indexOf(this.sampledVars, varI),
                                                                    allVarsToIParentsMapper);
             }
@@ -108,7 +108,7 @@ public class WeightedSampleProducer extends SampleProducer {
     protected double produceSample(int[] sampledVarsValues) {
         Random rand = ThreadLocalRandom.current(); // just one look-up per sample
         double weight = 1.0;
-        for(WeightedSamplingSampleAction action : this.samplingActions)
+        for(WeightedSamplingAction action : this.samplingActions)
             weight *= action.sample(sampledVarsValues, rand);
         return weight;
     }
@@ -116,8 +116,9 @@ public class WeightedSampleProducer extends SampleProducer {
 
 
 
+
 /** The Command design pattern for sampling of all variables (evidence and non-evidence). */
-abstract class WeightedSamplingSampleAction {
+abstract class WeightedSamplingAction {
     
     /**
      * Put value of a variable to the current produceSample allVarsValues and return
@@ -135,13 +136,13 @@ abstract class WeightedSamplingSampleAction {
  * "Sample" an evidence variable - return weight change and put the observed
  * evidence value to current produceSample.
  */
-class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction {
+class WeightedSamplingEvidenceAction extends WeightedSamplingAction {
     private Node ENode;
     private int EValue;
     private int EIndex;
     private VariableSubsetMapper allVarsToEParentsMapper;
     
-    public WeightedSamplingEvidenceSampleAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEParents) {
+    public WeightedSamplingEvidenceAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEParents) {
         this.ENode = evidenceNode;
         this.EValue = evidenceVal;
         this.EIndex = evidenceVarIndex;
@@ -166,12 +167,12 @@ class WeightedSamplingEvidenceSampleAction extends WeightedSamplingSampleAction 
  * Sample a non-evidence variable by extracting assignment of it's parents,
  * sampling and placing the sampled value to current produceSample.
  */
-class WeightedSamplingVariableSampleAction extends WeightedSamplingSampleAction {
+class WeightedSamplingVariableAction extends WeightedSamplingAction {
     private Node XNode;
     private int XIndex;
     private VariableSubsetMapper allVarsToXParentsMapper;
     
-    public WeightedSamplingVariableSampleAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents) {
+    public WeightedSamplingVariableAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents) {
         this.XNode = XNode;
         this.XIndex = XVarIndex;
         this.allVarsToXParentsMapper = allVarsToXParents;
