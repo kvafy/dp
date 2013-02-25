@@ -24,6 +24,7 @@ public class DatasetCreationSampler implements Sampler {
         // ie. for a query P(AllVariables)
         this.sampleProducer = new WeightedSampleProducer(
                 bn,
+                // X = AllVariables ~ the SampleProducer will surely sample all variables
                 bn.getVariables(),
                 new Variable[0],
                 new Variable[0],
@@ -33,18 +34,18 @@ public class DatasetCreationSampler implements Sampler {
     /** Perform sampling according to given controller. */
     @Override
     public void sample(SamplingController controller) {
-        int[] sampledVarsValues = new int[this.sampleProducer.sampledVars.length]; // to this array variables are sampled
+        SamplingContext context = this.sampleProducer.createSamplingContext();
         
         FileWriter writer = null;
         try {
             writer = new FileWriter(this.outputFilename);
             this.printFileHeader(writer);
             
-            int sampleNumber = 0;
-            this.sampleProducer.initializeSample(sampledVarsValues);
+            long sampleNumber = 0;
+            this.sampleProducer.initializeSample(context);
             while(!controller.stopFlag() && sampleNumber < controller.maxSamples()) {
-                this.sampleProducer.produceSample(sampledVarsValues);
-                this.printFileEntry(writer, sampledVarsValues);
+                this.sampleProducer.produceSample(context);
+                this.printFileEntry(writer, context.sampledVarsAssignment);
                 sampleNumber++;
             }
             writer.close();

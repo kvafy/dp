@@ -8,15 +8,15 @@ package bna.bnlib.sampling;
  * To control the sampling process, possibly in context of more threads.
  */
 public class SamplingController {
-    private int maxSamples;
+    private long maxSamples;
     private boolean stopFlag;
     
-    public SamplingController(int maxSamples) {
+    public SamplingController(long maxSamples) {
         this.maxSamples = maxSamples;
         this.stopFlag = false;
     }
     
-    public int maxSamples() {
+    public long maxSamples() {
         return this.maxSamples;
     }
     

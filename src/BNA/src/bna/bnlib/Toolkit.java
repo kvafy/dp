@@ -69,6 +69,7 @@ public class Toolkit {
         return true;
     }
     
+    /** From set2 appends all elements not in set1 to set1. */
     public static <T> T[] union(T[] set1, T[] set2) {
         ArrayList<T> resultList = new ArrayList<T>();
         for(T o1 : set1)

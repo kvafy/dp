@@ -5,30 +5,27 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-//import java.util.concurrent.ThreadLocalRandom;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Random;
 
 
 /**
  * Concrete implementation of sampler for weighted sampling.
  * The sampler works as follows: We compute a topological sort of all variables
- * in the network and prune nodes that are not in X union Y union E nor any of
- * their descendants is in this set.
- * One same is produced by sampling all the variables left after pruning in
- * topological order, one variable at a time. Sampling action of a single
- * variable is implemented as an abstract WeightedSamplingAction. So, we
- * perform all actions in samplingActions array in order to produce one sample.
- * The sampling action is dependent on whether it is an evidence variable or other:
+ * in the network and prune nodes that are not in the set (X union Y union E)
+ * nor any of their descendants is in this set.
+ * One sample is produced by sampling all the variables left after pruning
+ * (pruned in method filterVariablesToSample(...)) in topological order, one
+ * variable at a time. Sampling action of a single variable is implemented as
+ * an abstract WeightedSamplingAction. So, we perform all actions in samplingActions
+ * array in order to produce one sample. The sampling action is dependent on
+ * whether it is an evidence variable or other:
  *  (a) evidence variable E: extract assignment to Parents(E) from the current
- *      sampledVarsValues and modify sample weight by returning potentially non-one
- *      double value (!= 1.0) from WeightedSamplingEvidenceAction.produceSample(...).
- *      Also place the observed value of evidence to current assignment vector
- *      sampledVarsValues.
+ *      sampledVarsValues and modify sample weight. Also place the observed
+ *      value of evidence into assignment vector in the sampling context.
  *  (b) non-evidence variable X: extract assignment to Parents(X) and sample
- *      the variable X. Put the sampled value to current produceSample assignment
- *      sampledVarsValues.
+ *      the variable X. Put the sampled value into assignment vector in the
+ *      sampling context.
  */
 public class WeightedSampleProducer extends SampleProducer {
     private WeightedSamplingAction[] samplingActions;
@@ -40,27 +37,29 @@ public class WeightedSampleProducer extends SampleProducer {
         for(int i = 0 ; i < this.sampledVars.length ; i++) {
             Variable varI = this.sampledVars[i];
             Node varINode = this.bn.getNode(varI.getName());
-            VariableSubsetMapper allVarsToIParentsMapper = new VariableSubsetMapper(this.sampledVars, varINode.getParentVariables());
             WeightedSamplingAction actionI;
             
             if(Toolkit.arrayContains(E, varI)) {
+                Variable[] IAndParentsVars = Toolkit.union(new Variable[]{varI}, varINode.getParentVariables());
+                VariableSubsetMapper allVarsToIAndParentsMapper = new VariableSubsetMapper(this.sampledVars, IAndParentsVars);
                 // action: adjust produceSample weight and write the evidence value
-                int varIValue = e[Toolkit.indexOf(E, varI)];
+                int evidenceValue = e[Toolkit.indexOf(E, varI)];
                 // - map allVarsValues to Parents(ENode) values
                 // - add known value of evidence variable => EValue,parents(EValue) assignment
                 // - read probability of that assignment from factor for ENode
                 actionI = new WeightedSamplingEvidenceAction(varINode,
-                                                                   Toolkit.indexOf(this.sampledVars, varI),
-                                                                   varIValue,
-                                                                   allVarsToIParentsMapper);
+                                                             Toolkit.indexOf(this.sampledVars, varI),
+                                                             evidenceValue,
+                                                             allVarsToIAndParentsMapper);
             }
             else {
+                VariableSubsetMapper allVarsToIParentsMapper = new VariableSubsetMapper(this.sampledVars, varINode.getParentVariables());
                 // action: produceSample variable by it's parents current assignment
                 // - map allVarsValues to Parents(X) values
                 // - for assignment of parents produceSample value for X
                 actionI = new WeightedSamplingVariableAction(varINode,
-                                                                   Toolkit.indexOf(this.sampledVars, varI),
-                                                                   allVarsToIParentsMapper);
+                                                             Toolkit.indexOf(this.sampledVars, varI),
+                                                             allVarsToIParentsMapper);
             }
             this.samplingActions[i] = actionI;
         }
@@ -94,23 +93,22 @@ public class WeightedSampleProducer extends SampleProducer {
     }
     
     @Override
-    protected void initializeSample(int[] sampledVarsValues) {
+    protected void initializeSample(SamplingContext context) {
         // all the work is done in produceSample
     }
 
     /**
-     * One produceSample is in weighted sampling produced by sampling all the variables
-     * in the network whilst accumulating the produceSample weight according to evidence.
-     * @param allVarsValues Assignment to all variables in the network.
-     * @return Weight of the produceSample
+     * One sample is in weighted sampling produced by sampling all the variables
+     * in the network whilst accumulating the weight of the sample according to
+     * evidence.
+     * @param context Context to fill with a new sample.
      */
     @Override
-    protected double produceSample(int[] sampledVarsValues) {
-        Random rand = ThreadLocalRandom.current(); // just one look-up per sample
-        double weight = 1.0;
+    protected void produceSample(SamplingContext context) {
+        context.sampleWeight = 1.0;
         for(WeightedSamplingAction action : this.samplingActions)
-            weight *= action.sample(sampledVarsValues, rand);
-        return weight;
+            action.sample(context);
+        this.sampledVarsToXYVarsMapper.map(context.sampledVarsAssignment, context.XYVarsAssignment);
     }
 }
 
@@ -121,45 +119,38 @@ public class WeightedSampleProducer extends SampleProducer {
 abstract class WeightedSamplingAction {
     
     /**
-     * Put value of a variable to the current produceSample allVarsValues and return
-     * weight change, ie. 1.0 for a non-evidence variable and a general value
-     * for an evidence variable.
-     * @param allVarsValues Current produceSample (values of variables in the network
-     *                      considered in topological order.
-     * @param rand Random data generator (is passed for performance).
-     * @return Weight change after sampling the variable.
+     * Put value of a variable to the context.sampledVarsAssignment and 
+     * possibly modify the context.sampleWeight.
+     * @param context Context to modify.
      */
-    public abstract double sample(int[] allVarsValues, Random rand);
+    public abstract void sample(SamplingContext context);
 }
 
 /**
- * "Sample" an evidence variable - return weight change and put the observed
- * evidence value to current produceSample.
+ * "Sample" an evidence variable - perform weight change and put the observed
+ * evidence value to sampling context.
  */
 class WeightedSamplingEvidenceAction extends WeightedSamplingAction {
     private Node ENode;
     private int EValue;
     private int EIndex;
-    private VariableSubsetMapper allVarsToEParentsMapper;
+    private VariableSubsetMapper allVarsToEAndParentsMapper;
     
-    public WeightedSamplingEvidenceAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEParents) {
+    public WeightedSamplingEvidenceAction(Node evidenceNode, int evidenceVarIndex, int evidenceVal, VariableSubsetMapper allVarsToEAndParents) {
         this.ENode = evidenceNode;
         this.EValue = evidenceVal;
         this.EIndex = evidenceVarIndex;
-        this.allVarsToEParentsMapper = allVarsToEParents;
+        this.allVarsToEAndParentsMapper = allVarsToEAndParents;
     }
     
     @Override
-    public double sample(int[] sampledVarsValues, Random rand) {
+    public void sample(SamplingContext context) {
         // for variable E determine assignment to Parents(E) from sampledVarsValues
-        int[] parentsAssignment = this.allVarsToEParentsMapper.map(sampledVarsValues);
-        int[] nodeAndParentsAssignment = new int[1 + parentsAssignment.length];
-        nodeAndParentsAssignment[0] = this.EValue;
-        System.arraycopy(parentsAssignment, 0, nodeAndParentsAssignment, 1, parentsAssignment.length);
+        int[] nodeAndParentsAssignment = this.allVarsToEAndParentsMapper.map(context.sampledVarsAssignment);
         // determine weight change coefficient, ie. probability of P(E = e, parents(E))
-        double weight = this.ENode.getProbability(nodeAndParentsAssignment);
-        sampledVarsValues[this.EIndex] = this.EValue;
-        return weight;
+        double eProb = this.ENode.getProbability(nodeAndParentsAssignment);
+        context.sampleWeight *= eProb;
+        context.sampledVarsAssignment[this.EIndex] = this.EValue;
     }
 }
 
@@ -172,18 +163,16 @@ class WeightedSamplingVariableAction extends WeightedSamplingAction {
     private int XIndex;
     private VariableSubsetMapper allVarsToXParentsMapper;
     
-    public WeightedSamplingVariableAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParents) {
+    public WeightedSamplingVariableAction(Node XNode, int XVarIndex, VariableSubsetMapper allVarsToXParentsMapper) {
         this.XNode = XNode;
         this.XIndex = XVarIndex;
-        this.allVarsToXParentsMapper = allVarsToXParents;
+        this.allVarsToXParentsMapper = allVarsToXParentsMapper;
     }
 
     @Override
-    public double sample(int[] sampledVarsValues, Random rand) {
-        int[] XParentsAssignment = this.allVarsToXParentsMapper.map(sampledVarsValues);
-        //int XVal = this.XNode.sampleVariable(XParentsAssignment, ThreadLocalRandom.current());
-        int XVal = this.XNode.sampleVariable(XParentsAssignment, rand);
-        sampledVarsValues[this.XIndex] = XVal;
-        return 1.0; // no weight change
+    public void sample(SamplingContext context) {
+        int[] XParentsAssignment = this.allVarsToXParentsMapper.map(context.sampledVarsAssignment);
+        int XVal = this.XNode.sampleVariable(XParentsAssignment, context.rand);
+        context.sampledVarsAssignment[this.XIndex] = XVal;
     }
 }

@@ -15,8 +15,8 @@ public class BNA {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        //playing_sampling();
-        benchmarkSampling_sequentialVSMultithreaded();
+        playing_sampling();
+        //benchmarkSampling_sequentialVSMultithreaded();
     }
     
     
@@ -32,7 +32,7 @@ public class BNA {
             
             
             // sampling and its variants
-            final int SAMPLES_COUNT = 20000000;
+            final long SAMPLES_COUNT = 20000000;
             final int THREAD_COUNT = 3;
             Variable[] X = {bn.getVariable("RAIN")};
             Variable[] Y = {};
@@ -105,7 +105,7 @@ public class BNA {
         NetworkVariant networkVariant = NetworkVariant.ICUNet;
         SamplingVariant samplingVariant = SamplingVariant.WeightedSampling;
         // how many samples to generate in a single run
-        final int SAMPLES_COUNT = 16 * 3 * 208400*2; // cca 20.000.000 but dividible by any used threadcount
+        final long SAMPLES_COUNT = 16 * 3 * 208400*2; // cca 20.000.000 but dividible by any used threadcount
         // how many runs to compute an average from
         final int RUNS_COUNT = 25;
         // how many threads
@@ -184,7 +184,7 @@ public class BNA {
                     runningTimes.add((timeEnd - timeStart) / 1000.0);
                     System.out.print(String.format(" %.3f", runningTimes.getLast()));
                 }
-                int samplesPerRun = SAMPLES_COUNT;
+                long samplesPerRun = SAMPLES_COUNT;
                 double timePerRun = computeMedian(runningTimes);
                 int samplesPerSecond = (int)(samplesPerRun / timePerRun);
                 if(threadcount == 1) {

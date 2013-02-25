@@ -5,18 +5,17 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-//import java.util.concurrent.ThreadLocalRandom;
 import java.util.ArrayList;
 
 
 /**
- * Concrete implementation of sampler for Markov chain Monte-Carlo sampling.
+ * Concrete implementation of sampler for Markov chain Monte-Carlo sampling method.
  * Formally, in order to resample variable X given current sample (ie. assigment)
- * "a", we need to compute the distribution P(X | MB(X) = a) and sample this
+ * "s", we need to compute the distribution P(X | MB(X) = s) and sample this
  * distribution. However, only a subset of variables in MB(X) change their
- * probabilities with different values of X, namely variables X and Children(X);
+ * probabilities with different values of X, namely variables (X union Children(X));
  * the rest of the MB(X) doesn't need to be accounted for when computing
- * the distribution P(X | MB(X) = a).
+ * the distribution P(X | MB(X) = s).
  */
 public class MCMCSampleProducer extends SampleProducer {
     private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<MCMCResamplingAction>();
@@ -29,8 +28,8 @@ public class MCMCSampleProducer extends SampleProducer {
     private void generateResamplingActions() {
         for(Variable varToResample : this.sampledVars) {
             if(!Toolkit.arrayContains(this.EVars, varToResample)) {
-                // we can resample any variable except evidence variables which
-                // doesn't make sense
+                // we can resample any variable except evidence variables
+                // (for evidence doesn't make sense)
                 MCMCResamplingAction action = new MCMCResamplingAction(this.bn, this.sampledVars, varToResample);
                 this.resamplingActions.add(action);
             }
@@ -39,21 +38,23 @@ public class MCMCSampleProducer extends SampleProducer {
 
     /** Initializes the sample by a single weighted sampling pass. */
     @Override
-    protected void initializeSample(int[] sampledVarsValues) {
+    protected void initializeSample(SamplingContext context) {
         WeightedSampleProducer weightedSampler = new WeightedSampleProducer(
                 this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
         // the variable values are preserved after the following call
-        weightedSampler.produceSample(sampledVarsValues);
+        weightedSampler.produceSample(context); // evidence is correctly set
+        context.sampleWeight = 1.0;
     }
 
     /** Select a single resampling action at random and execute it. */
     @Override
-    protected double produceSample(int[] sampledVarsValues) {
+    protected void produceSample(SamplingContext context) {
+        context.sampleWeight = 1.0;
         // TODO maybe sequentially instead of at random ??
-        int actionIndex = ThreadLocalRandom.current().nextInt(this.resamplingActions.size());
+        int actionIndex = context.rand.nextInt(this.resamplingActions.size());
         MCMCResamplingAction action = this.resamplingActions.get(actionIndex);
-        action.resample(sampledVarsValues);
-        return 1.0; // MCMC doesn't use weights for samples
+        action.resample(context);
+        this.sampledVarsToXYVarsMapper.map(context.sampledVarsAssignment, context.XYVarsAssignment);
     }
 }
 
@@ -94,7 +95,7 @@ class MCMCResamplingAction {
         }
     }
     
-    public void resample(int[] sampledVarsValues) {
+    public void resample(SamplingContext context) {
         // for each possible assignmnet i of variable resampledVar
         //     put the value i of resampledVar to sampledVarsValues vector
         //     prob[i] = P(resampledVar = i | parents(resampledVar)
@@ -109,18 +110,18 @@ class MCMCResamplingAction {
         
         for(int i = 0 ; i < resampledVarAssignmentProb.length ; i++) {
             // ~ for each possible assignmnet i of variable resampledVar
-            sampledVarsValues[this.resampledVarIndexInSampledVars] = i;
+            context.sampledVarsAssignment[this.resampledVarIndexInSampledVars] = i;
             resampledVarAssignmentProb[i] = 1.0;
             for(int j = 0 ; j < this.significantNodes.length ; j++) {
                 Node nodeJ = this.significantNodes[j];
                 VariableSubsetMapper sampledVarsTovarJAndParentsMapper = this.sampledVarsToSignificantVarAndParentsMappers[j];
-                int[] probVarJAndParentsAssignment = sampledVarsTovarJAndParentsMapper.map(sampledVarsValues);
+                int[] probVarJAndParentsAssignment = sampledVarsTovarJAndParentsMapper.map(context.sampledVarsAssignment);
                 resampledVarAssignmentProb[i] *= nodeJ.getProbability(probVarJAndParentsAssignment);
             }
             probSum += resampledVarAssignmentProb[i];
         }
         // finally resample the variable
-        int resampledAssignment = Toolkit.randomIndex(resampledVarAssignmentProb, probSum, ThreadLocalRandom.current());
-        sampledVarsValues[this.resampledVarIndexInSampledVars] = resampledAssignment;
+        int resampledAssignment = Toolkit.randomIndex(resampledVarAssignmentProb, probSum, context.rand);
+        context.sampledVarsAssignment[this.resampledVarIndexInSampledVars] = resampledAssignment;
     }
 }
