@@ -943,13 +943,15 @@ List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
 
 
 \subsection{Answering a probabilistic query}
-\srccode{QuerySampler} \todo{what does it do? how it internally works?}
+Classes with common ancestor \srccode{SampleProducer} described in the previous section are able to generate a single sample on demand using a specific sampling technique. To provide an approximation of a general distribution $P(\vars{X} \mid \vars{Y}, \vars{e})$ we use an instance of \srccode{QuerySampler} which takes a \srccode{SampleProducer}, generates a requested number of samples and, using statistics, computes an approximation of the desired probability distribution in form of a (optionally normalized) factor.
+
+The internal logic is very simple and straightforward\,--\,get a \srccode{SampleProducer} object in the constructor, in \srccode{sample(...)} method create an instance of \srccode{SamplingContext}, initialize the context and use the sample producer along with the created context to generate a large number of samples. Each sample is accounted for in corresponding counter and in the end we can obtain the statistics as a \srccode{Factor} instance via methods \srccode{getSamplesCounter()} and \srccode{getSamplesCounterNormalized()}.
 
 
 \subsection{Multi-threaded sampling}
-Class \srccode{QuerySamplerMultithreaded} is a multi-threaded variant of class \srccode{QuerySampler} and also aims to compute an approximation of distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ through computing statistical properties of samples obtained from a given BN. We pass to the constructor of \srccode{QuerySamplerMultithreaded} a~\srccode{SampleProducer} object that provides samples on demand and the requested number of threads, the sampler instance creates and executes threads that perform sampling in parallel and finally their results are combined.
+Class \srccode{QuerySamplerMultithreaded} is a multi-threaded variant of class \srccode{QuerySampler} and also aims to compute an approximation of distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ through computing statistical properties of samples obtained from a given BN. We pass to the constructor of \srccode{QuerySamplerMultithreaded} a~\srccode{SampleProducer} object that provides samples on demand and the requested number of threads, the sampler instance creates and executes threads that perform sampling in parallel, each using a standalone \srccode{QuerySampler} instance, and finally their results are combined. For easy centralized control of the sampling carried out in multiple threads a single instance of \srccode{SamplingController} is used. This object has the information about the number of samples to generate and also can be used to instantly stop the sampling process in all threads by invoking \srccode{controllerInstance.setStopFlag()}, typically from user interface.
 
-Speedup of the multi-threaded variant has been measured on multiple computers with different processors (see Table~\ref{tbl:sampling_multithread_speedup}). On a multi-processor system the speedup is significant, eg. on an 8 core system the speedup is according to measurements virtually 2 for two threads and about 3.8 for four threads.
+Speedup of the multi-threaded variant has been measured on multiple computers with different processors (see Table~\ref{tbl:sampling_multithread_speedup}). On a multi-processor system the speedup is significant, eg. on a system with 4 physical and 8 logical cores the speedup is according to measurements virtually 2.0 for two threads and about 3.8 for four threads.
 
 \begin{table}[htb]
     \begin{center}
