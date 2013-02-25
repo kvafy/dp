@@ -541,11 +541,11 @@ I believe that the sampling process can furthermore be accelerated by omitting a
 Important drawback of likelihood weighting is that it doesn't account well for evidence in leaf nodes or near to them. This is because in that case we effectively sample the prior probability distribution and finally we modify weight of the generated sample by evidence but the sampling process is most of the time unaffected by the evidence and virtually only weights of samples take evidence into account. So, for a very rare instantiation of evidence variables (eg. for some rare and/or big set of symptoms) all of the generated samples might have very small weight and, in case of medical diagnosis, no sample representing the "real cause" of observed evidence might be generated at all. Once again, this is because we sample prior probability distribution rather than posterior and these two distributions may be very different~\cite[p.~503]{pgm}.
 
 \subsection{Markov Chain Monte Carlo}
-The likelihood weighting method presented earlier doesn't account well for evidence near leaf nodes, ie. for so called \term{evidential reasoning}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way, the information about all evidence variables propagates through the network and with time we get closer to the true posterior probability distribution.
+The likelihood weighting method presented earlier doesn't account well for evidence near leaf nodes, ie. for so called \term{evidential reasoning}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way, the information about all evidence variables propagates through the network and with time we get closer to the true posterior probability distribution $P(\vars{X} \mid \vars{e})$.
 
-To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is the minimal set of variables other than $X$ such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket could be defined as follows:
+To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (also see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is the minimal set of variables other than $X$ such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i \in Children(X)$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket could be defined as follows:
 \begin{equation*}
-MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! Parents(C)
+MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C_i \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! Parents(C_i) \setminus \lbrace X \rbrace
 \end{equation*}
 
 \begin{center}
@@ -553,18 +553,18 @@ MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C \in Childre
     \begin{center}
     \includegraphics[scale=0.4]{fig/bn-markov_blanket}
     \end{center}
-    \caption{Markov blanket $MB(X)$ of variable $X$ consists of all variables in this figure except $X$.}
+    \caption{Markov blanket $MB(X)$ of variable $X$ is the set of all variables in this figure except for $X$.}
     \label{fig:bn-markov-blanket}
 \end{figure}
 \end{center}
 
-Now, in order to resample some variable $X$ and thereby to produce a new MCMC sample, we need to compute the probability distribution $P(X \mid mb(X))$ and sample new value of $X$ from this distribution. In a sense, Markov blanket of variable $X$ defines context of the resampling, ie. all the variables whose values we need to know.
+Now, in order to resample some non-evidence variable $X$ and thereby to produce a new MCMC sample, we need to compute the probability distribution $P(X \mid mb(X))$ and sample new value of $X$ from this distribution. In a sense, Markov blanket of variable $X$ defines context of the resampling, ie. all the variables whose values we need to know.
 
 The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sample consistent with the evidence, eg. by one iteration of likelihood weighting with the weight discarded. Then we repeat the following: For each non-evidence variable $V$ we resample this variable from the current distribution $P(V \mid mb(V))$ producing a new sample with value of variable $V$ potentially changed. For the new sample we increase the corresponding counter $N_{\vars{x},\vars{e}}$ and proceed with resampling of another variable. The distribution $P(V \mid mb(V))$ needed for resampling of variable $V$ can be obtained by computing $P(v \mid mb(V))$ for every $v$ as follows:
 \begin{equation*}
     P(v \mid mb(V)) = \alpha \cdot P(v \mid parents(V)) \!\!\!\!\!\!\!\! \prod_{C_i \in Children(V)} \!\!\!\!\!\!\!\!\!\!\!\! P(c_i \mid parents(C_i))
 \end{equation*}
-where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of respective variables in the current sample.
+where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of variables $MB(\cdot)$ and $Parents(\cdot)$ in the current sample. As we can see, when computing the probability distribution $P(V \mid mb(V))$ we only need to account for probabilities of variables $V$ and $Children(X)$ not of the whole Markov blanket. This is because when we set $V$ to concrete value $v$, only probabilities in nodes $\lbrace V \rbrace \cup Children(X)$ are affected due to the definition of a Bayesian network where probability at a node depends purely on its parents.
 
 Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each instantiation of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this instantiation. More formally, MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
 
@@ -884,7 +884,7 @@ Sampling is implemented by classes in the \srccode{bna.bnlib.sampling} package. 
 
 One family of objects with common base class \srccode{SampleProducer} aims to provide samples from a general distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ where $\vars{X} \neq \emptyset$. Two sampling approaches are implemented\,--\,weighted sampling (class \srccode{WeightedSampleProducer}) and Markov chain Monte-Carlo (class \srccode{MCMCSampleProducer}).
 
-Concern of the second family of objects, that implement common interface \srccode{Sampler}, is what to do with generated samples. We can maintain statistics from a sufficient number of samples and in the end compute an approximation of the real distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ (class \srccode{QuerySampler}); the same task may be carried out in multiple threads at once (class \srccode{QuerySamplerMultithreaded}). Another goal might be to create an artificial dataset by sampling all the variables in a given BN and to write samples obtained to a file (class \srccode{DatasetCreationSampler}). Dataset creation is useful when benchmarking learning algorithms for Bayesian networks\,--\,we already have a BN and we attempt to learn that network again based just on dataset of chosen size, finally we compare the network just learnt with the original one according to some metric.
+Concern of the second family of objects, that implement common interface \srccode{Sampler}, is what to do with generated samples. We can maintain statistics from a sufficient number of samples and in the end compute an approximation of the real distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ (class \srccode{QuerySampler}); the same task may be carried out in multiple threads at once (class \srccode{QuerySamplerMultithreaded}). Another goal might be to create an artificial dataset by sampling all the variables in a given BN and to write samples obtained to a file in CSV format (class \srccode{DatasetCreationSampler}). Dataset creation is useful when benchmarking learning algorithms for Bayesian networks\,--\,we already have a BN and we attempt to learn that network again based just on dataset of chosen size, finally we compare the network just learnt with the original one according to some metric.
 
 \begin{center}
 \begin{figure}[h]
@@ -901,36 +901,49 @@ Concern of the second family of objects, that implement common interface \srccod
 \subsection{Producing a single sample}
 Generally, a sample can be produced using many different sampling techniques (eg. direct sampling, weighted sampling, MCMC etc.) and the abstract class \srccode{SampleProducer} is a~common base class for such specific samplers. The class mainly keeps the specification of the distribution $P(\vars{X} \mid \vars{Y}, \vars{e})$ we want to sample and reference to the BN to be sampled.
 
+The class \srccode{SampleProducer} and its subclasses use an instance of \srccode{SamplingContext} to maintain thread-local variables needed for sampling\,--\,array to hold assignment to variables in the network (to avoid frequent allocation) and a random number generator (will be explained later).
+
+\medskip
 List of noteworthy methods of the \srccode{SampleProducer} class:
 \begin{itemize}
-	\item \srccode{void determineSamplingOrder()}: A template method that computes list of variables whose values we need to keep track of during sampling and also determines the order of sampling, ie. specific sequence of variables. First of all, the order of sampling is computed using a linear time DFS-based topological sort algorithm~\cite{cormen_introduction_to_algorithms}. Then there is a hook \srccode{filterVariablesToSample(...)} by which the specific samplers (children of \srccode{SampleProducer}) can reduce the list of variables we need to take into account during sampling\,--\,this is useful for example in the case of weighted sampling. The final array of variables whose values need to be known/determined during sampling is stored in the instance variable \srccode{sampledVars}.
-	\item \srccode{Variable[] filterVariablesToSample(Variable[] allVars)}: A hook of the template method \srccode{determineSamplingOrder()} described above. By default returns the argument, ie. no filtering.
-	\item \srccode{void initializeSample(int[] assignment)}: Abstract method in which a concrete sampler may prepare the assignment of variables before the first sample is produced (needed in the MCMC sampling to set the evidence variables to given values). Specific values in the \srccode{assignment} array are instantiations of variables in \srccode{sampledVars} on the same indices.
-	\item \srccode{double produceSample(int[] assignment)}: Abstract method to produce one sample and return its weight. The \srccode{assignment} array is filled with a concrete instantiation of respective variables of the array \srccode{SampleProducer.sampledVars}.
+	\item \srccode{void determineSamplingOrder()}: A template method that computes list of variables whose values we need to keep track of during sampling and also determines the order of sampling, ie. specific sequence of variables. First of all, the order of sampling is computed using a linear time DFS-based topological sort algorithm described in~\cite{cormen_introduction_to_algorithms}. Then there is a hook \srccode{filterVariablesToSample(...)} by which the specific samplers (children of \srccode{SampleProducer}) can reduce the list of variables we need to take into account during sampling\,--\,this is useful for example in the case of weighted sampling. The final array of variables whose values need to be known/determined during sampling is stored in the instance variable \srccode{sampledVars}.
+	\item \srccode{Variable[] filterVariablesToSample(Variable[] allVars)}: A hook of the template method \srccode{determineSamplingOrder()} described above. By default returns the argument unchanged (ie. no filtering).
+	\item \srccode{void initializeSample(SamplingContext context)}: Abstract method in which a concrete sampler may prepare the assignment of variables before the first sample is produced (needed in the MCMC sampling to set the evidence variables to given values). Specific values in the \srccode{context.sampledVarsAssignment} array are instantiations of variables the array in \srccode{SampleProducer.sampledVars} on the same indices.
+	\item \srccode{void produceSample(SamplingContext context)}: Abstract method to produce one sample consisting of a concrete assignment to variables and weight of the sample. The sample is stored in the \srccode{context} argument. The \srccode{context.sampledVarsAssignment} array is filled with a concrete instantiation of corresponding variables of the array \srccode{SampleProducer.sampledVars}.
+	\item \srccode{SamplingContext createSamplingContext()}: Creates a thread-local context for sampling. This context is meant to be reused when generating a number of samples within one \srccode{SampleProducer}.
 \end{itemize}
 
 
 \subsubsection{Weighted sampling}
-Weighted sampling is implemented by the class \srccode{WeightedSampleProducer}. As a subclass of \srccode{SampleProducer} it needs to define methods \srccode{initializeSample(...)}, \srccode{produceSample(...)} and also redefines the hook \srccode{filterVariablesToSample(...)} for optimization purposes.
+Weighted sampling is implemented by the class \srccode{WeightedSampleProducer}. As it is a non-abstract direct child of \srccode{SampleProducer} it needs to define methods \srccode{initializeSample(...)}, \srccode{produceSample(...)} and it also redefines the hook \srccode{filterVariablesToSample(...)} for optimization purposes.
 
-List of noteworthy methods of the \srccode{SampleProducer} class:
+\medskip
+List of noteworthy methods of the \srccode{WeightedSampleProducer} class:
 \begin{itemize}
-	\item \srccode{Variable[] filterVariablesToSample(Variable[] allVars)}: At this point the implementation weighted sampling takes advantage of the fact that, in order to produce relevant samples for determining the distribution $P(\vars{X} \mid \vars{Y}, \vars{e})$, we don't have to consider variables such that they are not in $\vars{X} \cup \vars{Y} \cup \vars{E}$ and also none of their descendants is in $\vars{X} \cup \vars{Y} \cup \vars{E}$. So, this method filters the given array of variables and preserves only those variables that don't satisfy the previously stated condition. This way weighted sampling can be accelerated for those queries in which a significant part of the BN doesn't need to be considered.
-	\item \srccode{void initializeSample(int[] assignment)}: Empty method\,--\,during weighted sampling values of all variables are rewritten anyway, so there is no need to produce some initial instantiation.
-	\item \srccode{double produceSample(int[] assignment)}: The weighted sampling is implemented as follows: We keep an array of \srccode{WeightedSamplingAction} objects. Each object is responsible for handling one variable of the \srccode{sampledVars} array (ie. the array of variables that need to be taken into account) so, one sample is produced by performing all the actions in a sequence.
+	\item \srccode{Variable[] filterVariablesToSample(Variable[] allVars)}: At this point the implementation weighted sampling takes advantage of the fact that, in order to produce relevant samples for determining the distribution $P(\vars{X} \mid \vars{Y}, \vars{e})$, we don't have to consider variables such that they are not in $\vars{X} \cup \vars{Y} \cup \vars{E}$ and also none of their descendants is in $\vars{X} \cup \vars{Y} \cup \vars{E}$. So, this method filters the given array of variables and preserves only those variables that don't satisfy the previously stated conditions. This way weighted sampling can be accelerated for those queries in which a significant part of the BN doesn't need to be considered.
+	\item \srccode{void initializeSample(SamplingContext context)}: Empty method\,--\,in weighted sampling values of all variables are rewritten anyway, so there is no need to produce some initial instantiation of variables.
+	\item \srccode{void produceSample(SamplingContext context)}: The weighted sampling is implemented as follows: We keep an array of \srccode{WeightedSamplingAction} objects. Each object is responsible for handling one variable of the \srccode{sampledVars} array (ie. the array of variables that need to be taken into account) so, one sample is produced by performing all the actions in a sequence.
 	
 	The associated action objects are different for evidence and for non-evidence variables.	For an evidence variable $E_i$ the associated \srccode{WeightedSamplingEvidenceAction} object extracts assignment of the variables $Parents(E_i)$ from the current sample (ie. current values in \srccode{assignment}) and determines the probability $P(E_i = e_i \mid parents(E_i))$ which will affect the weight of the sample.
-	For a~non-evidence variable $X_i$ the associated \srccode{WeightedSamplingVariableAction} extracts assignment of the variables $Parents(X_i)$ from the current sample and then samples the variable $X_i$ from distribution $P(X_i \mid parents(X_i))$\,--\,sampling itself is actually implemented in the \srccode{Node} class. Finally, the value $x_i$ of variable $X_i$ is written to \srccode{assignment} on the right index.
+	For a~non-evidence variable $X_i$ the associated \srccode{WeightedSamplingVariableAction} extracts assignment of the variables $Parents(X_i)$ from the current sample and then samples the variable $X_i$ from distribution $P(X_i \mid parents(X_i))$; sampling itself is actually implemented in the \srccode{Node} class. Finally, the value $x_i$ of variable $X_i$ is written to \srccode{context}.
 \end{itemize}
 
 
 \subsubsection{MCMC sampling}
-\todo{MCMC resampling of variable $X$: the distribution $P(X \mid mb(X)$ is computed only by products of $P(x) P(children(X))$ instead of the whole Markov blanket}
+MCMC sampling is implemented by the class \srccode{MCMCSampleProducer}. As a subclass of \srccode{SampleProducer} it has to define methods \srccode{initializeSample(...)} and \srccode{produceSample(...)}.
 
+\medskip
+List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
+\begin{itemize}
+	\item \srccode{void initializeSample(SamplingContext context)}: MCMC actually is a sampling method that views the last generated sample as a state and the next sample is produced by perturbing this state. So, in initialization we need to produce some valid instantiation of all \srccode{sampledVars} variables. Such instantiation has to (1)~respect given evidence and (2)~be a \uv{normal} sample (not something very improbable). Therefore we internally generate one sample using weighted sampling and use this as the initial state of the MCMC sampler.
+	\item \srccode{void produceSample(SamplingContext context)}: Sample is in MCMC produced by taking the last generated sample and resampling a single variable while values of other variables remain unchanged. For the purpose of resampling we keep an array named \srccode{resamplingActions} with one instance of \srccode{MCMCResamplingAction} for each non-evidence variable (evidence variable cannot be resampled). New sample is then produced by performing a randomly chosen resampling action.
+	
+	The \srccode{MCMCResamplingAction} for a variable $X$ works as follows: For each instantiation $x$ of the variable $X$ we compute the probability $P(x \mid parents(X)) \prod_{C_i \in Children(X)} P(c_i \mid parents(C_i))$\,--\,we don't need to consider variables other than $X \cup Children(X)$ because for other nodes different values $x$ of $X$ don't affect probability at these nodes given parents. Then by normalization we obtain the distribution $P(X \mid \text{rest-of-sample})$ and by sampling $X$ from this distribution we obtain the new value of $X$ which is written to the \srccode{context} object.
+\end{itemize}
 
 
 \subsection{Answering a probabilistic query}
-\srccode{QuerySampler}
+\srccode{QuerySampler} \todo{what does it do? how it internally works?}
 
 
 \subsection{Multi-threaded sampling}
