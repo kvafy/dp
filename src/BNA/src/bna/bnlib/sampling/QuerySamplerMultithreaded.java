@@ -5,6 +5,8 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
+import java.util.Collection;
+import java.util.LinkedList;
 
 
 /**
@@ -36,7 +38,7 @@ public class QuerySamplerMultithreaded implements Sampler {
     public void sample(SamplingController controller) {
         // initialize threads
         final SamplingController sharedController = controller;
-        SamplingThread[] threadpool = new SamplingThread[this.threadcount];
+        LinkedList<SamplingThread> threadpool = new LinkedList<SamplingThread>();
         for(int i = 0 ; i < this.threadcount ; i++) {
             SamplingThread threadI = new SamplingThread() {
                 @Override
@@ -46,28 +48,36 @@ public class QuerySamplerMultithreaded implements Sampler {
                     this.sampleCounter = querySampler.getSamplesCounter(); // store samples of this thread
                 }
             };
-            threadpool[i] = threadI;
+            threadpool.add(threadI);
         }
-        // run all threads
+        // run all worker threads
         for(Thread t : threadpool)
             t.start();
-        for(Thread t : threadpool) {
+        // wait for workers one by one
+        LinkedList<SamplingThread> threadpoolWorking = new LinkedList<SamplingThread>(threadpool);
+        while(!threadpoolWorking.isEmpty()) {
             try {
-                t.join();
+                threadpoolWorking.getFirst().join();
+                threadpoolWorking.removeFirst();
             }
             catch(InterruptedException iex) {
-                iex.printStackTrace(); // TODO better?
+                // on interrupt of the main thread stop the workers and combine
+                // immediate results of worker threads
+                controller.setStopFlag();
+                // now the workers will finish quickly
             }
         }
         // combine the results of all threads
         this.sampleCounter = this.combineResults(threadpool);
     }
     
-    private Factor combineResults(SamplingThread[] threads) {
+    private Factor combineResults(Collection<SamplingThread> threads) {
         // extract the subresults as factors
-        Factor[] subresults = new Factor[threads.length];
-        for(int i = 0 ; i < threads.length ; i++)
-            subresults[i] = threads[i].sampleCounter;
+        Factor[] subresults = new Factor[threads.size()];
+        int i = 0;
+        for(SamplingThread t : threads) {
+            subresults[i++] = t.sampleCounter;
+        }
         // combine to produce the final result
         return Factor.sumFactors(subresults);
     }
