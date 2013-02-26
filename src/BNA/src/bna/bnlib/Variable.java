@@ -38,6 +38,16 @@ public class Variable {
         return this.values;
     }
     
+    /** Convert textual assignment to index in this.values array. */
+    public int getValueIndex(String value) {
+        for(int i = 0 ; i < this.values.length ; i++) {
+            if(this.values[i].equals(value))
+                return i;
+        }
+        String msg = String.format("Unknown assignment \"%s\" of variable \"%s\".", value, this.name);
+        throw new BayesianNetworkRuntimeException(msg);
+    }
+    
     public int getCardinality() {
         return this.values.length;
     }

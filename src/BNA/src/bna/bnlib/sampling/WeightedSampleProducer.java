@@ -32,18 +32,39 @@ public class WeightedSampleProducer extends SampleProducer {
 
     public WeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
-        // generate sampling actions for all variables that need to be sampled
+        this.generateSamplingActions();
+    }
+    
+    /**
+     * Create a weighted sample producer based on a query of textual form.
+     * @param bn Network to be sampled.
+     * @param query Textual query of general form "P(X1, ..., Xn | Y1, ..., Ym, E1 = e1, ..., Ek = ek)".
+     *              The names of variables as well as their values of evidence
+     *              must conform exactly (case sensitively) to variables from
+     *              given network and to their values.
+     * @throws BayesianNetworkException When the query string is invalid.
+     */
+    public WeightedSampleProducer(BayesianNetwork bn, String query) throws BayesianNetworkException {
+        this(new ParsedQuery(bn, query));
+    }
+    
+    /** Just to solve the "call to this must be first statement" in the constructor above. */
+    private WeightedSampleProducer(ParsedQuery query) {
+        this(query.bn, query.X, query.Y, query.E, query.e);
+    }
+    
+    private void generateSamplingActions() {
         this.samplingActions = new WeightedSamplingAction[this.sampledVars.length];
         for(int i = 0 ; i < this.sampledVars.length ; i++) {
             Variable varI = this.sampledVars[i];
             Node varINode = this.bn.getNode(varI.getName());
             WeightedSamplingAction actionI;
             
-            if(Toolkit.arrayContains(E, varI)) {
+            if(Toolkit.arrayContains(this.EVars, varI)) {
                 Variable[] IAndParentsVars = Toolkit.union(new Variable[]{varI}, varINode.getParentVariables());
                 VariableSubsetMapper allVarsToIAndParentsMapper = new VariableSubsetMapper(this.sampledVars, IAndParentsVars);
                 // action: adjust produceSample weight and write the evidence value
-                int evidenceValue = e[Toolkit.indexOf(E, varI)];
+                int evidenceValue = this.EVals[Toolkit.indexOf(this.EVars, varI)];
                 // - map allVarsValues to Parents(ENode) values
                 // - add known value of evidence variable => EValue,parents(EValue) assignment
                 // - read probability of that assignment from factor for ENode

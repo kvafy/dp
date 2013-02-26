@@ -48,6 +48,24 @@ public abstract class SampleProducer {
     }
     
     /**
+     * Create a sample producer based on a query of textual form.
+     * @param bn Network to be sampled.
+     * @param query Textual query of general form "P(X1, ..., Xn | Y1, ..., Ym, E1 = e1, ..., Ek = ek)".
+     *              The names of variables as well as their values of evidence
+     *              must conform exactly (case sensitively) to variables from
+     *              given network and to their values.
+     * @throws BayesianNetworkException When the query string is invalid.
+     */
+    public SampleProducer(BayesianNetwork bn, String query) throws BayesianNetworkException {
+        this(new ParsedQuery(bn, query));
+    }
+    
+    /** Just to solve the "call to this must be first statement" in the constructor above. */
+    private SampleProducer(ParsedQuery query) {
+        this(query.bn, query.X, query.Y, query.E, query.e);
+    }
+    
+    /**
      * Sampling order defines list of variables that need to be sampled.
      * The sampling order primarily has be topological order. Other criteria
      * are method-specific.

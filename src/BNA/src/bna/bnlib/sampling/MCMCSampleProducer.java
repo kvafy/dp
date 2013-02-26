@@ -35,6 +35,24 @@ public class MCMCSampleProducer extends SampleProducer {
             }
         }
     }
+    
+    /**
+     * Create a weighted sample producer based on a query of textual form.
+     * @param bn Network to be sampled.
+     * @param query Textual query of general form "P(X1, ..., Xn | Y1, ..., Ym, E1 = e1, ..., Ek = ek)".
+     *              The names of variables as well as their values of evidence
+     *              must conform exactly (case sensitively) to variables from
+     *              given network and to their values.
+     * @throws BayesianNetworkException When the query string is invalid.
+     */
+    public MCMCSampleProducer(BayesianNetwork bn, String query) throws BayesianNetworkException {
+        this(new ParsedQuery(bn, query));
+    }
+    
+    /** Just to solve the "call to this must be first statement" in the constructor above. */
+    private MCMCSampleProducer(ParsedQuery query) {
+        this(query.bn, query.X, query.Y, query.E, query.e);
+    }
 
     /** Initializes the sample by a single weighted sampling pass. */
     @Override

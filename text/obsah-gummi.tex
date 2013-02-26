@@ -41,6 +41,8 @@
 \newcommand{\term}[1]{\emph{#1}}           % novy termin v textu prace
 \newcommand{\srccode}[1]{{\tt #1}}         % fragment zdrojaku v textu
 \newcommand{\vars}[1]{{\bold{#1}}}         % matematicke vyrazy - mnozina promennych
+\newcommand{\bnfconst}[1]{``\textbf{#1}''} % BNF literal / konstanta
+\newcommand{\bnfgroup}[1]{\textit{#1}}     % BNF skupina
 \newcommand{\ignore}[1]{}                  % komentar v radku
 \newcommand{\todo}[1]{{\color{red}#1}}
 \newcommand{\uncertain}[1]{{\color{magenta}#1}}
@@ -132,7 +134,6 @@
 % (c) Michal Bidlo, Bohuslav Křena, 2008
 
 \chapter{Introduction}
-
 Bayesian networks represent a subclass of probabilistic graphical models and serve as a~tool for modeling joint probability distributions of random variables. Bayesian networks were originally used to evaluate medical data of a patient in order to determine the probability of them having a certain disease\,--\,a situation with many unknown facts, eg. missing medical history or unknown results of possible tests. Since then there have been many other applications such as inspection of pedigree trees in genetics or general classification tasks.
 
 The main advantage of Bayesian networks lies in their inherent property that, thanks to conditional dependency and independency between variables, they represent the joint probability distribution in a very compact way in terms of space complexity. Construction of Bayesian networks for some concrete problem is a complicated process involving complex algorithms, enough input data and, in many cases, expert knowledge. Another problem is providing answers to queries over the underlaying probability distribution of a Bayesian network, so called inference.
@@ -912,6 +913,30 @@ List of noteworthy methods of the \srccode{SampleProducer} class:
 	\item \srccode{void produceSample(SamplingContext context)}: Abstract method to produce one sample consisting of a concrete assignment to variables and weight of the sample. The sample is stored in the \srccode{context} argument. The \srccode{context.sampledVarsAssignment} array is filled with a concrete instantiation of corresponding variables of the array \srccode{SampleProducer.sampledVars}.
 	\item \srccode{SamplingContext createSamplingContext()}: Creates a thread-local context for sampling. This context is meant to be reused when generating a number of samples within one \srccode{SampleProducer}.
 \end{itemize}
+
+\subsubsection{Query specification}
+The general query $P(\vars{X} \mid \vars{Y}, \vars{e})$, where $\vars{X} \neq \emptyset$, may be specified for \srccode{SampleProducer} and any of its subclasses in a user friendly way as a string. Form of the query string is described bellow using EBNF:
+
+\begin{center}
+\begin{tabular}{lcl}
+    \bnfgroup{query} & ::
+        & ( \bnfconst{P} , \bnfconst{(} , \bnfgroup{var-list} , \bnfconst{)} ) \\
+    & ::
+        & ( \bnfconst{P} , \bnfconst{(} , \bnfgroup{var-list} , \bnfconst{$\mid$} , \bnfgroup{var-list} , \bnfconst{)} ) \\
+    & $\mid$
+        & ( \bnfconst{P} , \bnfconst{(} , \bnfgroup{var-list} , \bnfconst{$\mid$} , \bnfgroup{assignment-list} , \bnfconst{)} ) \\
+    & $\mid$
+        & ( \bnfconst{P} , \bnfconst{(} , \bnfgroup{var-list} , \bnfconst{$\mid$} , \bnfgroup{var-list} , \bnfconst{,} , \bnfgroup{assignment-list} , \bnfconst{)} ) ; \\
+    \bnfgroup{var-list} & ::
+        & \bnfgroup{var} , \{ \bnfconst{,} , \bnfgroup{var} \} ; \\
+    \bnfgroup{assignment-list} & ::
+        & \bnfgroup{var} , \bnfconst{=} , \bnfgroup{val} , \{ \bnfconst{,} , \bnfgroup{var} , \bnfconst{=} \} ; \\
+\end{tabular}
+\end{center}
+
+Variable name \bnfgroup{var} and variable value \bnfgroup{val} may consist, for simplicity, of any characters except for {\tt , | = -} and whitespaces. Variable names and values are case sensitive.
+
+Some examples of valid query strings are \srccode{P(RAIN)}, \srccode{P(CLOUDY $\mid$ WETGRASS = TRUE)}, \srccode{P(SPRINKLER, CLOUDY)} or \srccode{P(CLOUDY $\mid$ RAIN, WETGRASS = TRUE)}.
 
 
 \subsubsection{Weighted sampling}

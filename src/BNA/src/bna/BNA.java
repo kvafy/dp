@@ -15,12 +15,13 @@ public class BNA {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        playing_sampling();
+        //playing_sampling_mixed();
+        playing_sampling_query();
         //benchmarkSampling_sequentialVSMultithreaded();
     }
     
     
-    private static void playing_sampling() {
+    private static void playing_sampling_mixed() {
         long timeStart, timeEnd;
         try {
             // load BN from file
@@ -42,7 +43,7 @@ public class BNA {
             // weighted sampling P(RAIN | WETGRASS = TRUE)
             System.out.println("Weighted sampling...");
             timeStart = System.currentTimeMillis();
-            WeightedSampleProducer weightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
+            SampleProducer weightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
             QuerySampler weightedQuerySampler = new QuerySampler(weightedSampleProducer);
             SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT);
             weightedQuerySampler.sample(weightedSamplingController);
@@ -55,7 +56,7 @@ public class BNA {
             // MCMC sampling P(RAIN | WETGRASS = TRUE)
             System.out.println("MCMC sampling...");
             timeStart = System.currentTimeMillis();
-            MCMCSampleProducer mcmcSampleProducer = new MCMCSampleProducer(bn, X, Y, E, e);
+            SampleProducer mcmcSampleProducer = new MCMCSampleProducer(bn, X, Y, E, e);
             QuerySampler mcmcQuerySampler = new QuerySampler(mcmcSampleProducer);
             SamplingController mcmcSamplingController = new SamplingController(SAMPLES_COUNT);
             mcmcQuerySampler.sample(mcmcSamplingController);
@@ -66,6 +67,21 @@ public class BNA {
             timeEnd = System.currentTimeMillis();
             System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));
             
+            
+            // optional interruption of the main thread when performing multithreaded sampling
+            final Thread mainThread = Thread.currentThread();
+            Thread interruptThread = new Thread() {
+                public void run() {
+                    try {
+                        System.out.println("Waiting to interrupt the main thread...");
+                        sleep(2000);
+                        System.out.println("Interrupting the main thread now.");
+                        mainThread.interrupt();
+                    }
+                    catch(InterruptedException iex) {}
+                }
+            };
+            interruptThread.start();
             // multithreaded weighted sampling P(RAIN | WETGRASS = TRUE)
             // somehow lousy results (inaccurate, far better is single-threaded result)
             //   [solved] Random is not thread safe => each thread has its own instane
@@ -74,7 +90,7 @@ public class BNA {
             //                 of sampling a non-evidence variable in weighted sampling
             System.out.println("Multithreaded weighted sampling...");
             timeStart = System.currentTimeMillis();
-            WeightedSampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
+            SampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
             QuerySamplerMultithreaded weightedQuerySamplerMultithreaded = new QuerySamplerMultithreaded(sharedWeightedSampleProducer, THREAD_COUNT);
             SamplingController weightedSamplingMultithreadedController = new SamplingController(SAMPLES_COUNT / THREAD_COUNT);
             weightedQuerySamplerMultithreaded.sample(weightedSamplingMultithreadedController);
@@ -93,6 +109,44 @@ public class BNA {
             datasetSampler.sample(datasetSamplingController);
             timeEnd = System.currentTimeMillis();
             System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));*/
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+    }
+    
+    private static void playing_sampling_query() {
+        final long SAMPLES_COUNT = 20000000;
+        final int THREAD_COUNT = 3;
+        final String NETWORK_FILE = "../../networks/sprinkler.net";
+        final String QUERY_STR = "P(RAIN | WETGRASS = TRUE)";
+        
+        long timeStart, timeEnd;
+        try {
+            // load BN from file
+            timeStart = System.currentTimeMillis();
+            System.out.println("Loading a network from file...");
+            BayesianNetwork bn = BayesianNetwork.loadFromFile(NETWORK_FILE);
+            timeEnd = System.currentTimeMillis();
+            System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));
+            
+            // multithreaded weighted sampling for QUERY_STR
+            // somehow lousy results (inaccurate, far better is single-threaded result)
+            //   [solved] Random is not thread safe => each thread has its own instane
+            // slow
+            //   [in progress] Random.nextDouble() takes about 90 % of time
+            //                 of sampling a non-evidence variable in weighted sampling
+            System.out.println("Multithreaded weighted sampling of string query " + QUERY_STR);
+            timeStart = System.currentTimeMillis();
+            SampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, QUERY_STR);
+            QuerySamplerMultithreaded weightedQuerySamplerMultithreaded = new QuerySamplerMultithreaded(sharedWeightedSampleProducer, THREAD_COUNT);
+            SamplingController weightedSamplingMultithreadedController = new SamplingController(SAMPLES_COUNT / THREAD_COUNT);
+            weightedQuerySamplerMultithreaded.sample(weightedSamplingMultithreadedController);
+            Factor weightedSamplesMultithreaded = weightedQuerySamplerMultithreaded.getSamplesCounterNormalized();
+            System.out.println("sampleCounter:");
+            System.out.println(weightedSamplesMultithreaded.toString());
+            timeEnd = System.currentTimeMillis();
+            System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();
