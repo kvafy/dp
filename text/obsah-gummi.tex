@@ -470,7 +470,7 @@ Direct sampling presented earlier doesn't allow for any evidence. Rejection samp
 
 This simple approach bears the disadvantage that if the observed evidence is very unlikely then many samples get discarded and hence a lot of computational time is wasted because rejected samples don't contribute to the final probability distribution estimate. Unfortunately, when considering somewhat uniform distribution, the probability $P(\vars{e})$ decreases exponentially with the number of observed variables (eg. with symptoms of a~patient) and by the same rationale the number of samples that are not rejected decreases just as rapidly.
 
-\subsubsection{Likelihood weighting (\todo{implementation note: compute $P(\vars{X}\cup\vars{Y}\mid\vars{e})$ and renorm.})}
+\subsubsection{Likelihood weighting}
 Rejection sampling described earlier can theoretically be used for answering queries of the form $P(\vars{X} \mid \vars{e})$ but the number of rejected samples may be unbearable in practice. Likelihood weighting method copes with this problem by forcing every sample to be consistent with observed evidence, ie. by artificially setting variables $\vars{E}$ to $\vars{e}$. Then, of course, not every sample is equally likely, so we cannot determine $P(\vars{x} \mid \vars{e})$ by simply dividing number of samples $N_{\vars{x},\vars{e}}$ by $N_\vars{e}$. For each sample we need some additional information which is the probability of assigning values $\vars{e}$ to evidence variables given values of other variables in the current sample~\cite[p.~514]{russell_norvig_ed2}. Let $\vars{Y}$ denote set of all variables in a BN other than the variables $\vars{X} \cup \vars{E}$. Then we can state that weight of a sample $\vars{x},\vars{e}, \vars{y}$ is $w_{\vars{x},\vars{e}, \vars{y}} = \prod_\vars{E} P(e \mid parents(E))$ where $parents(E_i)$ denotes assignment to variables $Parents(E_i)$ according to the given sample $\vars{x},\vars{e}, \vars{y}$.
 
 The sampling algorithm needs to be changed in the following way. First of all, the counters of samples won't be integral but real. Also, when generating a~new sample we will keep not only the values of variables but also weight of the sample. When generating a new sample, first we set the weight of the current sample to 1. Then we sample all variables in topological order. For a non-evidence variable $X_i$ we proceed as in the case of direct sampling\,--\,randomly assign a value $x_i$ according to the probability distribution $P(X_i \mid parents(X_i))$ which is governed by the current instantiation of $X_i$'s parents. When we encounter an evidence variable $E_i$, we set it to value $e_i$ according to the given evidence $\vars{e}$ and multiply weight of the current sample by $P(e_i \mid parents(E_i))$. When a sample is completed we increase the counter $C_{\vars{x},\vars{e}}$ by the weight of the generated sample. The final probability distribution is computed as follows:
@@ -835,11 +835,9 @@ general graphs
 
 
 \subsection{Method for finding all possible alterations of a network}
-During structure learning, at some point we always need to determine the set of all possible alterations of a concrete network, ie. which edges may be added, removed or reversed. Method of determining this set should be time efficient as well as mathematically plausible. With these criteria in mind I have devised the following approach.
+During structure learning, at some point we always need to determine the set of all possible alterations of a concrete network, ie. which edges may be added, removed or reversed. Method of determining this set should be time-efficient as well as mathematically plausible. With these criteria in mind I have devised the following approach.
 
-The main problem we must face is that no alteration may introduce a directed cycle into the network because Bayesian networks are purely DAGs.
-Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. As usual, $r^+$ will denote transitive closure of the relation $r$.
-Lets now inspect three the possible alteration cases (we always consider arbitrary variables $X,Y$ such that $X \neq Y$).
+The main problem we must face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ will denote the transitive closure of the relation $r$. Lets now inspect the three possible alteration cases\,--\,edge removal, addition and reversal. In further text, we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
 
 
 \subsubsection{Removing an edge}
@@ -867,10 +865,10 @@ Another way to look at it is to ask whether the edge reversal can introduce a~cy
 \end{adjustwidth}
 Our attention now goes to the set of variables $\vars{M}$ which are between $X$ and $Y$ in the topological ordering $\prec$ because these variables determine whether reversing $(X,Y)$ introduces a cycle. I state that the edge $(X,Y)$ can be reversed iff $\not \exists M \in \vars{M}: Xr^+Mr^+Y$. It is not difficult to see that existence of such $M$ would cause a cycle as there would be directed paths $X \rightarrow^+ M$, $M \rightarrow^+ Y$ and the edge $(Y,X)$ would complete the cycle. Critical is the following observation: The node $M$ has to be reachable by forward edges from $X$ and at the same time by backward edges from $Y$; otherwise $M$ could be moved in the $\prec$ relation directly before $X$ of after $Y$ while $\prec$ still being an actual topological ordering. So if all $M$s could be this way \uv{factored out} from the $\vars{M}$ set to get to $\vars{M} = \emptyset$, the edge reversal wouldn't introduce a cycle.
 
-Formally, edge $(X,Y)$ may be reversed iff $(\not \exists M \in \vars{M}: Xr^+Mr^+Y) \land (X r Y)$.
+Formally, edge $(X,Y)$ may be reversed iff $(\not \exists M \in \vars{M}: Xr^+Mr^+Y) \land (X r Y)$, where $\vars{M}$ is maximal set of variables such that $\forall M \in \vars{M}: X \prec M \prec Y$ for some topological ordering $\prec$ of the original network.
 
 \bigskip
-In the text above I have proposed a method for efficient determination of all possible alterations of a Bayesian network using transitive closure of adjacency relation (computable by Warshall's algorithm) and topological ordering (computable by a DFS-based algorithm~\cite{cormen_introduction_to_algorithms}).
+In the text above I have proposed a method for efficient determination of all possible alterations of a Bayesian network using transitive closure $r^+$ of adjacency relation $r$ (computable by Warshall's algorithm) and topological ordering $\prec$ (computable by a DFS-based algorithm~\cite{cormen_introduction_to_algorithms}).
 
 
 \begin{comment}
@@ -1234,7 +1232,7 @@ In the summer semester I am going to study the selected application cases in dep
 
 My original contributions:
 \begin{itemize}
-	\item I myself devised some proofs: Joint probability distribution induces by a BN indeed is a probability distribution (sums to one). Derivation of the formula for weighted sampling.
+	\item I myself devised some proofs and nice formal theories: Joint probability distribution induces by a BN indeed is a probability distribution (sums to one). Derivation of the formula for weighted sampling. Nice theory for finding all possible alterations of a network (for state-space search in structure learning).
 \end{itemize}
 %=========================================================================
 %begin-of-inserted-footer

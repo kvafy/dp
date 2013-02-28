@@ -7,18 +7,17 @@ CO=dp
 
 all: $(CO).pdf
 
-
 $(CO).ps: $(CO).dvi
 	dvips $(CO)
 
-$(CO).pdf: clean obsah.tex
+$(CO).pdf: clean $(CO).tex obsah.tex
 	pdflatex $(CO)
 	bibtex $(CO)
 	pdflatex $(CO)
 	pdflatex $(CO)
 	make clean-post-build
 
-$(CO).dvi: $(CO).tex $(CO).bib obsah.tex
+$(CO).dvi: clean $(CO).tex obsah.tex
 	latex $(CO)
 	bibtex $(CO)
 	latex $(CO)
