@@ -11,46 +11,42 @@ import java.util.Arrays;
 /**
  * Generates samples for a probabilistic query P(X | Y, E = e) and computes the statistics as a factor with scope (X union Y).
  */
-public class QuerySampler implements Sampler {
-    private SampleProducer sampleProducer;
+public class QuerySampler extends Sampler {
     // sampling statistics
-    private AssignmentIndexMapper XYIndexMapper; // mapping of assignment XYVars to index to the array sampleCounter
-    private double[] sampleCounter;              // for all instantiations of X,Y (ie. of sampleProducer.XYVars)
+    private AssignmentIndexMapper XYIndexMapper; // mapping of assignment XYVars to index into the array sampleCounter
+    private double[] XYSampleCounter;              // for all instantiations of X,Y (ie. of this.XYVars)
     
     public QuerySampler(SampleProducer sampleProducer) {
-        this.sampleProducer = sampleProducer;
+        super(sampleProducer);
         // initialize sampleCounter
-        this.XYIndexMapper = new AssignmentIndexMapper(this.sampleProducer.XYVars);
-        this.sampleCounter = new double[Toolkit.cardinality(this.sampleProducer.XYVars)];
-        Arrays.fill(this.sampleCounter, 0.0);
+        this.XYIndexMapper = new AssignmentIndexMapper(this.XYVars);
+        this.XYSampleCounter = new double[Toolkit.cardinality(this.XYVars)];
+        Arrays.fill(this.XYSampleCounter, 0.0);
     }
     
     
-    /** Record a sampleNumber with given weight. */
-    private void registerSample(int[] XYVarsValues, double sampleWeight) {
-        int assignmentIndex = this.XYIndexMapper.assignmentToIndex(XYVarsValues);
-        this.sampleCounter[assignmentIndex] += sampleWeight;
-    }
-    
-    /** Perform sampling according to given controller. */
+    /** Record a sampleNumber with given weight in our statistics. */
     @Override
-    public void sample(SamplingController controller) {
-        SamplingContext context = this.sampleProducer.createSamplingContext();
-        
-        long sampleNumber = 0;
-        this.sampleProducer.initializeSample(context);
-        while(!controller.stopFlag() && sampleNumber < controller.maxSamples()) {
-            this.sampleProducer.produceSample(context);
-            this.registerSample(context.XYVarsAssignment, context.sampleWeight);
-            sampleNumber++;
-        }
+    protected void registerSample(int[] XYVarsValues, double sampleWeight) {
+        int assignmentIndex = this.XYIndexMapper.assignmentToIndex(XYVarsValues);
+        this.XYSampleCounter[assignmentIndex] += sampleWeight;
+    }
+    
+    @Override
+    protected void presamplingActions() {
+        // no need to do anything
+    }
+
+    @Override
+    protected void postsamplingActions() {
+        // no need to do anything
     }
     
     /**
      * Get the samples counter for instantiations of X,Y variables (just raw counters).
      */
     public Factor getSamplesCounter() {
-        return new Factor(this.sampleProducer.XYVars, sampleCounter);
+        return new Factor(this.XYVars, XYSampleCounter);
     }
     
     /**

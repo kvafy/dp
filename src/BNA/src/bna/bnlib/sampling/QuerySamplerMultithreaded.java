@@ -15,7 +15,7 @@ import java.util.LinkedList;
  * a Random object for each thread separately. That is easily accomplished
  * by using java.util.concurrent.ThreadLocalRandom.
  */
-public class QuerySamplerMultithreaded implements Sampler {
+public class QuerySamplerMultithreaded implements SamplerInterface {
     private SampleProducer sharedSampleProducer;
     private int threadcount;
     private Factor sampleCounter;
