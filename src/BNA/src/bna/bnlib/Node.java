@@ -12,7 +12,7 @@ import java.util.Random;
 /**
  * Node of a Bayesian network holding it's variable, CPT as a factor and
  * connectivity information.
- * Mutable.
+ * Mutable (but just from inside its own package).
  */
 public class Node {
     // associated variables
@@ -36,6 +36,10 @@ public class Node {
         return this.variable;
     }
     
+    public Factor getFactor() {
+        return this.factor;
+    }
+    
     public int getParentCount() {
         return this.parents.size();
     }
@@ -51,6 +55,11 @@ public class Node {
         return parentsArray;
     }
     
+    public Node[] getParentNodes() {
+        Node[] parentsArray = new Node[this.parents.size()];
+        return this.parents.toArray(parentsArray);
+    }
+    
     public Node[] getChildNodes() {
         Node[] childrenArray = new Node[this.children.size()];
         return this.children.toArray(childrenArray);
@@ -61,6 +70,17 @@ public class Node {
         for(int i = 0 ; i < this.children.size() ; i++)
             childrenArray[i] = this.children.get(i).getVariable();
         return childrenArray;
+    }
+    
+    /**
+     * Compute scope according to currently registered parent nodes.
+     */
+    public Variable[] getScope() {
+        Variable[] scope = new Variable[1 + parents.size()];
+        scope[0] = this.variable;
+        for(int i = 0 ; i < this.parents.size() ; i++)
+            scope[i + 1] = this.parents.get(i).getVariable();
+        return scope;
     }
     
     public double getProbability(int[] assignment) {
@@ -82,32 +102,33 @@ public class Node {
         return Toolkit.randomIndex(probabilities, 1.0, random);
     }
     
-    public void addParent(Node parent) {
+    
+    // modification methods are package-private => users of the library cannot manipulate nodes directly
+    
+    void addParent(Node parent) {
         this.parents.add(parent);
     }
     
-    public void addChild(Node child) {
+    void addChild(Node child) {
         this.children.add(child);
     }
     
-    public void setProbabilityVector(double[] probs) {
+    void removeParent(Node parent) {
+        this.parents.remove(parent);
+    }
+    
+    void removeChild(Node child) {
+        this.children.remove(child);
+    }
+    
+    void setProbabilityVector(double[] probs) {
         this.setFactor(new Factor(this.getScope(), probs));
     }
     
-    private void setFactor(Factor f) {
+    void setFactor(Factor f) {
+        if(f != null && !Toolkit.areEqual(f.getScope(), this.getScope()))
+            throw new BayesianNetworkRuntimeException("Factor has invalid scope wrt. current parent nodes.");
         this.factor = f;
-    }
-    
-    /**
-     * Compute scope according to currently registered parent nodes.
-     * @return 
-     */
-    private Variable[] getScope() {
-        Variable[] scope = new Variable[1 + parents.size()];
-        scope[0] = this.variable;
-        for(int i = 0 ; i < this.parents.size() ; i++)
-            scope[i + 1] = this.parents.get(i).getVariable();
-        return scope;
     }
     
     public boolean hasValidFactor() {
@@ -128,6 +149,7 @@ public class Node {
     }
     
     @Override
+    /** Two nodes are considered equal if they hold equal variables. */
     public boolean equals(Object o) {
         if(o instanceof Node)
             return ((Node)o).variable.equals(this.variable);

@@ -2,6 +2,7 @@
 package bna;
 
 import bna.bnlib.*;
+import bna.bnlib.learning.*;
 import bna.bnlib.sampling.*;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -16,8 +17,11 @@ public class BNA {
      */
     public static void main(String[] args) {
         //playing_sampling_mixed();
-        playing_sampling_query();
         //benchmarkSampling_sequentialVSMultithreaded();
+        //playing_sampling_string_query();
+        //playing_parameter_learning();
+        //playing_dataset_testing();
+        playing_structure_learning();
     }
     
     
@@ -104,7 +108,7 @@ public class BNA {
             // generating a dataset for the loaded bn
             System.out.println("dataset sampling...");
             timeStart = System.currentTimeMillis();
-            BayesianNetworkDatasetCreationSampler datasetSampler = new BayesianNetworkDatasetCreationSampler(bn, "samples.csv");
+            DatafileCreationSampler datasetSampler = new DatafileCreationSampler(bn, "samples.csv");
             SamplingController datasetSamplingController = new SamplingController(SAMPLES_COUNT);
             datasetSampler.sample(datasetSamplingController);
             timeEnd = System.currentTimeMillis();
@@ -115,7 +119,7 @@ public class BNA {
         }
     }
     
-    private static void playing_sampling_query() {
+    private static void playing_sampling_string_query() {
         final long SAMPLES_COUNT = 20000000;
         final int THREAD_COUNT = 3;
         final String NETWORK_FILE = "../../networks/sprinkler.net";
@@ -132,7 +136,8 @@ public class BNA {
             
             // multithreaded weighted sampling for QUERY_STR
             // somehow lousy results (inaccurate, far better is single-threaded result)
-            //   [solved] Random is not thread safe => each thread has its own instane
+            //   [solved] the SampleProducer had some cached arrays (to avoid frequent allocation)
+            //            whose content got rewritten by concurrent threads
             // slow
             //   [in progress] Random.nextDouble() takes about 90 % of time
             //                 of sampling a non-evidence variable in weighted sampling
@@ -228,7 +233,7 @@ public class BNA {
                 System.out.print(String.format("- run times for %d thread(s):", threadcount));
                 while(runningTimes.size() < RUNS_COUNT) {
                     long timeStart, timeEnd;
-                    Sampler sampler;
+                    SamplerInterface sampler;
                     sampler = new QuerySamplerMultithreaded(sampleProducer, threadcount); // also for a single thread
                     SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT / threadcount);
                     timeStart = System.currentTimeMillis();
@@ -288,4 +293,92 @@ public class BNA {
     
     enum NetworkVariant {SprinklerNet, ICUNet}
     enum SamplingVariant {WeightedSampling, MCMCSampling}
+    
+    
+    private static void playing_parameter_learning() {
+        final long SAMPLES = 1000 * 1000;
+        try {
+            System.out.println("Parameter estimation using maximum likelihood");
+            BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            System.out.println("Original factors (~CPDs) in all nodes:");
+            System.out.println(bn.dumpCPTs());
+            System.out.print("\n\n");
+            // sample the network
+            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bn);
+            SamplingController samplingController = new SamplingController(SAMPLES);
+            datasetSampler.sample(samplingController);
+            Dataset dataset = datasetSampler.getDataset();
+            // attempt to compute CPDs for all nodes based on the dataset
+            System.out.println("Computing CPDs using MLE...");
+            BayesianNetwork bnLearnt = ParameterLearner.learnMLE(bn, dataset);
+            // write the resulting CPDs
+            System.out.println("Resulting factors (~CPDs) in all nodes:");
+            System.out.println(bnLearnt.dumpCPTs());
+            // TODO
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+        catch(OutOfMemoryError oome) {
+            oome.printStackTrace();
+        }
+    }
+    
+    private static void playing_dataset_testing() {
+        // take network with independent variables (no connections) and check the mutual information
+        final long SAMPLES = 1000 * 1000;
+        try {
+            System.out.println("Mutual information computation test");
+            // sample some empty network
+            System.out.println("Loading unconnected sprinkler network...");
+            BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler-empty.net");
+            // sample the network
+            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bn);
+            SamplingController samplingController = new SamplingController(SAMPLES);
+            datasetSampler.sample(samplingController);
+            Dataset dataset = datasetSampler.getDataset();
+            // compute mutual information between some two variables
+            Variable XVars[] = {bn.getVariable("CLOUDY"), bn.getVariable("WETGRASS")},
+                     YVars[] = {bn.getVariable("SPRINKLER"), bn.getVariable("RAIN")};
+            double mutualInf = dataset.mutualInformation(XVars, YVars);
+            System.out.println(String.format("Mutual information of independent variables: %.2f (should be close to zero)",mutualInf));
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+    }
+    
+    private static void playing_structure_learning() {
+        final long SAMPLES = 1000;
+        final long MAX_ITERATIONS = 10;
+        try {
+            System.out.println("Structure learning");
+            // sample some original network
+            System.out.println("Loading original network...");
+            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            // sample the network
+            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+            SamplingController samplingController = new SamplingController(SAMPLES);
+            datasetSampler.sample(samplingController);
+            Dataset dataset = datasetSampler.getDataset();
+            // create initial empty network and learn
+            System.out.println("Learning structure...");
+            LearningController controller = new LearningController(MAX_ITERATIONS);
+            BayesianNetwork bnInitial = BayesianNetwork.loadFromFile("../../networks/sprinkler-empty.net");
+            //BayesianNetwork bnInitial = new BayesianNetwork(dataset.getVariables());
+            ScoringMethod scoringMethod = new LikelihoodScoringMethod(dataset);
+            LearningAlgorithm learningAlgorithm = new LearningAlgorithm(scoringMethod);
+            BayesianNetwork bnResult = learningAlgorithm.learn(bnInitial, controller);
+            System.out.println("Learning done!");
+            System.out.println("best structure:");
+            System.out.println(bnResult.dumpStructure());
+            System.out.println("best total score: " + scoringMethod.absoluteScore(bnResult));
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+    }
 }

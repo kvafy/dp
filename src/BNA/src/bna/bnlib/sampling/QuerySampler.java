@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class QuerySampler extends Sampler {
     // sampling statistics
     private AssignmentIndexMapper XYIndexMapper; // mapping of assignment XYVars to index into the array sampleCounter
-    private double[] XYSampleCounter;              // for all instantiations of X,Y (ie. of this.XYVars)
+    private double[] XYSampleCounter;            // for all instantiations of X,Y (ie. of this.XYVars)
     
     public QuerySampler(SampleProducer sampleProducer) {
         super(sampleProducer);

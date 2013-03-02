@@ -8,7 +8,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Immutable.
+ * Immutable representation of a factor.
+ * The factor is iterable over all possible assignments to its scope (not values!).
  */
 public class Factor implements Iterable<int[]> {
     private Variable[] scope;
@@ -24,7 +25,7 @@ public class Factor implements Iterable<int[]> {
         this.mapper = new AssignmentIndexMapper(scope);
         
         if(!this.hasValidCardinality())
-            throw new BayesianNetworkRuntimeException("Invalid values length wrt scope");
+            throw new BayesianNetworkRuntimeException("Invalid values length wrt scope.");
     }
     
     public double getProbability(int index) {
@@ -44,14 +45,39 @@ public class Factor implements Iterable<int[]> {
         return Arrays.copyOf(this.scope, this.scope.length);
     }
     
+    /** Perform factor marginalization over given set of variables. */
+    public Factor marginalize(Variable[] over) {
+        Variable[] newScope = Toolkit.difference(this.scope, over);
+        if(newScope.length == 0)
+            // TODO create a special "ONE" factor (??)
+            throw new BayesianNetworkRuntimeException("Marginalizing over all variables yields an empty factor.");
+        double[] newValues = new double[Toolkit.cardinality(newScope)];
+        VariableSubsetMapper scopeToNewScopeMapper = new VariableSubsetMapper(this.scope, newScope);
+        AssignmentIndexMapper newScopeIndexMapper = new AssignmentIndexMapper(newScope);
+        int[] newScopeAssignment = new int[newScope.length];
+        for(int[] scopeAssignment : this) {
+            double value = this.getProbability(scopeAssignment);
+            scopeToNewScopeMapper.map(scopeAssignment, newScopeAssignment);
+            int index = newScopeIndexMapper.assignmentToIndex(newScopeAssignment);
+            newValues[index] += value;
+        }
+        return new Factor(newScope, newValues);
+    }
+    
+    /** Make all values of the factor sum to one. */
+    public Factor normalize() {
+        return this.normalizeByFirstNVariables(this.scope.length);
+    }
+    
+    /** Values for assignments that differ only in (n+1)-th variable and higher will sum to one. */
     public Factor normalizeByFirstNVariables(int n) {
         if(n < 1 || n > this.scope.length)
             throw new BayesianNetworkRuntimeException("Normalization by invalid number of variables.");
         double[] normalizedValues = new double[this.values.length];
         // determine how many consequent values have to sum to 1.0
-        int valuesInABlock = 0;
+        int valuesInABlock = 1;
         for(int i = 0 ; i < n ; i++)
-            valuesInABlock += this.scope[i].getCardinality();
+            valuesInABlock *= this.scope[i].getCardinality();
         // each valuesInABlock values must sum to one, make it so
         for(int block = 0 ; block < this.getCardinality() / valuesInABlock ; block++) {
             int blockOffset = block * valuesInABlock;

@@ -16,14 +16,14 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     private boolean parsed = false;
     private ArrayList<Variable> variables;
     private HashMap<String, String[]> parents;
-    private HashMap<String, Double[]> probabilities;
+    private HashMap<String, double[]> probabilities;
     
     public BayesianNetworkNetFileReader(String filename) {
         super(filename);
         this.parsed = false;
         this.variables = new ArrayList<Variable>();
         this.parents = new HashMap<String, String[]>();
-        this.probabilities = new HashMap<String, Double[]>();
+        this.probabilities = new HashMap<String, double[]>();
     }
 
     @Override
@@ -42,7 +42,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     }
 
     @Override
-    public Map<String, Double[]> readProbabilities() throws BayesianNetworkException {
+    public Map<String, double[]> readProbabilities() throws BayesianNetworkException {
         if(!this.parsed)
             parse();
         return this.probabilities;
@@ -120,8 +120,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
                 varParentsList.toArray(varParentsArray);
                 this.parents.put(var, varParentsArray);
                 // save the probability vector
-                Double[] probabilityArray = new Double[probabilityList.size()];
-                probabilityList.toArray(probabilityArray);
+                double[] probabilityArray = this.doubleListToPrimitiveArray(probabilityList);
                 this.probabilities.put(var, probabilityArray);
             }
             
@@ -139,6 +138,14 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
         catch(NumberFormatException nfe) {
             throw new BayesianNetworkException("Invalid number format in BN specification file.");
         }
+    }
+    
+    private double[] doubleListToPrimitiveArray(List<Double> list) {
+        double[] array = new double[list.size()];
+        int i = 0;
+        for(double value : list)
+            array[i++] = value;
+        return array;
     }
     
     private String unquote(String quoted) {

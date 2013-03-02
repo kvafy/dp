@@ -10,7 +10,7 @@ import java.util.Objects;
 
 
 /**
- * A discrete variable.
+ * A discrete variable consisting of its name and array of possible assignments.
  * Immutable.
  */
 public class Variable {
@@ -35,7 +35,7 @@ public class Variable {
     }
     
     public String[] getValues() {
-        return this.values;
+        return Arrays.copyOf(this.values, this.values.length);
     }
     
     /** Convert textual assignment to index in this.values array. */

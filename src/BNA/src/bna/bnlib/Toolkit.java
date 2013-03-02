@@ -5,10 +5,7 @@
 package bna.bnlib;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 
 
 /**
@@ -19,8 +16,18 @@ public class Toolkit {
     public static final double DOUBLE_EPS = 1e-4;
     
     
+    /** Are two real numbers considered equal (with some tolerance)? */
     public static boolean doubleEquals(double a, double b) {
         return Math.abs(a - b) <= Toolkit.DOUBLE_EPS;
+    }
+    
+    /**
+     * Prints the headline and each item of given collection on one line using toString().
+     */
+    public static void dumpCollection(String headline, Iterable c) {
+        System.out.println(headline + ":");
+        for(Object item : c)
+            System.out.println(" * " + item.toString());
     }
     
     public static <T> boolean unique(T[] array) {
@@ -36,11 +43,28 @@ public class Toolkit {
         return set.size() == collection.size();
     }
     
+    /** Determine number of all possible assignments to given variables. */
     public static int cardinality(Variable[] X) {
         int c = 1;
         for(Variable x : X)
             c *= x.getCardinality();
         return c;
+    }
+    
+    /**
+     * Check whether the given vector is a valid assignment to given variables.
+     * For this to be true assignment has to have the same number of values
+     * as there are variables and for each variable the assignment must be
+     * within bounds for corresponding variable.
+     */
+    public static boolean validateAssignment(Variable[] vars, int[] assignment) {
+        if(vars == null || assignment == null || vars.length != assignment.length)
+            return false;
+        for(int i = 0 ; i < vars.length ; i++) {
+            if(vars[i].getCardinality() <= assignment[i])
+                return false;
+        }
+        return true;
     }
     
     public static <T> boolean isSubset(T[] superset, T[] subset) {
@@ -51,6 +75,10 @@ public class Toolkit {
                 return false;
         }
         return true;
+    }
+    
+    public static <T> boolean areEqual(T[] set1, T[] set2) {
+        return Toolkit.isSubset(set1, set2) && Toolkit.isSubset(set2, set1);
     }
     
     public static <T> boolean areDisjoint(T[] set1, T[] set2) {
@@ -91,9 +119,32 @@ public class Toolkit {
         return result;
     }
     
+    /** From set1 removes all elements present in set2. */
+    public static <T> T[] difference(T[] set1, T[] set2) {
+        ArrayList<T> resultList = new ArrayList<T>();
+        for(T o1 : set1) {
+            if(!Toolkit.arrayContains(set2, o1))
+                resultList.add(o1);
+        }
+
+        Class<?> componentType;
+        if(set1.length > 0)
+            componentType = set1[0].getClass();
+        else if(set2.length > 0)
+            componentType = set2[0].getClass();
+        else
+            componentType = Object.class;
+        // overcome the "generic array creation" problem
+        T[] result = (T[])Array.newInstance(componentType, resultList.size());
+        for(int i = 0 ; i < result.length ; i++)
+            result[i] = resultList.get(i);
+        return result;
+    }
+    
+    /** Check whether the given array contains specified object. */
     public static <T> boolean arrayContains(T[] array, T obj) {
         for(T arrayObj : array)
-            if(arrayObj == obj)
+            if(arrayObj.equals(obj))
                 return true;
         return false;
     }
@@ -106,7 +157,7 @@ public class Toolkit {
      */
     public static <T> int indexOf(T[] array, T obj) {
         for(int i = 0 ; i < array.length ; i++)
-            if(array[i] == obj)
+            if(array[i].equals(obj))
                 return i;
         return -1;
     }
@@ -141,5 +192,21 @@ public class Toolkit {
         }
         // if the uniformDistribution are normalized, it shouldn't come to this
         throw new BayesianNetworkRuntimeException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
+    }
+    
+    /** Compute transitive closure of given relation. */
+    public static boolean[][] transitiveClosure(boolean[][] relation) {
+        boolean[][] closure = new boolean[relation.length][];
+        for(int i = 0 ; i < relation.length ; i++)
+            closure[i] = Arrays.copyOf(relation[i], relation[i].length);
+        
+        for(int k = 0 ; k < relation.length ; k++) {
+            for(int i = 0 ; i < relation.length ; i++) {
+                for(int j = 0 ; j < relation.length ; j++)
+                    closure[i][j] = closure[i][j] || (closure[i][k] && closure[k][j]);
+            }
+        }
+        
+        return closure;
     }
 }

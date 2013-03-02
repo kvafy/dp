@@ -31,16 +31,19 @@ public abstract class BayesianNetworkFileReader {
                 bn.addDependency(parent, var);
         }
         // 4) attach factors to nodes
-        Map<String, Double[]> probabilities = this.readProbabilities();
+        Map<String, double[]> probabilities = this.readProbabilities();
         for(String var : probabilities.keySet()) {
-            Double[] probVector = probabilities.get(var);
+            double[] probVector = probabilities.get(var);
             bn.setCPT(var, probVector);
         }
         
         return bn;
     }
     
+    
+    // template method pattern: methods used within the load() method
+    
     public abstract Variable[] readVariables() throws BayesianNetworkException;
     public abstract Map<String, String[]> readDependencies() throws BayesianNetworkException;
-    public abstract Map<String, Double[]> readProbabilities() throws BayesianNetworkException;
+    public abstract Map<String, double[]> readProbabilities() throws BayesianNetworkException;
 }

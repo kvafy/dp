@@ -5,7 +5,6 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import java.util.Arrays;
 
 
 /**
@@ -31,7 +30,7 @@ public abstract class Sampler implements SamplerInterface {
         long sampleNumber = 0;
         this.sampleProducer.initializeSample(context);
         
-        while(!controller.stopFlag() && sampleNumber < controller.maxSamples()) {
+        while(!controller.shouldStop(sampleNumber)) {
             this.sampleProducer.produceSample(context);
             this.registerSample(context.XYVarsAssignment, context.sampleWeight);
             sampleNumber++;
@@ -39,6 +38,9 @@ public abstract class Sampler implements SamplerInterface {
         
         this.postsamplingActions();
     }
+    
+    
+    // template method pattern: abstract methods used in the sample(...) method
     
     /** A sample has just been generated, subclass, do something with it. */
     protected abstract void registerSample(int[] XYVarsValues, double sampleWeight);

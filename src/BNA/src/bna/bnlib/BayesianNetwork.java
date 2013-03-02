@@ -6,10 +6,13 @@ package bna.bnlib;
 
 import bna.bnlib.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
- *
- * @author kvafy
+ * General Bayesian network class.
+ * The network consists of network nodes (Node class), each node has associated
+ * variable, collection of parents and children, a factor holding CPT of this
+ * node.
  */
 public class BayesianNetwork {
     private Node[] nodes;
@@ -21,33 +24,76 @@ public class BayesianNetwork {
             this.nodes[i] = new Node(variables[i]);
     }
     
+    /** Create a deep copy of given network. */
+    public BayesianNetwork(BayesianNetwork original) {
+        try {
+            // duplicate nodes (without connections)
+            this.nodes = new Node[original.nodes.length];
+            for(int i = 0 ; i < this.nodes.length ; i++) {
+                Node nodeOrig = original.nodes[i];
+                this.nodes[i] = new Node(nodeOrig.getVariable(), nodeOrig.getFactor());
+            }
+            // duplicate structure
+            for(Node nodeOrigParent : original.nodes) {
+                String varParent = nodeOrigParent.getVariable().getName();
+                for(Node nodeOrigChild : nodeOrigParent.getChildNodes()) {
+                    String varChild = nodeOrigChild.getVariable().getName();
+                    this.addDependency(varParent, varChild);
+                }
+            }
+        }
+        catch(BayesianNetworkException bnex) {
+            throw new RuntimeException("Internal error while replicating a network.");
+        }
+    }
     
-    // methods for building a Bayesian network (see BayesianNetworkFileReader)
+    
+    // methods for building/editing a Bayesian network (see BayesianNetworkFileReader or AlterationAction)
     
     public void addDependency(String parent, String child) throws BayesianNetworkException {
+        this.addDependency(this.getNode(parent), this.getNode(child));
+    }
+    
+    public void addDependency(Variable parent, Variable child) throws BayesianNetworkException {
         this.addDependency(this.getNode(parent), this.getNode(child));
     }
     
     public void addDependency(Node parent, Node child) throws BayesianNetworkException {
         if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
             throw new BayesianNetworkException("One of the variables is not in the network.");
-        
         parent.addChild(child);
         child.addParent(parent);
     }
     
-    public void setCPT(String variable, double[] probs) throws BayesianNetworkException {
+    public void removeDependency(Variable parent, Variable child) throws BayesianNetworkException {
+        this.removeDependency(this.getNode(parent), this.getNode(child));
+    }
+    
+    public void removeDependency(Node parent, Node child) throws BayesianNetworkException {
+        if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
+            throw new BayesianNetworkException("One of the variables is not in the network.");
+        
+        parent.removeChild(child);
+        child.removeParent(parent);
+    }
+    
+    public void reverseDependency(Variable parent, Variable child) throws BayesianNetworkException {
+        this.reverseDependency(this.getNode(parent), this.getNode(child));
+    }
+    
+    public void reverseDependency(Node parent, Node child) throws BayesianNetworkException {
+        this.removeDependency(parent, child);
+        this.addDependency(child, parent);
+    }
+    
+    public void setCPT(String variable, double[] probs) throws BayesianNetworkRuntimeException {
         Node node = this.getNode(variable);
         node.setProbabilityVector(probs);
     }
     
-    public void setCPT(String variable, Double[] probs) throws BayesianNetworkException {
-        // transform to "double[]" array
-        double[] probsPrimitive = new double[probs.length];
-        for(int i = 0 ; i < probs.length ; i++)
-            probsPrimitive[i] = probs[i];
-        // delegate
-        this.setCPT(variable, probsPrimitive);
+    public void setCPT(String variable, Factor cpt) {
+        Node node = this.getNode(variable);
+        node.setFactor(cpt);
     }
     
     /**
@@ -88,15 +134,6 @@ public class BayesianNetwork {
                 throw new BayesianNetworkException("Variable \"" + n.getVariable().getName() + "\" has invalid factor.");
     }
     
-    public Digraph convertToDigraph() {
-        Digraph g = new Digraph(this.nodes);
-        for(Node u : this.nodes) {
-            for(Node v : u.getChildNodes())
-                g.addEdge(u, v);
-        }
-        return g;
-    }
-    
     public static BayesianNetwork loadFromFile(String filename) throws BayesianNetworkException {
         // all known file readers for various Bayesian network formats
         BayesianNetworkFileReader[] readers = {new BayesianNetworkNetFileReader(filename)};
@@ -134,8 +171,11 @@ public class BayesianNetwork {
         return this.getNode(variable).getChildrenCount();
     }
     
-    public Variable[] getVariableMarkovBlanket(Variable variable) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Variable[] getVariables() {
+        Variable[] vars = new Variable[this.nodes.length];
+        for(int i = 0 ; i < this.nodes.length ; i++)
+            vars[i] = this.nodes[i].getVariable();
+        return vars;
     }
     
     public Node getNode(String variableName) {
@@ -152,6 +192,10 @@ public class BayesianNetwork {
         throw new BayesianNetworkRuntimeException("Node with variable \"" + variable.getName() + "\" is not in the network.");
     }
     
+    public Node[] getNodes() {
+        return Arrays.copyOf(this.nodes, this.nodes.length);
+    }
+    
     /** Is there a node with variable v? */
     private boolean containsVariable(Variable v) {
         for(Node node : this.nodes)
@@ -160,23 +204,85 @@ public class BayesianNetwork {
         return false;
     }
     
-    public Variable[] getVariables() {
-        Variable[] vars = new Variable[this.nodes.length];
-        for(int i = 0 ; i < this.nodes.length ; i++)
-            vars[i] = this.nodes[i].getVariable();
-        return vars;
-    }
-    
     public int getVariablesCount() {
         return this.nodes.length;
     }
     
+    
+    // Graph operations
+    
     public Variable[] topologicalSort() {
+        Node[] topologicalOrderNodes = this.topologicalSortNodes();
+        Variable[] topologicalOrderVariables = new Variable[topologicalOrderNodes.length];
+        for(int i = 0 ; i < topologicalOrderNodes.length ; i++)
+            topologicalOrderVariables[i] = topologicalOrderNodes[i].getVariable();
+        return topologicalOrderVariables;
+    }
+    
+    public Node[] topologicalSortNodes() {
         Digraph digraph = this.convertToDigraph();
         Object[] topologicalOrderObjects = digraph.topologicalSort();
-        Variable[] topologicalOrderVariables = new Variable[topologicalOrderObjects.length];
+        Node[] topologicalOrderNodes = new Node[topologicalOrderObjects.length];
         for(int i = 0 ; i < topologicalOrderObjects.length ; i++)
-            topologicalOrderVariables[i] = ((Node)topologicalOrderObjects[i]).getVariable();
-        return topologicalOrderVariables;
+            topologicalOrderNodes[i] = (Node)topologicalOrderObjects[i];
+        return topologicalOrderNodes;
+    }
+    
+    private Digraph convertToDigraph() {
+        Digraph g = new Digraph(this.nodes);
+        for(Node u : this.nodes) {
+            for(Node v : u.getChildNodes())
+                g.addEdge(u, v);
+        }
+        return g;
+    }
+    
+    /**
+     * Compute adjacency matrix.
+     * Indices of variables/nodes in the resulting matrix are the same as in
+     * the nodeOrder parameter.
+     */
+    boolean[][] adjacencyMatrix(Node[] nodeOrder) {
+        final int NODE_COUNT = nodeOrder.length;
+        boolean[][] matrix = new boolean[NODE_COUNT][NODE_COUNT];
+        for(int i = 0 ; i < NODE_COUNT ; i++) {
+            Node ithNode = nodeOrder[i];
+            for(Node child : ithNode.getChildNodes()) {
+                int j = Toolkit.indexOf(nodeOrder, child);
+                matrix[i][j] = true;
+            }
+        }
+        return matrix;
+    }
+    
+    public String dumpStructure() {
+        StringBuilder ret = new StringBuilder();
+        for(Node node : this.topologicalSortNodes()) { // in a nice top-down manner
+            ret.append(node.getVariable().getName());
+            ret.append(" <- ");
+            ret.append("[");
+            boolean first = true;
+            for(Node parent : node.getParentNodes()) {
+                if(!first)
+                    ret.append(", ");
+                first = false;
+                ret.append(parent.getVariable().getName());
+            }
+            ret.append("]");
+            ret.append(System.lineSeparator());
+        }
+        return ret.toString();
+    }
+    
+    public String dumpCPTs() {
+        StringBuilder ret = new StringBuilder();
+        boolean firstLine = true;
+        for(Node node : this.topologicalSortNodes()) { // in a nice top-down manner
+            if(!firstLine)
+                ret.append(System.lineSeparator());
+            ret.append(node.getFactor().toString());
+            firstLine = false;
+        }
+        return ret.toString();
     }
 }
