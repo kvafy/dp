@@ -13,23 +13,19 @@ import java.util.Arrays;
  */
 public class QuerySampler extends Sampler {
     // sampling statistics
-    private AssignmentIndexMapper XYIndexMapper; // mapping of assignment XYVars to index into the array sampleCounter
-    private double[] XYSampleCounter;            // for all instantiations of X,Y (ie. of this.XYVars)
+    private Counter XYCounter;
     
     public QuerySampler(SampleProducer sampleProducer) {
         super(sampleProducer);
-        // initialize sampleCounter
-        this.XYIndexMapper = new AssignmentIndexMapper(this.XYVars);
-        this.XYSampleCounter = new double[Toolkit.cardinality(this.XYVars)];
-        Arrays.fill(this.XYSampleCounter, 0.0);
+        // initialize counter
+        this.XYCounter = new Counter(this.XYVars);
     }
     
     
     /** Record a sampleNumber with given weight in our statistics. */
     @Override
     protected void registerSample(int[] XYVarsValues, double sampleWeight) {
-        int assignmentIndex = this.XYIndexMapper.assignmentToIndex(XYVarsValues);
-        this.XYSampleCounter[assignmentIndex] += sampleWeight;
+        this.XYCounter.add(XYVarsValues, sampleWeight);
     }
     
     @Override
@@ -46,7 +42,7 @@ public class QuerySampler extends Sampler {
      * Get the samples counter for instantiations of X,Y variables (just raw counters).
      */
     public Factor getSamplesCounter() {
-        return new Factor(this.XYVars, XYSampleCounter);
+        return this.XYCounter.toFactor();
     }
     
     /**

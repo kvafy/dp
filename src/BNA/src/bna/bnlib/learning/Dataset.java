@@ -68,16 +68,14 @@ public class Dataset {
     
     /** Count occurences of all assignments to given variables and return as a factor. */
     public Factor computeFactor(Variable[] scope) {
-        double[] values = new double[Toolkit.cardinality(scope)];
+        Counter counter = new Counter(scope);
         VariableSubsetMapper recordToScopeMapper = new VariableSubsetMapper(this.variables, scope);
-        AssignmentIndexMapper scopeAssignmentToIndexMapper = new AssignmentIndexMapper(scope);
         int[] scopeAssignment = new int[scope.length];
         for(int[] record : this.records) {
             recordToScopeMapper.map(record, scopeAssignment);
-            int index = scopeAssignmentToIndexMapper.assignmentToIndex(scopeAssignment);
-            values[index] += 1;
+            counter.add(scopeAssignment, 1);
         }
-        return new Factor(scope, values);
+        return counter.toFactor();
     }
     
     /** Compute mutual information between two sets of variables. */
