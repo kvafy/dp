@@ -1,15 +1,15 @@
-/*
- * // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
- * // Author:  David Chaloupka (xchalo09)
- * // Created: 2013/xx/xx
- */
+// Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
+// Author:  David Chaloupka (xchalo09)
+// Created: 2013/xx/xx
+
 package bna.bnlib;
 
-import java.util.Collection;
+
 import org.junit.AfterClass;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
+import org.junit.Test;
+import java.util.Collection;
 
 /**
  *
@@ -79,6 +79,77 @@ public class ToolkitTest {
         int result = Toolkit.cardinality(X);
         assertEquals(expResult, result);
     }
+    
+    /**
+     * Test of validateAssignment method, of class Toolkit.
+     */
+    @Test
+    public void testValidateAssignment_OK() throws BayesianNetworkException {
+        System.out.println("validateAssignment");
+        String[] values2 = {"false", "true"},
+                 values3 = {"low", "medium", "high"};
+        Variable binaryVar = new Variable("binary", values2),
+                 ternaryVar = new Variable("ternary", values3);
+        Variable[] scope = {binaryVar, ternaryVar};
+        double[] values = new double[Toolkit.cardinality(scope)];
+        Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
+        int[] validAssignment = {1, 2};
+        fBinTern.getProbability(validAssignment);
+    }
+    
+    /**
+     * Test of cardinality method, of class Toolkit.
+     */
+    @Test(expected=BayesianNetworkRuntimeException.class)
+    public void testValidateAssignment_fail1() throws BayesianNetworkException {
+        System.out.println("validateAssignment");
+        String[] values2 = {"false", "true"},
+                 values3 = {"low", "medium", "high"};
+        Variable binaryVar = new Variable("binary", values2),
+                 ternaryVar = new Variable("ternary", values3);
+        Variable[] scope = {binaryVar, ternaryVar};
+        double[] values = new double[Toolkit.cardinality(scope)];
+        Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
+        int[] invalidAssignment = {2, 2};
+        fBinTern.getProbability(invalidAssignment);
+        fail();
+    }
+    
+    /**
+     * Test of cardinality method, of class Toolkit.
+     */
+    @Test(expected=BayesianNetworkRuntimeException.class)
+    public void testValidateAssignment_fail2() throws BayesianNetworkException {
+        System.out.println("validateAssignment");
+        String[] values2 = {"false", "true"},
+                 values3 = {"low", "medium", "high"};
+        Variable binaryVar = new Variable("binary", values2),
+                 ternaryVar = new Variable("ternary", values3);
+        Variable[] scope = {binaryVar, ternaryVar};
+        double[] values = new double[Toolkit.cardinality(scope)];
+        Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
+        int[] invalidAssignment = {1, 3};
+        fBinTern.getProbability(invalidAssignment);
+        fail();
+    }
+    
+    /**
+     * Test of cardinality method, of class Toolkit.
+     */
+    @Test(expected=BayesianNetworkRuntimeException.class)
+    public void testValidateAssignment_fail3() throws BayesianNetworkException {
+        System.out.println("validateAssignment");
+        String[] values2 = {"false", "true"},
+                 values3 = {"low", "medium", "high"};
+        Variable binaryVar = new Variable("binary", values2),
+                 ternaryVar = new Variable("ternary", values3);
+        Variable[] scope = {binaryVar, ternaryVar};
+        double[] values = new double[Toolkit.cardinality(scope)];
+        Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
+        int[] invalidAssignment = {-1, 0};
+        fBinTern.getProbability(invalidAssignment);
+        fail();
+    }
 
     /**
      * Test of isSubset method, of class Toolkit.
@@ -100,6 +171,37 @@ public class ToolkitTest {
     }
     
     /**
+     * Test of areEqual method, of class Toolkit.
+     */
+    @Test
+    public void testAreEqual() {
+        System.out.println("areEqual");
+        Integer[] set1A = {1, 2, 3};
+        Integer[] set1B = {3, 1, 2};
+        boolean expResult1 = true;
+        boolean result1 = Toolkit.areEqual(set1A, set1B);
+        assertEquals(expResult1, result1);
+        
+        Integer[] set2A = {1, 2, 3};
+        Integer[] set2B = {3, 1, 0};
+        boolean expResult2 = false;
+        boolean result2 = Toolkit.areEqual(set2A, set2B);
+        assertEquals(expResult2, result2);
+        
+        Integer[] set3A = {1, 2, 3};
+        Integer[] set3B = {3, 1};
+        boolean expResult3 = false;
+        boolean result3 = Toolkit.areEqual(set3A, set3B);
+        assertEquals(expResult3, result3);
+        
+        Integer[] set4A = {};
+        Integer[] set4B = {};
+        boolean expResult4 = true;
+        boolean result4 = Toolkit.areEqual(set4A, set4B);
+        assertEquals(expResult4, result4);
+    }
+    
+    /**
      * Test of isSubset method, of class Toolkit.
      */
     @Test
@@ -116,6 +218,50 @@ public class ToolkitTest {
         boolean expResult2 = true;
         boolean result2 = Toolkit.areDisjoint(setA2, setB2);
         assertEquals(expResult2, result2);
+    }
+    
+    /**
+     * Test of union method, of class Toolkit.
+     */
+    @Test
+    public void testUnion() {
+        System.out.println("union");
+        Object[][][] setA_setB_setResult = {
+            {{1, 2, 3}, {}, {1, 2, 3}},
+            {{}, {1, 2, 3}, {1, 2, 3}},
+            {{1.0}, {2.0}, {1.0, 2.0}},
+            {{2.0}, {1.0}, {1.0, 2.0}},
+        };
+        for(Object[][] testCase : setA_setB_setResult) {
+            Object[] setA = testCase[0],
+                     setB = testCase[1],
+                     unionExpected = testCase[2];
+            Object[] union = Toolkit.union(setA, setB);
+            assertTrue(Toolkit.areEqual(union, unionExpected));
+        }
+    }
+    
+    /**
+     * Test of difference method, of class Toolkit.
+     */
+    @Test
+    public void testDifference() {
+        System.out.println("difference");
+        Object[][][] setA_setB_setResult = {
+            {{1, 2, 3}, {}, {1, 2, 3}},
+            {{}, {1, 2, 3}, {}},
+            {{1.0}, {2.0}, {1.0}},
+            {{2.0}, {1.0}, {2.0}},
+            {{1.0, 2.0}, {1.0}, {2.0}},
+            {{2.0}, {2.0}, {}},
+        };
+        for(Object[][] testCase : setA_setB_setResult) {
+            Object[] setA = testCase[0],
+                     setB = testCase[1],
+                     differenceExpected = testCase[2];
+            Object[] difference = Toolkit.difference(setA, setB);
+            assertTrue(Toolkit.areEqual(difference, differenceExpected));
+        }
     }
 
     /**
