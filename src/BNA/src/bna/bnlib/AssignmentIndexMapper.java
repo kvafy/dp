@@ -26,11 +26,8 @@ public class AssignmentIndexMapper {
         // validate parameters
         if(assignment == null)
             throw new BayesianNetworkRuntimeException("Null assignment.");
-        if(assignment.length != this.vars.length)
-            throw new BayesianNetworkRuntimeException("Assignment of invalid length.");
-        for(int i = 0 ; i < assignment.length ; i++)
-            if(assignment[i] >= this.vars[i].getCardinality())
-                throw new BayesianNetworkRuntimeException(String.format("Variable \"%s\" has invalid value %i.", this.vars[i].getName(), assignment[i]));
+        if(!Toolkit.validateAssignment(this.vars, assignment))
+            throw new BayesianNetworkRuntimeException("Invalid assignment for given list of variables.");
         // index computation
         int index = 0;
         for(int i = 0 ; i < assignment.length ; i++)

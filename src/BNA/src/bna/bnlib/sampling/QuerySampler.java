@@ -5,7 +5,6 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import java.util.Arrays;
 
 
 /**

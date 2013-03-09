@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+import bna.bnlib.sampling.*;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -61,10 +62,143 @@ public class Toolkit {
         if(vars == null || assignment == null || vars.length != assignment.length)
             return false;
         for(int i = 0 ; i < vars.length ; i++) {
-            if(vars[i].getCardinality() <= assignment[i])
+            if(vars[i].getCardinality() <= assignment[i] || assignment[i] < 0)
                 return false;
         }
         return true;
+    }
+    
+    /** Compute relative entropy between two networks with identical structure. */
+    /*public static double networkDistanceRelativeEntropy(BayesianNetwork bnExact, BayesianNetwork bnApprox) {
+        try {
+            double relativeEntropy = 0;
+            for(Node nodeExact : bnExact.getNodes()) {
+                Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
+                if(!Toolkit.areEqual(nodeExact.getParentVariables(), nodeApprox.getParentVariables()))
+                    throw new BayesianNetworkRuntimeException("A variable differs in parents in the two networks.");
+                VariableSubsetMapper exactToApproxMapper = new VariableSubsetMapper(nodeExact.getScope(), nodeApprox.getScope());
+                // relative entropy decomposes over the nodes in a BN
+                if(nodeExact.getParentCount() > 0) { // node with parents
+                    Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, nodeExact.getParentVariables());
+                    for(int[] parentsAssignment : parentsJointProbabilityFactor) {
+                        double innerSumOverX = 0;
+                        int[] exactParentsAssignment = parentsAssignment;
+                        int[] exactAssignment = new int[1 + parentsAssignment.length],
+                              approxAssignment = new int[1 + parentsAssignment.length];
+                        System.arraycopy(exactParentsAssignment, 0, exactAssignment, 1, exactParentsAssignment.length);
+                        for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
+                            exactAssignment[0] = x;
+                            exactToApproxMapper.map(exactAssignment, approxAssignment);
+                            double pXgivenP = nodeExact.getProbability(exactAssignment),
+                                   qXgivenP = nodeApprox.getProbability(approxAssignment);
+                            if(pXgivenP > 0 && qXgivenP > 0)
+                                innerSumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
+                        }
+                        double parentsProb = parentsJointProbabilityFactor.getProbability(parentsAssignment);
+                        relativeEntropy += parentsProb * innerSumOverX;
+                    }
+                }
+                else { // node without parents
+                    double innerSumOverX = 0;
+                    for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
+                        double pX = nodeExact.getProbability(new int[]{x}),
+                               qX = nodeApprox.getProbability(new int[]{x});
+                        if(pX > 0 && qX > 0)
+                            innerSumOverX += pX * Math.log(pX / qX);
+                    }
+                    relativeEntropy += innerSumOverX;
+                }
+            }
+            return relativeEntropy;
+        }
+        catch(BayesianNetworkRuntimeException bnrex) {
+            throw new BayesianNetworkRuntimeException("The two networks aren't structurally identical.");
+        }
+        catch(BayesianNetworkException bnex) {
+            throw new BayesianNetworkRuntimeException("Internal sampling error while computing relative entropy.");
+        }
+    }*/
+    
+    /** Compute relative entropy between two networks with identical structure. */
+    public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact, BayesianNetwork bnApprox) {
+        final double MINIMAL_Q_PROB = 1e-5;
+        try {
+            double relativeEntropy = 0;
+            for(Node nodeExact : bnExact.getNodes()) {
+                // check if the two nodes have the same parents
+                Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
+                if(!Toolkit.areEqual(nodeExact.getParentVariables(), nodeApprox.getParentVariables()))
+                    throw new BayesianNetworkRuntimeException("A variable differs in parents in the two networks.");
+                
+                // relative entropy decomposes over the nodes in a BN
+                if(nodeExact.getParentCount() > 0) { // node with parents
+                    Variable scopeVar = nodeExact.getVariable();
+                    Variable[] scopeParents = nodeExact.getParentVariables();
+                    Variable[] scope = Toolkit.union(new Variable[]{scopeVar}, scopeParents); // ensure the indexing
+                    VariableSubsetMapper scopeToExactMapper = new VariableSubsetMapper(scope, nodeExact.getScope()),
+                                         scopeToApproxMapper = new VariableSubsetMapper(scope, nodeApprox.getScope());
+                    int[] scopeAssignment = new int[scope.length],
+                          exactAssignment = new int[scope.length],
+                          approxAssignment = new int[scope.length];
+                    Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, scopeParents);
+                    for(int[] scopeParentsAssignment : parentsJointProbabilityFactor) { // sum over instantiations of parents
+                        double sumOverX = 0;
+                        System.arraycopy(scopeParentsAssignment, 0, scopeAssignment, 1, scope.length - 1);
+
+                        for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
+                            scopeAssignment[0] = x;
+                            scopeToExactMapper.map(scopeAssignment, exactAssignment);
+                            scopeToApproxMapper.map(scopeAssignment, approxAssignment);
+                            
+                            double pXgivenP = nodeExact.getProbability(exactAssignment),
+                                   qXgivenP = nodeApprox.getProbability(approxAssignment);
+                            if(pXgivenP > 0) {
+                                if(qXgivenP == 0)
+                                    qXgivenP = MINIMAL_Q_PROB; // correction so that all values are accounted for
+                                sumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
+                            }
+                            else if(pXgivenP < 0 || qXgivenP < 0)
+                                throw new BayesianNetworkRuntimeException("unexpected");
+                        }
+                        double pParents = parentsJointProbabilityFactor.getProbability(scopeParentsAssignment);
+                        relativeEntropy += pParents * sumOverX;
+                    }
+                }
+                else { // node without parents
+                    double sumOverX = 0;
+                    for(int[] assignment : nodeExact.getFactor()) {
+                        double pX = nodeExact.getProbability(assignment),
+                               qX = nodeApprox.getProbability(assignment);
+                        if(pX > 0) {
+                            if(qX == 0)
+                                qX = MINIMAL_Q_PROB;
+                            sumOverX += pX * Math.log(pX / qX);
+                        }
+                        else if(pX < 0 || qX < 0)
+                            throw new BayesianNetworkRuntimeException("unexpected");
+                    }
+                    relativeEntropy += sumOverX;
+                }
+            }
+            return relativeEntropy;
+        }
+        catch(BayesianNetworkRuntimeException bnrex) {
+            bnrex.printStackTrace();
+            throw new BayesianNetworkRuntimeException("Internal error while computing relative entropy.");
+        }
+        catch(BayesianNetworkException bnrex) {
+            throw new BayesianNetworkRuntimeException("Internal error while computing relative entropy.");
+        }
+    }
+    
+    private static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) throws BayesianNetworkException {
+        final long SAMPLES_COUNT = 500 * 1000;
+        final int THREAD_COUNT = 5;
+        SampleProducer sampleProducer = new WeightedSampleProducer(bn, vars, new Variable[]{}, new Variable[]{}, new int[]{});
+        QuerySamplerMultithreaded querySamplerMultithreaded = new QuerySamplerMultithreaded(sampleProducer, THREAD_COUNT);
+        SamplingController samplingController = new SamplingController(SAMPLES_COUNT / THREAD_COUNT);
+        querySamplerMultithreaded.sample(samplingController);
+        return querySamplerMultithreaded.getSamplesCounterNormalized();
     }
     
     public static <T> boolean isSubset(T[] superset, T[] subset) {
@@ -99,46 +233,37 @@ public class Toolkit {
     
     /** From set2 appends all elements not in set1 to set1. */
     public static <T> T[] union(T[] set1, T[] set2) {
-        ArrayList<T> resultList = new ArrayList<T>();
-        for(T o1 : set1)
-            resultList.add(o1);
-        for(T o2 : set2)
-            if(!Toolkit.arrayContains(set1, o2))
-                resultList.add(o2);
-        Class<?> componentType;
-        if(set1.length > 0)
-            componentType = set1[0].getClass();
-        else if(set2.length > 0)
-            componentType = set2[0].getClass();
-        else
-            componentType = Object.class;
-        // overcome the "generic array creation" problem
-        T[] result = (T[])Array.newInstance(componentType, resultList.size());
-        for(int i = 0 ; i < result.length ; i++)
-            result[i] = resultList.get(i);
-        return result;
+        if(set1.length == 0)
+            return Arrays.copyOf(set2, set2.length);
+        else if(set2.length == 0)
+            return Arrays.copyOf(set1, set1.length);
+        else {
+            ArrayList<T> resultList = new ArrayList<T>();
+            for(T o1 : set1)
+                resultList.add(o1);
+            for(T o2 : set2)
+                if(!Toolkit.arrayContains(set1, o2))
+                    resultList.add(o2);
+            // overcome the "generic array creation" problem
+            Class<?> componentType = set1[0].getClass();
+            return Toolkit.collectionToGenericArray(resultList, componentType);
+        }
     }
     
     /** From set1 removes all elements present in set2. */
     public static <T> T[] difference(T[] set1, T[] set2) {
-        ArrayList<T> resultList = new ArrayList<T>();
-        for(T o1 : set1) {
-            if(!Toolkit.arrayContains(set2, o1))
-                resultList.add(o1);
+        if(set1.length == 0 || set2.length == 0)
+            return Arrays.copyOf(set1, set1.length);
+        else {
+            ArrayList<T> resultList = new ArrayList<T>();
+            for(T o1 : set1) {
+                if(!Toolkit.arrayContains(set2, o1))
+                    resultList.add(o1);
+            }
+            // overcome the "generic array creation" problem
+            Class<?> componentType = set1[0].getClass();
+            return Toolkit.collectionToGenericArray(resultList, componentType);
         }
-
-        Class<?> componentType;
-        if(set1.length > 0)
-            componentType = set1[0].getClass();
-        else if(set2.length > 0)
-            componentType = set2[0].getClass();
-        else
-            componentType = Object.class;
-        // overcome the "generic array creation" problem
-        T[] result = (T[])Array.newInstance(componentType, resultList.size());
-        for(int i = 0 ; i < result.length ; i++)
-            result[i] = resultList.get(i);
-        return result;
     }
     
     /** Check whether the given array contains specified object. */
@@ -208,5 +333,14 @@ public class Toolkit {
         }
         
         return closure;
+    }
+    
+    /** Method to overcome the "generic array creation" problem. */
+    private static <T> T[] collectionToGenericArray(Collection<T> collection, Class<?> componentType) {
+        T[] array = (T[])Array.newInstance(componentType, collection.size());
+        int i = 0;
+        for(T obj : collection)
+            array[i++] = obj;
+        return array;
     }
 }

@@ -26,4 +26,26 @@ public class ParameterLearner {
         }
         return bnLearnt;
     }
+    
+    /**
+     * Produce a new network with identical structure but with CPTs computed by Bayesian estimation with uniform prior.
+     * @param alpha Equivalent sample size.
+     */
+    public static BayesianNetwork learnBayesianEstimationUniform(BayesianNetwork bnOrig, Dataset dataset, double alpha) {
+        if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
+            throw new BayesianNetworkRuntimeException("Some variables of the network aren't present in the dataset.");
+        
+        BayesianNetwork bnLearnt = new BayesianNetwork(bnOrig);
+        for(Node node : bnLearnt.getNodes()) {
+            Variable[] nodeFactorScope = Toolkit.union(new Variable[]{node.getVariable()}, node.getParentVariables());
+            Factor nodeFactorRealCounts = dataset.computeFactor(nodeFactorScope);
+            double alphaUniform = alpha / Toolkit.cardinality(nodeFactorScope);
+            Counter pseudoCounts = new Counter(nodeFactorScope, alphaUniform);
+            Factor nodeFactorPseudoCounts = pseudoCounts.toFactor();
+            Factor nodeFactor = Factor.sumFactors(new Factor[] {nodeFactorRealCounts, nodeFactorPseudoCounts});
+            nodeFactor = nodeFactor.normalizeByFirstNVariables(1);
+            bnLearnt.setCPT(node.getVariable().getName(), nodeFactor);
+        }
+        return bnLearnt;
+    }
 }

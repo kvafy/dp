@@ -27,11 +27,11 @@ public class BayesianNetwork {
     /** Create a deep copy of given network. */
     public BayesianNetwork(BayesianNetwork original) {
         try {
-            // duplicate nodes (without connections)
+            // duplicate nodes (for now, without connections and CPDs)
             this.nodes = new Node[original.nodes.length];
             for(int i = 0 ; i < this.nodes.length ; i++) {
                 Node nodeOrig = original.nodes[i];
-                this.nodes[i] = new Node(nodeOrig.getVariable(), nodeOrig.getFactor());
+                this.nodes[i] = new Node(nodeOrig.getVariable());
             }
             // duplicate structure
             for(Node nodeOrigParent : original.nodes) {
@@ -41,9 +41,17 @@ public class BayesianNetwork {
                     this.addDependency(varParent, varChild);
                 }
             }
+            // duplicate CPDs (the scope checking will pass as structure has been established)
+            for(Node node : this.nodes) {
+                Variable variable = node.getVariable();
+                node.setFactor(original.getNode(variable).getFactor());
+            }
         }
         catch(BayesianNetworkException bnex) {
-            throw new RuntimeException("Internal error while replicating a network.");
+            throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
+        }
+        catch(BayesianNetworkRuntimeException bnex) {
+            throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
         }
     }
     
@@ -278,8 +286,10 @@ public class BayesianNetwork {
         StringBuilder ret = new StringBuilder();
         boolean firstLine = true;
         for(Node node : this.topologicalSortNodes()) { // in a nice top-down manner
-            if(!firstLine)
+            if(!firstLine) {
                 ret.append(System.lineSeparator());
+                ret.append(System.lineSeparator());
+            }
             ret.append(node.getFactor().toString());
             firstLine = false;
         }

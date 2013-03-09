@@ -33,6 +33,8 @@ public class Factor implements Iterable<int[]> {
     }
     
     public double getProbability(int[] assignment) {
+        if(!Toolkit.validateAssignment(this.scope, assignment))
+            throw new BayesianNetworkRuntimeException("Invalid assignment wrt. scope of the factor.");
         return this.values[this.mapper.assignmentToIndex(assignment)];
     }
     
@@ -41,7 +43,6 @@ public class Factor implements Iterable<int[]> {
     }
     
     public Variable[] getScope() {
-        // TODO performance
         return Arrays.copyOf(this.scope, this.scope.length);
     }
     
@@ -103,17 +104,25 @@ public class Factor implements Iterable<int[]> {
     public static Factor sumFactors(Factor[] factors) {
         if(factors == null || factors.length == 0)
             throw new BayesianNetworkRuntimeException("The factors array must be non-empty.");
+        for(int i = 1 ; i < factors.length ; i++)
+            if(!Toolkit.areEqual(factors[0].getScope(), factors[i].getScope()))
+                throw new BayesianNetworkRuntimeException("All factors need to have the same variables in their scope.");
         
-        Factor factorsRepresentant = factors[0];
-        double[] valuesSumVector = new double[factorsRepresentant.getCardinality()];
-        for(int[] assignment : factorsRepresentant) {
-            double sumForAssignment = 0;
-            for(Factor f : factors)
-                sumForAssignment += f.getProbability(assignment);
-            int assignmentIndex = factorsRepresentant.mapper.assignmentToIndex(assignment);
-            valuesSumVector[assignmentIndex] = sumForAssignment;
+        Variable[] sumScope = factors[0].getScope();
+        double[] sumValues = new double[factors[0].getCardinality()];
+        AssignmentIndexMapper sumIndexMapper = new AssignmentIndexMapper(sumScope);
+        VariableSubsetMapper mappers[] = new VariableSubsetMapper[factors.length];
+        for(int i = 0 ; i < mappers.length ; i++)
+            mappers[i] = new VariableSubsetMapper(sumScope, factors[i].getScope());
+        for(int[] assignment : factors[0]) {
+            double partialSum = 0;
+            for(int i = 0 ; i < factors.length ; i++) {
+                int[] iAssignment = mappers[i].map(assignment);
+                partialSum += factors[i].getProbability(iAssignment);
+            }
+            sumValues[sumIndexMapper.assignmentToIndex(assignment)] = partialSum;
         }
-        return new Factor(factorsRepresentant.getScope(), valuesSumVector);
+        return new Factor(sumScope, sumValues);
     }
     
     /** Iterate over all possible assignments to variables in scope of this factor. */

@@ -9,11 +9,13 @@ package bna.bnlib;
  * Map assignment of a superset of variables to assignment of their subset.
  */
 public class VariableSubsetMapper {
+    private Variable[] superset;
     private int[] mapping; // subset -> index in superset
     
     public VariableSubsetMapper(Variable[] superset, Variable[] subset)  {
         if(!Toolkit.isSubset(superset, subset))
             throw new BayesianNetworkRuntimeException("Not a subset");
+        this.superset = superset;
         // generate the mapping
         this.mapping = new int[subset.length];
         for(int i = 0 ; i < subset.length ; i++)
@@ -28,6 +30,8 @@ public class VariableSubsetMapper {
     public int[] map(int[] supersetAssignment, int[] subsetAssignment) {
         if(subsetAssignment.length != this.mapping.length)
             throw new BayesianNetworkRuntimeException("Invalid array for target assignment.");
+        if(!Toolkit.validateAssignment(this.superset, supersetAssignment))
+            throw new BayesianNetworkRuntimeException("Invalid assignment of the superset.");
         for(int i = 0 ; i < this.mapping.length ; i++)
             subsetAssignment[i] = supersetAssignment[this.mapping[i]];
         return subsetAssignment;

@@ -54,14 +54,23 @@ public class MCMCSampleProducer extends SampleProducer {
         this(query.bn, query.X, query.Y, query.E, query.e);
     }
 
-    /** Initializes the sample by a single weighted sampling pass. */
+    /** Initializes the sample by seting the evidence variables. */
     @Override
     protected void initializeSample(SamplingContext context) {
-        WeightedSampleProducer weightedSampler = new WeightedSampleProducer(
+        for(int i = 0 ; i < this.EVars.length ; i++) {
+            Variable EVar = this.EVars[i];
+            int EVal = this.EVals[i];
+            int EIndex = Toolkit.indexOf(this.sampledVars, EVar);
+            context.sampledVarsAssignment[EIndex] = EVal;
+        }
+        context.sampleWeight = 1.0;
+        // TODO maybe produce a few samples to get the network into a more "normal" state
+
+        /*WeightedSampleProducer weightedSampler = new WeightedSampleProducer(
                 this.bn, this.XVars, this.YVars, this.EVars, this.EVals);
         // the variable values are preserved after the following call
         weightedSampler.produceSample(context); // evidence is correctly set
-        context.sampleWeight = 1.0;
+        context.sampleWeight = 1.0;*/
     }
 
     /** Select a single resampling action at random and execute it. */

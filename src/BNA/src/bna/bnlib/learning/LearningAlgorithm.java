@@ -52,11 +52,17 @@ public class LearningAlgorithm {
                 }
                 // perform the best action (if more are possible, perform one arbitrarily)
                 AlterationAction bestAlteration;
-                if(bestGainActions.size() == 1)
-                    bestAlteration = bestGainActions.get(0); // avoid expensive random number generation
-                else {
-                    int bestAlterationIndex = rand.nextInt(bestGainActions.size());
-                    bestAlteration = bestGainActions.get(bestAlterationIndex);
+                switch(bestGainActions.size()) {
+                    case 1:
+                        bestAlteration = bestGainActions.get(0); // avoid expensive random number generation
+                        break;
+                    case 0:
+                        System.out.println("Structure learning: no alteration possible!");
+                        bestAlteration = null;
+                        break;
+                    default:
+                        int bestAlterationIndex = rand.nextInt(bestGainActions.size());
+                        bestAlteration = bestGainActions.get(bestAlterationIndex);
                 }
                 System.out.println(" => applying alteration " + bestAlteration.toString());
                 bestAlteration.apply(bnCurrent);

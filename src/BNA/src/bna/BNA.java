@@ -19,9 +19,10 @@ public class BNA {
         //playing_sampling_mixed();
         //benchmarkSampling_sequentialVSMultithreaded();
         //playing_sampling_string_query();
-        //playing_parameter_learning();
         //playing_dataset_testing();
-        playing_structure_learning();
+        //playing_parameter_learning();
+        benchmark_parameter_learningMLEVSBayes();
+        //playing_structure_learning();
     }
     
     
@@ -75,6 +76,7 @@ public class BNA {
             // optional interruption of the main thread when performing multithreaded sampling
             final Thread mainThread = Thread.currentThread();
             Thread interruptThread = new Thread() {
+                @Override
                 public void run() {
                     try {
                         System.out.println("Waiting to interrupt the main thread...");
@@ -295,36 +297,6 @@ public class BNA {
     enum SamplingVariant {WeightedSampling, MCMCSampling}
     
     
-    private static void playing_parameter_learning() {
-        final long SAMPLES = 1000 * 1000;
-        try {
-            System.out.println("Parameter estimation using maximum likelihood");
-            BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
-            System.out.println("Original factors (~CPDs) in all nodes:");
-            System.out.println(bn.dumpCPTs());
-            System.out.print("\n\n");
-            // sample the network
-            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
-            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bn);
-            SamplingController samplingController = new SamplingController(SAMPLES);
-            datasetSampler.sample(samplingController);
-            Dataset dataset = datasetSampler.getDataset();
-            // attempt to compute CPDs for all nodes based on the dataset
-            System.out.println("Computing CPDs using MLE...");
-            BayesianNetwork bnLearnt = ParameterLearner.learnMLE(bn, dataset);
-            // write the resulting CPDs
-            System.out.println("Resulting factors (~CPDs) in all nodes:");
-            System.out.println(bnLearnt.dumpCPTs());
-            // TODO
-        }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-        }
-        catch(OutOfMemoryError oome) {
-            oome.printStackTrace();
-        }
-    }
-    
     private static void playing_dataset_testing() {
         // take network with independent variables (no connections) and check the mutual information
         final long SAMPLES = 1000 * 1000;
@@ -350,8 +322,96 @@ public class BNA {
         }
     }
     
+    private static void playing_parameter_learning() {
+        final long SAMPLES = 1000 * 1000;
+        try {
+            System.out.println("Parameter estimation using maximum likelihood");
+            BayesianNetwork bn = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            System.out.println("Original factors (~CPDs) in all nodes:");
+            System.out.println(bn.dumpCPTs());
+            System.out.print("\n\n");
+            // sample the network
+            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bn);
+            SamplingController samplingController = new SamplingController(SAMPLES);
+            datasetSampler.sample(samplingController);
+            Dataset dataset = datasetSampler.getDataset();
+            // attempt to compute CPDs for all nodes based on the dataset
+            System.out.println("Computing CPDs using MLE...");
+            BayesianNetwork bnLearnt = ParameterLearner.learnMLE(bn, dataset);
+            // write the resulting CPDs
+            System.out.println("Resulting factors (~CPDs) in all nodes:");
+            System.out.println(bnLearnt.dumpCPTs());
+            
+            // TODO other methods
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+        catch(OutOfMemoryError oome) {
+            oome.printStackTrace();
+        }
+    }
+    
+    private static void benchmark_parameter_learningMLEVSBayes() {
+        // take network with independent variables (no connections) and check the mutual information
+        final long SAMPLES_MIN = 50,
+                   SAMPLES_MAX = 5000,
+                   STEP_COUNT = 30;
+        final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
+        String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
+        CmdlineTable table = new CmdlineTable(headers, 5, false);
+        try {
+            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile("../../networks/alarm.net");
+            double samplesDbl = SAMPLES_MIN;
+            for(int i = 0 ; i < STEP_COUNT ; i++, samplesDbl *= SAMPLES_EXP_STEP) {
+                long samples = Math.round(samplesDbl);
+                // sample the original network
+                DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+                SamplingController samplingController = new SamplingController(samples);
+                datasetSampler.sample(samplingController);
+                Dataset dataset = datasetSampler.getDataset();
+                // learn the parameters using MLE and Bayesian estimation with various equivalent sample sizes
+                LinkedList<BayesianNetwork> networks = new LinkedList<BayesianNetwork>();
+                networks.addLast(ParameterLearner.learnMLE(bnOriginal, dataset));
+                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 1.0));
+                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 2.5));
+                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 5.0));
+                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 10.0));
+                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 20.0));
+                /*System.out.println("Dump of original network:");
+                System.out.println(bnOriginal.dumpCPTs());
+                System.out.println("=======================================");
+                System.out.println("Dump of MLE network:");
+                System.out.println(ParameterLearner.learnMLE(bnOriginal, dataset).dumpCPTs());
+                System.out.println("=======================================");
+                System.out.println("Dump of Bayes(1) network:");
+                System.out.println(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 1.0).dumpCPTs());
+                System.out.println("=======================================");
+                System.out.println("Dump of Bayes(5) network:");
+                System.out.println(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 5.0).dumpCPTs());
+                if(1==1)break;*/
+                // produce one line of output
+                System.err.printf("computing case for %d samples...\n", samples);
+                LinkedList<Object> dataRowList = new LinkedList<Object>();
+                dataRowList.add(samples);
+                for(BayesianNetwork bnLearned : networks) {
+                    Double entropy = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, bnLearned);
+                    dataRowList.addLast(entropy);
+                }
+                Object[] entropyRow = dataRowList.toArray();
+                table.addRow(entropyRow);
+            }
+            System.out.println("# Benchmark of parameter learning quality (ICU network, MLE & Bayesian estimation, relative entropy)");
+            System.out.println(table.toString());
+        }
+        catch(BayesianNetworkException bnex) {
+            bnex.printStackTrace();
+        }
+    }
+    
     private static void playing_structure_learning() {
-        final long SAMPLES = 1000;
+        final long SAMPLES = 1000 * 1000;
         final long MAX_ITERATIONS = 10;
         try {
             System.out.println("Structure learning");
