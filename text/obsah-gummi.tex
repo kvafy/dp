@@ -682,25 +682,32 @@ In context of Bayesian networks, the technique most frequently used is simple hi
 \subsection{Likelihood score}
 The likelihood score has information-theoretic foundations and basically quantifies how well a given network structure matches our dataset. We assume that for a given structure $\mathcal{G}$ the parameters $\Theta$ are learnt using the maximum likelihood estimation, so the likelihood score really evaluates the hypothesis $(\mathcal{G}, \Theta)$.
 
-Again, the goal is to maximize probability of the data given a hypothesis. Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ and let's examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with structure $X \rightarrow Y$. Then their likelihood scores are computed as follows:
-\begin{eqnarray*}
-    score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)})\Bigr)\\
-    score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^m \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)} \mid x^{(i)})\Bigr)
-\end{eqnarray*}
-where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of structure $\mathcal{G}_1$ with dataset $\mathcal{D}$, $x^{(i)}$ is value of variable $X$ in example $\xi_i$ and $\hat P$ denotes the \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle, eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$.
+Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$. Again, learning corresponds with maximizing probability of sampling exactly the data $\mathcal{D}$ from the learnt network, only now we search for optimal BN structure rather than parameters. Concretely, we will focus on maximizing the likelihood function $P(\mathcal{D} \mid \Theta, \mathcal{G})$ which is basically probability of obtaining exactly the samples contained in dataset $\mathcal{D}$ from the network $(\mathcal{G},\Theta)$, ie. one can write $P(\mathcal{D} \mid \Theta, \mathcal{G}) = P(\xi_1 \mid \Theta, \mathcal{G}) \dotsm P(\xi_m \mid \Theta, \mathcal{G})$. Furthermore, we will use \term{log-likelihood function} which is just a logarithm of the likelihood function. This is a useful trick because logarithm transforms a product into a sum which will allow us to compute score of a network based purely on computations over individual nodes (the likelihood score decomposes over a network).
 
-Now let's examine the difference between having an edge between variables $X$ and $Y$ or not. We obtain the following result (for complete derivation see~\cite[p.~791]{pgm}):
+To understand how the likelihood score changes for two networks that differ only by presence of a~single edge, we will examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with structure $X \rightarrow Y$. From the previous text we know likelihood scores of these networks (logarithms of likelihood functions) can be computed as follows:
 \begin{eqnarray*}
-   score_L(\mathcal{G}_2 : \mathcal{D}) - score_L(\mathcal{G}_1 : \mathcal{D}) %& = & \sum_{i=1}^m \log \hat P(y[i] \mid x[i]) - \sum_{i=1}^m \log \hat P(y[i]) \\
-     %& = & \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
-     %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
-     %& = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
-     %& = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)} \\
-     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
+    score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^{|\mathcal{D}|} \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)})\Bigr)\\
+    score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^{|\mathcal{D}|} \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)} \mid x^{(i)})\Bigr)
+\end{eqnarray*}
+where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of dataset $\mathcal{D}$ in network with structure $\mathcal{G}_1$, $x^{(i)}$ is value of variable $X$ in sample $\xi_i$ and $\hat P$ denotes so called \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle (eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$) and therefore $\hat{P}(\cdot)$ also corresponds to the CPD entries (we have said that parameters $\Theta$ of a network with given structure are assumed to be computed using maximum likelihood estimation).
+
+Now let's examine the difference between having an edge between variables $X$ and $Y$ or not, how does the likelihood score change? We obtain the following result (derivation inspired by~\cite[p.~791]{pgm}):
+\begin{eqnarray*}
+   score_L(\mathcal{G}_2 : \mathcal{D}) - score_L(\mathcal{G}_1 : \mathcal{D}) 
+     & = & \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)} \mid x^{(i)}) - \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)}) \\
+     & = & \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
+     & = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
+     & = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
+     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)}
+       =   N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
      & = & N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
-%The first step is to change the logic of the summation from \uv{over the dataset $\xi_1,\dots,\xi_m$} to \uv{over possible instantiations of $X,Y$}. Then we express the counts $N_{x,y},N_y$ using size of the dataset $N$ and their empirical probabilities of respective instantiations. After that we can extend the second summation from just over $Y$ to over $X,Y$. The final step is merging the two sums and logarithms.
-The term $I_{\hat P}(X; Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$, when the variables are dependent, to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$, when the variables are independent. It can be proved (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
+First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi_1,\dots,\xi_m$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as much as before.
+On the third line the counts $N_{x,y}$ and $N_y$ are expresses using size of the dataset $N$ and empirical probabilities of respective instantiations $x,y$ and $y$.
+After that, on the fourth line, we can extend the second summation from just over $Y$ to over $X,Y$.
+The last step, the fifth line, is merging the two sums and logarithms and applying Bayes' rule on the $\hat P(y \mid x)$ term. Finally, we introduce special notation for the final expression.
+
+The term $I_{\hat P}(X; Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$, in which the variables are dependent, to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$, when the variables are independent. It can be proved (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
 \begin{equation}
     score_L(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
 \end{equation}
