@@ -21,8 +21,8 @@ public class BNA {
         //playing_sampling_string_query();
         //playing_dataset_testing();
         //playing_parameter_learning();
-        benchmark_parameter_learningMLEVSBayes();
-        //playing_structure_learning();
+        //benchmark_parameter_learningMLEVSBayes();
+        playing_structure_learning();
     }
     
     
@@ -122,10 +122,10 @@ public class BNA {
     }
     
     private static void playing_sampling_string_query() {
-        final long SAMPLES_COUNT = 20000000;
+        final long SAMPLES_COUNT = 20 * 1000 * 1000;
         final int THREAD_COUNT = 3;
         final String NETWORK_FILE = "../../networks/sprinkler.net";
-        final String QUERY_STR = "P(RAIN | WETGRASS = TRUE)";
+        final String QUERY_STR = "P(RAIN | SPRINKLER = TRUE, WETGRASS = TRUE)";
         
         long timeStart, timeEnd;
         try {
@@ -141,8 +141,9 @@ public class BNA {
             //   [solved] the SampleProducer had some cached arrays (to avoid frequent allocation)
             //            whose content got rewritten by concurrent threads
             // slow
-            //   [in progress] Random.nextDouble() takes about 90 % of time
-            //                 of sampling a non-evidence variable in weighted sampling
+            //   [solved] Random.nextDouble() takes about 90 % of time
+            //            of sampling a non-evidence variable in weighted sampling
+            //            => each thread has its own Random instance
             System.out.println("Multithreaded weighted sampling of string query " + QUERY_STR);
             timeStart = System.currentTimeMillis();
             SampleProducer sharedWeightedSampleProducer = new WeightedSampleProducer(bn, QUERY_STR);
@@ -266,24 +267,6 @@ public class BNA {
         }
     }
     
-    /*private static double computeAverageWithoutExtremes(LinkedList<Double> values) {
-        final double DROP_EXTREMES = 0.1; // drop 10 % of extreme values
-        
-        values = new LinkedList<>(values); // make a local copy
-        Collections.sort(values);
-        
-        int dropCount = (int)(DROP_EXTREMES * values.size() / 2);
-        for(int i = 0 ; i < dropCount ; i++) {
-            values.removeFirst();
-            values.removeLast();
-        }
-        // compute the average
-        double sum = 0;
-        for(double x : values)
-            sum += x;
-        return sum / values.size();
-    }*/
-    
     private static double computeMedian(LinkedList<Double> values) {
         values = new LinkedList<Double>(values); // make a local copy
         Collections.sort(values);
@@ -343,7 +326,7 @@ public class BNA {
             System.out.println("Resulting factors (~CPDs) in all nodes:");
             System.out.println(bnLearnt.dumpCPTs());
             
-            // TODO other methods
+            // TODO other methods than MLE
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();
@@ -411,8 +394,8 @@ public class BNA {
     }
     
     private static void playing_structure_learning() {
-        final long SAMPLES = 1000 * 1000;
-        final long MAX_ITERATIONS = 10;
+        final long SAMPLES = 300;
+        final long MAX_ITERATIONS = 200;
         try {
             System.out.println("Structure learning");
             // sample some original network
@@ -424,18 +407,31 @@ public class BNA {
             SamplingController samplingController = new SamplingController(SAMPLES);
             datasetSampler.sample(samplingController);
             Dataset dataset = datasetSampler.getDataset();
-            // create initial empty network and learn
-            System.out.println("Learning structure...");
+            
             LearningController controller = new LearningController(MAX_ITERATIONS);
             BayesianNetwork bnInitial = BayesianNetwork.loadFromFile("../../networks/sprinkler-empty.net");
+            
+            // learn using likelihood score
+            System.out.println("Learning structure by likelihood score...");
             //BayesianNetwork bnInitial = new BayesianNetwork(dataset.getVariables());
-            ScoringMethod scoringMethod = new LikelihoodScoringMethod(dataset);
-            LearningAlgorithm learningAlgorithm = new LearningAlgorithm(scoringMethod);
-            BayesianNetwork bnResult = learningAlgorithm.learn(bnInitial, controller);
+            ScoringMethod likelihoodScoringMethod = new LikelihoodScoringMethod(dataset);
+            StructureLearningAlgorithm likelihoodLearningAlgorithm = new HillClimbLearningAlgorithm(likelihoodScoringMethod);
+            BayesianNetwork bnResultLikelihood = likelihoodLearningAlgorithm.learn(bnInitial, controller);
             System.out.println("Learning done!");
             System.out.println("best structure:");
-            System.out.println(bnResult.dumpStructure());
-            System.out.println("best total score: " + scoringMethod.absoluteScore(bnResult));
+            System.out.println(bnResultLikelihood.dumpStructure());
+            System.out.println("best total score: " + likelihoodScoringMethod.absoluteScore(bnResultLikelihood));
+            System.out.println("");
+            
+            // learn using likelihood score
+            System.out.println("Learning structure by BIC score...");
+            ScoringMethod bicScoringMethod = new BICScoringMethod(dataset);
+            StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, 3);
+            BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller);
+            System.out.println("Learning done!");
+            System.out.println("best structure:");
+            System.out.println(bnResultBIC.dumpStructure());
+            System.out.println("best total score: " + bicScoringMethod.absoluteScore(bnResultBIC));
         }
         catch(BayesianNetworkException bnex) {
             bnex.printStackTrace();

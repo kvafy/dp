@@ -1,6 +1,7 @@
 // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
 // Author:  David Chaloupka (xchalo09)
-// Created: 2013/03/02
+// Created: 2013/03/10
+
 
 package bna.bnlib.learning;
 
@@ -8,24 +9,28 @@ import bna.bnlib.*;
 
 
 /**
- * Class implementing the likelihood score.
+ * Class implementing the BIC score.
  */
-public class LikelihoodScoringMethod extends ScoringMethod {
-    public LikelihoodScoringMethod(Dataset dataset) {
+public class BICScoringMethod extends ScoringMethod {
+    public BICScoringMethod(Dataset dataset) {
         super(dataset);
     }
     
     @Override
     public double absoluteScore(BayesianNetwork bn) {
         double N = this.dataset.getSize();
-        double score = 0;
+        // the likelihood-score part
+        double likelihoodScore = 0;
         for(Node node : bn.getNodes()) {
             if(node.getParentCount() == 0) // TODO really works like this?
                 continue;
-            score += dataset.mutualInformation(new Variable[]{node.getVariable()}, node.getParentVariables());
+            likelihoodScore += dataset.mutualInformation(new Variable[]{node.getVariable()}, node.getParentVariables());
         }
-        score *= N;
-        return score;
+        likelihoodScore *= N;
+        // the dimension part
+        double dim = bn.getDegreesOfFreedomInCPDs();
+        double structurePenalization = Math.log(N) / 2 * dim;
+        return likelihoodScore - structurePenalization;
     }
     
     @Override

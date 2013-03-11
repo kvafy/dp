@@ -9,17 +9,24 @@ package bna.bnlib;
  * Action that adds an edge to an existing Bayesian network.
  */
 public class AlterationActionAddEdge extends AlterationAction {
-    private Variable parent, child;
-    
-    
+
     public AlterationActionAddEdge(Variable parent, Variable child) {
-        this.parent = parent;
-        this.child = child;
+        super(parent, child);
     }
 
     @Override
     public void apply(BayesianNetwork bnOrig) throws BayesianNetworkException {
         bnOrig.addDependency(this.parent, this.child);
+    }
+    
+    @Override
+    public void undo(BayesianNetwork bn) throws BayesianNetworkException {
+        bn.removeDependency(this.parent, this.child);
+    }
+    
+    @Override
+    public AlterationAction getUndoAction() {
+        return new AlterationActionRemoveEdge(this.parent, this.child);
     }
     
     @Override

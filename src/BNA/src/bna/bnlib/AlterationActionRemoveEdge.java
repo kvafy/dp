@@ -9,17 +9,24 @@ package bna.bnlib;
  * Action that removes an edge from an existing Bayesian network.
  */
 public class AlterationActionRemoveEdge extends AlterationAction {
-    private Variable parent, child;
-    
     
     public AlterationActionRemoveEdge(Variable parent, Variable child) {
-        this.parent = parent;
-        this.child = child;
+        super(parent, child);
     }
 
     @Override
     public void apply(BayesianNetwork bnOrig) throws BayesianNetworkException {
         bnOrig.removeDependency(this.parent, this.child);
+    }
+    
+    @Override
+    public void undo(BayesianNetwork bn) throws BayesianNetworkException {
+        bn.addDependency(this.parent, this.child);
+    }
+    
+    @Override
+    public AlterationAction getUndoAction() {
+        return new AlterationActionAddEdge(this.parent, this.child);
     }
 
     @Override

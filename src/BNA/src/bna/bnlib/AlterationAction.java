@@ -9,5 +9,36 @@ package bna.bnlib;
  * Abstract class of an action that takes an existing Bayesian network and modifies it.
  */
 public abstract class AlterationAction {
-    public abstract void apply(BayesianNetwork bnOrig) throws BayesianNetworkException;
+    protected final Variable parent, child;
+    
+    
+    public AlterationAction(Variable parent, Variable child) {
+        this.parent = parent;
+        this.child = child;
+    }
+    
+    public abstract void apply(BayesianNetwork bn) throws BayesianNetworkException;
+    
+    public abstract void undo(BayesianNetwork bn) throws BayesianNetworkException;
+    
+    public abstract AlterationAction getUndoAction();
+    
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof AlterationAction) {
+            Variable oParent = ((AlterationAction)o).parent,
+                     oChild = ((AlterationAction)o).child;
+            return oParent.equals(this.parent) && oChild.equals(this.child);
+        }
+        else
+            return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + (this.parent != null ? this.parent.hashCode() : 0);
+        hash = 79 * hash + (this.child != null ? this.child.hashCode() : 0);
+        return hash;
+    }
 }

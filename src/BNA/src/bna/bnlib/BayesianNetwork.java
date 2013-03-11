@@ -24,8 +24,12 @@ public class BayesianNetwork {
             this.nodes[i] = new Node(variables[i]);
     }
     
+     public BayesianNetwork(BayesianNetwork original) {
+         this(original, true);
+     }
+    
     /** Create a deep copy of given network. */
-    public BayesianNetwork(BayesianNetwork original) {
+    private BayesianNetwork(BayesianNetwork original, boolean copyCPDs) {
         try {
             // duplicate nodes (for now, without connections and CPDs)
             this.nodes = new Node[original.nodes.length];
@@ -41,18 +45,27 @@ public class BayesianNetwork {
                     this.addDependency(varParent, varChild);
                 }
             }
-            // duplicate CPDs (the scope checking will pass as structure has been established)
-            for(Node node : this.nodes) {
-                Variable variable = node.getVariable();
-                node.setFactor(original.getNode(variable).getFactor());
+            if(copyCPDs) {
+                // duplicate CPDs (the scope checking will pass as structure has been established)
+                for(Node node : this.nodes) {
+                    Variable variable = node.getVariable();
+                    node.setFactor(original.getNode(variable).getFactor());
+                }
             }
+            // else the Factors for CPDs will remain null
         }
         catch(BayesianNetworkException bnex) {
             throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
         }
         catch(BayesianNetworkRuntimeException bnex) {
+            bnex.printStackTrace();
             throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
         }
+    }
+    
+    /** Duplicate the network's structure, but set empty CPDs. */
+    public BayesianNetwork copyWithEmptyCPDs() {
+        return new BayesianNetwork(this, false);
     }
     
     
@@ -214,6 +227,17 @@ public class BayesianNetwork {
     
     public int getVariablesCount() {
         return this.nodes.length;
+    }
+    
+    /** Return number of degrees of freedom of the network wrt CPD entries. */
+    public int getDegreesOfFreedomInCPDs() {
+        int degreesOfFreedom = 0;
+        for(Node v : this.nodes) {
+            int vCard = v.getVariable().getCardinality();
+            int parentsCard = Toolkit.cardinality(v.getParentVariables());
+            degreesOfFreedom += (vCard - 1) * parentsCard;
+        }
+        return degreesOfFreedom;
     }
     
     

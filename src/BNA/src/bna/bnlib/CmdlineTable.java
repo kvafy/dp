@@ -9,19 +9,19 @@ import java.util.LinkedList;
 
 
 /**
- * Provides a clean interface to produce a nice tabular output to command line.
+ * Provides a clean interface to produce a nice structured tabular output to command line.
  * Columns of the table are auto-size to accomodate for their content.
  */
 public class CmdlineTable {
     private static final int MIN_COLUMN_WIDTH = 1;
-    private static final int CELL_PADDING = 1;
+    private static final int CELL_PADDING = 1; // number of spaces on the left and right
     private static char COLUMN_SEPARATOR = '|';
     // internal data
     private int columnCount;
-    private LinkedList<Object[]> rows;
+    private LinkedList<Object[]> rows; // header followed by data rows
     // customization
-    private int precision;
-    private boolean separateColumns;
+    private int precision;             // number of decimal places
+    private boolean separateColumns;   // use extra character (COLUMN_SEPARATOR) between columns?
     
     
     public CmdlineTable(String[] columnHeaders, int precision, boolean separateColumns) {

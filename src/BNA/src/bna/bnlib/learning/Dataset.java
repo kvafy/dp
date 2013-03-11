@@ -48,6 +48,10 @@ public class Dataset {
         return Arrays.copyOf(this.variables, this.variables.length);
     }
     
+    public int getSize() {
+        return this.records.size();
+    }
+    
     private void loadFile(String csvFileName) throws IOException {
         LinkedList<int[]> data = new LinkedList<int[]>();
         // TODO read variables (name and list of possible assignments)
