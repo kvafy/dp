@@ -14,7 +14,7 @@ import java.util.LinkedList;
 /**
  *
  */
-public class Dataset {
+public class Dataset implements DatasetInterface {
     private Variable[] variables;
     List<int[]> records; // package-private for the DatasetIterator
     
@@ -44,10 +44,12 @@ public class Dataset {
         this.records = new LinkedList<int[]>();
     }
     
+    @Override
     public Variable[] getVariables() {
         return Arrays.copyOf(this.variables, this.variables.length);
     }
     
+    @Override
     public int getSize() {
         return this.records.size();
     }
@@ -64,6 +66,7 @@ public class Dataset {
     }
     
     /** Add new record to the dataset. */
+    @Override
     public void addRecord(int[] record) {
         if(!Toolkit.validateAssignment(this.variables, record))
             throw new BayesianNetworkRuntimeException("Record of invalid lenght.");
@@ -71,6 +74,7 @@ public class Dataset {
     }
     
     /** Count occurences of all assignments to given variables and return as a factor. */
+    @Override
     public Factor computeFactor(Variable[] scope) {
         Counter counter = new Counter(scope);
         VariableSubsetMapper recordToScopeMapper = new VariableSubsetMapper(this.variables, scope);
@@ -83,12 +87,16 @@ public class Dataset {
     }
     
     /** Compute mutual information between two sets of variables. */
+    @Override
     public double mutualInformation(Variable[] set1, Variable[] set2) {
         if(!Toolkit.areDisjoint(set1, set2))
             throw new BayesianNetworkRuntimeException("Sets to compute mutual information for are not disjoint.");
         Variable[] union = Toolkit.union(set1, set2);
         if(!Toolkit.isSubset(this.variables, union))
             throw new BayesianNetworkRuntimeException("Sets contain variables not present in the dataset.");
+        
+        if(set1.length == 0 || set2.length == 0)
+            return 0.0;
         
         double inf = 0.0;
         Factor unionFactor = this.computeFactor(union).normalize(),

@@ -11,8 +11,11 @@ import bna.bnlib.*;
  * Class implementing the likelihood score.
  */
 public class LikelihoodScoringMethod extends ScoringMethod {
-    public LikelihoodScoringMethod(Dataset dataset) {
-        super(dataset);
+    private DatasetInterface dataset;
+    
+    
+    public LikelihoodScoringMethod(DatasetInterface dataset) {
+        this.dataset = dataset;
     }
     
     @Override

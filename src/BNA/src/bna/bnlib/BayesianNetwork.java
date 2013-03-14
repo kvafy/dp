@@ -199,6 +199,10 @@ public class BayesianNetwork {
         return vars;
     }
     
+    public int getNodeCount() {
+        return this.nodes.length;
+    }
+    
     public Node getNode(String variableName) {
         for(Node n : this.nodes)
             if(n.getVariable().getName().equals(variableName))

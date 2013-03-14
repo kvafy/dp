@@ -23,6 +23,14 @@ public abstract class AlterationAction {
     
     public abstract AlterationAction getUndoAction();
     
+    public Variable getParentVariable() {
+        return this.parent;
+    }
+    
+    public Variable getChildVariable() {
+        return this.child;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if(o instanceof AlterationAction) {

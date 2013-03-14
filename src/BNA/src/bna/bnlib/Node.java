@@ -106,18 +106,26 @@ public class Node {
     // modification methods are package-private => users of the library cannot manipulate nodes directly
     
     void addParent(Node parent) {
+        if(this.parents.contains(parent))
+            throw new BayesianNetworkRuntimeException("The node is already in Parents(X).");
         this.parents.add(parent);
     }
     
     void addChild(Node child) {
+        if(this.children.contains(child))
+            throw new BayesianNetworkRuntimeException("The node is already in Children(X).");
         this.children.add(child);
     }
     
     void removeParent(Node parent) {
+        if(!this.parents.contains(parent))
+            throw new BayesianNetworkRuntimeException("The node is not in Parents(X).");
         this.parents.remove(parent);
     }
     
     void removeChild(Node child) {
+         if(!this.children.contains(child))
+            throw new BayesianNetworkRuntimeException("The node is not in Children(X).");
         this.children.remove(child);
     }
     

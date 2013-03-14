@@ -122,10 +122,12 @@ public class BNA {
     }
     
     private static void playing_sampling_string_query() {
-        final long SAMPLES_COUNT = 20 * 1000 * 1000;
+        final long SAMPLES_COUNT = 1 * 1000 * 1000;
         final int THREAD_COUNT = 3;
         final String NETWORK_FILE = "../../networks/sprinkler.net";
         final String QUERY_STR = "P(RAIN | SPRINKLER = TRUE, WETGRASS = TRUE)";
+        //final String NETWORK_FILE = "../../networks/alarm.net";
+        //final String QUERY_STR = "P(PVSAT | EXPCO2, SAO2 = HIGH)";
         
         long timeStart, timeEnd;
         try {
@@ -200,7 +202,7 @@ public class BNA {
                     networkFile = "../../networks/alarm.net";
                     networkName = "icu_net";
                     bn = BayesianNetwork.loadFromFile(networkFile);
-                    // P(PVSAT | ECO2, SAO2 = high)
+                    // P(PVSAT | ECO2, SAO2 = HIGH)
                     //  - PVSAT ~ PVS   ( "LOW" "NORMAL" "HIGH" )
                     //  - EXPCO2 ~ ECO2 ( "ZERO" "LOW" "NORMAL" "HIGH" )
                     //  - SAO2          ( "LOW" "NORMAL" "HIGH" )
@@ -394,13 +396,20 @@ public class BNA {
     }
     
     private static void playing_structure_learning() {
-        final long SAMPLES = 300;
-        final long MAX_ITERATIONS = 200;
+        final long SAMPLES = 100;
+        final long MAX_ITERATIONS = 300;
+        final double TABU_LIST_RELATIVE_SIZE = 0.3;
+        final double RANDOM_RESTART_STEPS_RELATIVE = 0.5;
         try {
+            long timeStart, timeEnd;
             System.out.println("Structure learning");
             // sample some original network
             System.out.println("Loading original network...");
             BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            int N = bnOriginal.getNodeCount();
+            int maxAlterations = 2 * (N * (N - 1) / 2);
+            int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE),
+                RANDOM_RESTART_STEPS = (int)(maxAlterations * RANDOM_RESTART_STEPS_RELATIVE);
             // sample the network
             System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
             DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
@@ -411,8 +420,13 @@ public class BNA {
             LearningController controller = new LearningController(MAX_ITERATIONS);
             BayesianNetwork bnInitial = BayesianNetwork.loadFromFile("../../networks/sprinkler-empty.net");
             
+            // put the dataset cache in place
+            int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2);
+            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 1.2); // 20 % edge
+            CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+            
             // learn using likelihood score
-            System.out.println("Learning structure by likelihood score...");
+            /*System.out.println("Learning structure by likelihood score...");
             //BayesianNetwork bnInitial = new BayesianNetwork(dataset.getVariables());
             ScoringMethod likelihoodScoringMethod = new LikelihoodScoringMethod(dataset);
             StructureLearningAlgorithm likelihoodLearningAlgorithm = new HillClimbLearningAlgorithm(likelihoodScoringMethod);
@@ -421,14 +435,16 @@ public class BNA {
             System.out.println("best structure:");
             System.out.println(bnResultLikelihood.dumpStructure());
             System.out.println("best total score: " + likelihoodScoringMethod.absoluteScore(bnResultLikelihood));
-            System.out.println("");
+            System.out.println("");*/
             
             // learn using likelihood score
+            timeStart = System.currentTimeMillis();
             System.out.println("Learning structure by BIC score...");
-            ScoringMethod bicScoringMethod = new BICScoringMethod(dataset);
-            StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, 3);
+            ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+            StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
             BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller);
-            System.out.println("Learning done!");
+            timeEnd = System.currentTimeMillis();
+            System.out.printf("Learning done! (took %.2f s)\n", (timeEnd - timeStart) / 1000.0);
             System.out.println("best structure:");
             System.out.println(bnResultBIC.dumpStructure());
             System.out.println("best total score: " + bicScoringMethod.absoluteScore(bnResultBIC));
