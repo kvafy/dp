@@ -4,165 +4,58 @@
 
 package bna.bnlib;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 /**
  * LRU associative cache.
  */
 public class LRUCache<K,V> implements Iterable<V> {
-    int capacity;
-    HashMap<K, Pair<V,DListNode<K>>> itemMap;
-    DList<K> itemRecencyList; // head ~ the most recently used, tail ~ the least recently used
+    private int capacity;
+    private LinkedHashMap<K,V> data;
     
     public LRUCache(int capacity) {
         this.capacity = capacity;
-        this.itemMap = new HashMap<K, Pair<V,DListNode<K>>>(capacity);
-        this.itemRecencyList = new DList<K>();
-    }
-    
-    public V get(K key) {
-        Pair<V,DListNode<K>> pair = this.itemMap.get(key);
-        if(pair != null) {
-            this.itemRecencyList.relocateToHead(pair.second); // update timestamp
-            return pair.first;
-        }
-        else
-            return null;
-    }
-    
-    public void put(K key, V value) {
-        DListNode<K> node = this.itemRecencyList.addFirst(key);
-        Pair<V,DListNode<K>> pair = new Pair<V,DListNode<K>>(value, node);
-        this.itemMap.put(key, pair);
-        this.flushOverTheLimitData();
-    }
-    
-    public int size() {
-        return this.itemRecencyList.size;
-    }
-    
-    private void flushOverTheLimitData() {
-        while(this.itemRecencyList.size() > this.capacity) {
-            K lruKey = this.itemRecencyList.popLast();
-            this.itemMap.remove(lruKey);
-        }
-    }
-
-    @Override
-    public Iterator<V> iterator() {
-        return new Iterator<V>() {
-            DListNode<K> currentNode = itemRecencyList.head;
-            
+        // for the LRU we can quite ellegantly use standard class LinkedHashMap
+        final float HASH_LOAD_FACTOR = 0.75f; // default from documentation
+        final int HASH_CAPACITY = capacity;
+        final int HASH_SIZE = (int)(HASH_CAPACITY / HASH_LOAD_FACTOR);
+        this.data = new LinkedHashMap<K,V>(HASH_SIZE, HASH_LOAD_FACTOR, true) {
             @Override
-            public boolean hasNext() {
-                return this.currentNode != null;
-            }
-
-            @Override
-            public V next() {
-                K curKey = this.currentNode.data;
-                V curValue = itemMap.get(curKey).first;
-                this.currentNode = this.currentNode.next;
-                return curValue;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("Deletion is not supported.");
+            protected boolean removeEldestEntry(Map.Entry<K,V> entry) {
+                // this method is invoked always after inserting a new item
+                return this.size() > HASH_CAPACITY;
             }
         };
     }
     
-    class Pair<A,B> {
-        final A first;
-        final B second;
-        
-        public Pair(A a, B b) {
-            this.first = a;
-            this.second = b;
-        }
+    public void clear() {
+        this.data.clear();
     }
-}
-
-
-class DList<T> {
-    DListNode<T> head = null,
-                 tail = null;
-    int size = 0;
-
     
+    public V get(K key) {
+        return this.data.get(key);
+    }
+    
+    public void put(K key, V value) {
+        this.data.put(key, value);
+    }
+    
+    /** Return current number of items in the cache. */
     public int size() {
-        return this.size;
+        return this.data.size();
     }
     
-    public DListNode<T> addFirst(T item) {
-        DListNode<T> node = new DListNode<T>(item);
-        if(this.size == 0) {
-            this.head = node;
-            this.tail = node;
-        }
-        else {
-            node.next = this.head;
-            this.head.prev = node;
-            this.head = node;
-        }        
-        this.size++;
-        return node;
+    /** Returns the maximal number of items this LRU cache can hold. */
+    public int capacity() {
+        return this.capacity;
     }
-    
-    public T popLast() {
-        if(this.size == 0)
-            throw new RuntimeException("Cannot pop from empty list.");
-        
-        T tailValue = this.tail.data;
-        if(this.size == 1) {
-            this.head = null;
-            this.tail = null;
-        }
-        else {
-            this.tail = this.tail.prev;
-            this.tail.next = null;
-        }
-        this.size--;
-        return tailValue;
-    }
-    
-    void relocateToHead(DListNode<T> node) {
-        if(node == this.head)
-            return;
-        // take the node out
-        DListNode<T> oldPrev = node.prev,
-                     oldNext = node.next;
-        if(oldPrev != null)
-            oldPrev.next = oldNext;
-        if(oldNext != null)
-            oldNext.prev = oldPrev;
-        // could have been the tail node
-        if(this.tail == node)
-            this.tail = oldPrev;
 
-        // put before the current head
-        node.prev = null;
-        node.next = this.head;
-        this.head.prev = node;
-        this.head = node;
+    @Override
+    /** Provides iterator over the values in reversed access order (most recently accessed item is last). */
+    public Iterator<V> iterator() {
+        return this.data.values().iterator();
     }
 }
-
-class DListNode<T> {
-    T data;
-    DListNode<T> prev, next;
-    
-    public DListNode() {
-        this(null);
-    }
-    
-    public DListNode(T data) {
-        this.data = data;
-        this.prev = null;
-        this.next = null;
-    }
-}
-
