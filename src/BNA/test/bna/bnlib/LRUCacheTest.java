@@ -4,13 +4,15 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.LRUCache;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import org.junit.AfterClass;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
@@ -36,11 +38,16 @@ public class LRUCacheTest {
     public void testAsAWhole() {
         Random rand = new Random();
         // what data can be inserted
-        Integer[] keys = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        String[] values = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+        final int POSSIBLE_VALUES_COUNT = 50;
+        Integer[] keys = new Integer[POSSIBLE_VALUES_COUNT];
+        String[] values = new String[POSSIBLE_VALUES_COUNT];
+        for(int i = 0 ; i < keys.length ; i++) {
+            keys[i] = i;
+            values[i] = String.valueOf(keys[i]);
+        }
         // parameters of the test
         final int OPERATION_COUNT = 100 * 1000;
-        final int CAPACITY = 6;
+        final int CAPACITY = keys.length / 2;
         
         LRUCache<Integer,String> cache = new LRUCache<Integer,String>(CAPACITY);
         SimpleLRU<Integer,String> referentialCache = new SimpleLRU<Integer,String>(CAPACITY);
@@ -71,15 +78,20 @@ public class LRUCacheTest {
     }
     
     private <K,V> boolean equalCaches(SimpleLRU<K,V> simple, LRUCache<K,V> complex) {
+        HashSet<V> simpleValues = new HashSet<V>(),
+                   complexValues = new HashSet<V>();
         Iterator<V> simpleIter = simple.values.iterator(),
                     complexIter = complex.iterator();
         while(true) {
             if(!simpleIter.hasNext() && !complexIter.hasNext())
-                return true;
+                return simpleValues.equals(complexValues);
             if(simpleIter.hasNext() ^ complexIter.hasNext())
                 fail("One iterator is longer than the other.");
             V simpleVal = simpleIter.next(),
               complexVal = complexIter.next();
+            simpleValues.add(simpleVal);
+            complexValues.add(complexVal);
+            /*
             if(!simpleVal.equals(complexVal)) {
                 String complexDump = "";
                 for(V v : complex)
@@ -91,13 +103,13 @@ public class LRUCacheTest {
                            + "complex dump: " + complexDump + "\n"
                            + "simple dump: " + simpleDump;
                 fail(msg);
-            }
+            }*/
         }
     }
 }
 
 
-class SimpleLRU<K,V> {
+class SimpleLRU<K,V> implements Iterable<V> {
     final int capacity;
     ArrayList<K> keys = new ArrayList<K>();
     ArrayList<V> values = new ArrayList<V>();
@@ -139,5 +151,10 @@ class SimpleLRU<K,V> {
     
     public int size() {
         return this.keys.size();
+    }
+
+    @Override
+    public Iterator<V> iterator() {
+        return this.values.iterator();
     }
 }

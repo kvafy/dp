@@ -5,6 +5,7 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
+import bna.bnlib.misc.Toolkit;
 import java.util.Arrays;
 import java.util.LinkedList;
 

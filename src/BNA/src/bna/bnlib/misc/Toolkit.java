@@ -2,8 +2,15 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/06
 
-package bna.bnlib;
+package bna.bnlib.misc;
 
+import bna.bnlib.BayesianNetwork;
+import bna.bnlib.BayesianNetworkException;
+import bna.bnlib.BayesianNetworkRuntimeException;
+import bna.bnlib.Factor;
+import bna.bnlib.Node;
+import bna.bnlib.Variable;
+import bna.bnlib.VariableSubsetMapper;
 import bna.bnlib.sampling.*;
 import java.lang.reflect.Array;
 import java.util.*;

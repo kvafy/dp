@@ -2,7 +2,7 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/06
 
-package bna.bnlib;
+package bna.bnlib.misc;
 
 import java.util.ArrayList;
 

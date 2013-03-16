@@ -5,10 +5,11 @@
 package bna.bnlib.learning;
 
 import bna.bnlib.*;
-import java.io.*;
+import bna.bnlib.misc.Toolkit;
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 
 
 /**

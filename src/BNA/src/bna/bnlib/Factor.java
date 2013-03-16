@@ -4,6 +4,8 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.Toolkit;
+import bna.bnlib.misc.CmdlineTable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,8 +18,6 @@ public class Factor implements Iterable<int[]> {
     private Variable[] scope;
     private double[] values;
     private AssignmentIndexMapper mapper;
-    
-    private static final String TO_STRING_COLUMN_SEPARATOR = " | ";
     
     
     public Factor(Variable[] scope, double[] values) {

@@ -4,6 +4,7 @@
  
 package bna.bnlib.learning;
 
+import bna.bnlib.misc.Toolkit;
 import bna.bnlib.*;
 import org.junit.AfterClass;
 import org.junit.Test;

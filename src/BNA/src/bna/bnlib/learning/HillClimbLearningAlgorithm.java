@@ -4,6 +4,7 @@
 
 package bna.bnlib.learning;
 
+import bna.bnlib.misc.Toolkit;
 import bna.bnlib.*;
 import java.util.ArrayList;
 import java.util.Random;
@@ -23,7 +24,7 @@ public class HillClimbLearningAlgorithm extends StructureLearningAlgorithm {
     @Override
     public BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller) { 
         // currently inspected network
-        BayesianNetwork bnCurrent = bnInitial.copyWithEmptyCPDs(); // so that the initial network won't be affected
+        BayesianNetwork bnCurrent = bnInitial.copyStructureWithEmptyCPDs(); // so that the initial network won't be affected
         // to keep the best scoring network
         BayesianNetwork bnBest = bnCurrent;
         double bnBestScore = this.scoringMethod.absoluteScore(bnCurrent);
@@ -42,7 +43,7 @@ public class HillClimbLearningAlgorithm extends StructureLearningAlgorithm {
                     double bnCurrentScore = this.scoringMethod.absoluteScore(bnCurrent);
                     if(bnBestScore < bnCurrentScore) {
                         bnBestScore = bnCurrentScore;
-                        bnBest = bnCurrent.copyWithEmptyCPDs(); // the parameters have not been learnt yet
+                        bnBest = bnCurrent.copyStructureWithEmptyCPDs(); // the parameters have not been learnt yet
                     }
                 }
                 else {

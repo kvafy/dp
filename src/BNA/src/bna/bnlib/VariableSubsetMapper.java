@@ -4,6 +4,8 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.Toolkit;
+
 
 /**
  * Map assignment of a superset of variables to assignment of their subset.

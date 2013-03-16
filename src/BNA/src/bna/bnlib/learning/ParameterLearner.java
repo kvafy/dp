@@ -5,6 +5,7 @@
 package bna.bnlib.learning;
 
 import bna.bnlib.*;
+import bna.bnlib.misc.Toolkit;
 
 
 /**
@@ -17,7 +18,7 @@ public class ParameterLearner {
         if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
             throw new BayesianNetworkRuntimeException("Some variables of the network aren't present in the dataset.");
         
-        BayesianNetwork bnLearnt = new BayesianNetwork(bnOrig);
+        BayesianNetwork bnLearnt = bnOrig.copyStructureWithEmptyCPDs();
         for(Node node : bnLearnt.getNodes()) {
             Variable[] nodeFactorScope = Toolkit.union(new Variable[]{node.getVariable()}, node.getParentVariables());
             Factor nodeFactorUnnormalized = dataset.computeFactor(nodeFactorScope);
@@ -35,7 +36,7 @@ public class ParameterLearner {
         if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
             throw new BayesianNetworkRuntimeException("Some variables of the network aren't present in the dataset.");
         
-        BayesianNetwork bnLearnt = new BayesianNetwork(bnOrig);
+        BayesianNetwork bnLearnt = bnOrig.copyStructureWithEmptyCPDs();
         for(Node node : bnLearnt.getNodes()) {
             Variable[] nodeFactorScope = Toolkit.union(new Variable[]{node.getVariable()}, node.getParentVariables());
             Factor nodeFactorRealCounts = dataset.computeFactor(nodeFactorScope);

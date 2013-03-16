@@ -5,6 +5,7 @@
 package bna.bnlib;
 
 
+import bna.bnlib.misc.Toolkit;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;

@@ -5,6 +5,8 @@
 package bna.bnlib;
 
 import bna.bnlib.io.*;
+import bna.bnlib.misc.Digraph;
+import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -24,12 +26,8 @@ public class BayesianNetwork {
             this.nodes[i] = new Node(variables[i]);
     }
     
-     public BayesianNetwork(BayesianNetwork original) {
-         this(original, true);
-     }
-    
     /** Create a deep copy of given network. */
-    private BayesianNetwork(BayesianNetwork original, boolean copyCPDs) {
+    private BayesianNetwork(BayesianNetwork original, boolean copyStructure, boolean copyCPDs) {
         try {
             // duplicate nodes (for now, without connections and CPDs)
             this.nodes = new Node[original.nodes.length];
@@ -37,6 +35,8 @@ public class BayesianNetwork {
                 Node nodeOrig = original.nodes[i];
                 this.nodes[i] = new Node(nodeOrig.getVariable());
             }
+            if(!copyStructure)
+                return;
             // duplicate structure
             for(Node nodeOrigParent : original.nodes) {
                 String varParent = nodeOrigParent.getVariable().getName();
@@ -45,12 +45,12 @@ public class BayesianNetwork {
                     this.addDependency(varParent, varChild);
                 }
             }
-            if(copyCPDs) {
-                // duplicate CPDs (the scope checking will pass as structure has been established)
-                for(Node node : this.nodes) {
-                    Variable variable = node.getVariable();
-                    node.setFactor(original.getNode(variable).getFactor());
-                }
+            if(!copyCPDs)
+                return;
+            // duplicate CPDs (the scope checking will pass as structure has been established)
+            for(Node node : this.nodes) {
+                Variable variable = node.getVariable();
+                node.setFactor(original.getNode(variable).getFactor());
             }
             // else the Factors for CPDs will remain null
         }
@@ -64,8 +64,18 @@ public class BayesianNetwork {
     }
     
     /** Duplicate the network's structure, but set empty CPDs. */
-    public BayesianNetwork copyWithEmptyCPDs() {
-        return new BayesianNetwork(this, false);
+    public BayesianNetwork copyEmptyStructure() {
+        return new BayesianNetwork(this, false, false);
+    }
+    
+    /** Duplicate the network's structure, but set empty CPDs. */
+    public BayesianNetwork copyStructureWithEmptyCPDs() {
+        return new BayesianNetwork(this, true, false);
+    }
+    
+    /** Duplicate the network's structure, but set empty CPDs. */
+    public BayesianNetwork copyStructureAndCPDs() {
+        return new BayesianNetwork(this, true, true);
     }
     
     
@@ -233,7 +243,7 @@ public class BayesianNetwork {
         return this.nodes.length;
     }
     
-    /** Return number of degrees of freedom of the network wrt CPD entries. */
+     /** Return number of degrees of freedom of the network wrt CPD entries. */
     public int getDegreesOfFreedomInCPDs() {
         int degreesOfFreedom = 0;
         for(Node v : this.nodes) {
@@ -242,6 +252,18 @@ public class BayesianNetwork {
             degreesOfFreedom += (vCard - 1) * parentsCard;
         }
         return degreesOfFreedom;
+    }
+    
+    /** Return number of degrees of freedom of the network wrt CPD entries. */
+    public int getEdgeCount() {
+        int edgeCount = 0;
+        for(Node v : this.nodes)
+            edgeCount += v.getChildrenCount();
+        return edgeCount;
+    }
+    
+    public int getNetworkDimension() {
+        return this.getDegreesOfFreedomInCPDs();
     }
     
     

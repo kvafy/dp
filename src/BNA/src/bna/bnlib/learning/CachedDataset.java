@@ -4,12 +4,16 @@
 
 package bna.bnlib.learning;
 
-import bna.bnlib.*;
+import bna.bnlib.Factor;
+import bna.bnlib.Variable;
+import bna.bnlib.misc.LRUCache;
 import java.util.Arrays;
 
 
 /**
- * Provides caching of mutual information queries.
+ * Provides caching of mutual information queries over given dataset.
+ * Please not that if the underlying dataset is modified, the cached values
+ * are no longer valid.
  */
 public class CachedDataset implements DatasetInterface {
     private Dataset dataset;

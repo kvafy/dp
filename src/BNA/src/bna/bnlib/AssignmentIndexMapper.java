@@ -4,6 +4,8 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.Toolkit;
+
 /**
  * Map between assignment of variables and corresponding index in a linear vector.
  */

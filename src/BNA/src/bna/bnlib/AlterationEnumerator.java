@@ -4,8 +4,9 @@
 
 package bna.bnlib;
 
-import java.util.Iterator;
+import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
 
@@ -52,7 +53,7 @@ public class AlterationEnumerator implements Iterable<AlterationAction> {
                 }
             }
         }
-        //this.verifyAlterationCountHypotheses(NODE_COUNT, actions.size()); // TODO remove
+        this.verifyAlterationCountHypotheses(NODE_COUNT, actions.size()); // TODO remove
         return actions;
     }
     
@@ -74,8 +75,8 @@ public class AlterationEnumerator implements Iterable<AlterationAction> {
         int N = nodesCount;
         // TODO remove
         int[] upperBounds = {
-            N * (N - 1) / 2  +  N * N / 4,
-            N * (N - 1) / 2  +  (int)((2.0 / 3) * N * (N - 1) / 2),
+            //N * (N - 1) / 2  +  N * N / 4,
+            //N * (N - 1) / 2  +  (int)((2.0 / 3) * N * (N - 1) / 2),
             N * (N - 1) / 2  +  N * (N - 1) / 2 // must be always true
         };
         for(int i = 0 ; i < upperBounds.length ; i++)

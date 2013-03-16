@@ -33,7 +33,7 @@ public class BICScoringMethod extends ScoringMethod {
             likelihoodScore += this.getMutualInformationFromDataset(node);
         likelihoodScore *= N;
         // the dimension part
-        double dim = bn.getDegreesOfFreedomInCPDs();
+        double dim = bn.getNetworkDimension();
         double structurePenalization = Math.log(N) / 2 * dim;
         return likelihoodScore - structurePenalization;
     }
@@ -41,13 +41,6 @@ public class BICScoringMethod extends ScoringMethod {
     @Override
     public double deltaScore(BayesianNetwork bn, AlterationAction action) {
         try {
-            // TODO better
-            /*double originalScore = this.absoluteScore(bn);
-            action.apply(bn);
-            double newScore = this.absoluteScore(bn);
-            action.undo(bn);
-            return newScore - originalScore;*/
-            
             double mutualInformationChange = this.getMutualInformationTermChange(bn, action);
             double dimensionTermChange = this.getDimensionTermChange(bn, action);
             return mutualInformationChange - dimensionTermChange;
@@ -59,6 +52,16 @@ public class BICScoringMethod extends ScoringMethod {
     }
     
     @Override
+    /**
+     * Cached values of mutual information changes for some AlterationAction have to be invalidated.
+     * If we make add or remove (X,Y) action, then parents of Y change and hence
+     * any cached value that was computed using mutual information I(Y, Pa(Y))
+     * is no longer valid. If we make a reverse (X,Y) action, then both parents
+     * of X and of Y change, hence any cached value that was computed using I(X, Pa(X))
+     * or I(Y, Pa(Y)) is no longer valid.
+     * Cached value of add/remove (X,Y) is invalid if Parents(Y) changed.
+     * Cached value of reverse (X,Y) is invalid if Parents(X) or Parents(Y) changed.
+     */
     public void notifyNetworkAlteration(AlterationAction actionTaken) {
         // by taking the given action, whose parents have changed?
         ArrayList<Variable> variablesWithNewParents = new ArrayList<Variable>();
@@ -138,9 +141,9 @@ public class BICScoringMethod extends ScoringMethod {
     /** In the BIC formula, how does the dimension term change? */
     private double getDimensionTermChange(BayesianNetwork bn, AlterationAction action) throws BayesianNetworkException {
         double N = this.dataset.getSize();
-        double dimCurrent = bn.getDegreesOfFreedomInCPDs();
+        double dimCurrent = bn.getNetworkDimension();
         action.apply(bn);
-        double dimNew = bn.getDegreesOfFreedomInCPDs();
+        double dimNew = bn.getNetworkDimension();
         action.undo(bn);
         return Math.log(N) / 2 * (dimNew - dimCurrent);
     }

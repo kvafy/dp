@@ -2,7 +2,7 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/03/14
 
-package bna.bnlib;
+package bna.bnlib.misc;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;

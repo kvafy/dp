@@ -6,6 +6,8 @@ package bna.bnlib.sampling;
 
 //import java.util.concurrent.ThreadLocalRandom;
 import bna.bnlib.*;
+import bna.bnlib.misc.ThreadLocalRandom;
+import bna.bnlib.misc.Toolkit;
 import java.util.Random;
 
 

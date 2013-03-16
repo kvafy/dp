@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
