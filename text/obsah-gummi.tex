@@ -702,16 +702,16 @@ Now let's examine the difference between having an edge between variables $X$ an
        =   N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
      & = & N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
-First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi_1,\dots,\xi_m$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as much as before.
+First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi_1,\dots,\xi_m$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as many times as before.
 On the third line the counts $N_{x,y}$ and $N_y$ are expresses using size of the dataset $N$ and empirical probabilities of respective instantiations $x,y$ and $y$.
 After that, on the fourth line, we can extend the second summation from just over $Y$ to over $X,Y$.
 The last step, the fifth line, is merging the two sums and logarithms and applying Bayes' rule on the $\hat P(y \mid x)$ term. Finally, we introduce special notation for the final expression.
 
-The term $I_{\hat P}(X; Y)$ is called \term{mutual information} between $X$ and $Y$ and expresses the average distance between the joint distribution $P(X,Y)$, in which the variables are dependent, to the distribution given as product of marginal distributions $P(X)$ and $P(Y)$, when the variables are independent. It can be proved (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a general graph $\mathcal{G}$ as follows:
+The term $I_{\hat P}(X; Y)$ is called \term{mutual information} between variables $X$ and $Y$ in the distribution $\hat P$ and expresses the average distance between the joint distribution $\hat P(X,Y)$, in which the variables are dependent, to the distribution given as product of marginal distributions $\hat P(X)$ and $\hat P(Y)$, when the variables are independent. The bigger the distance, the more variables $X$ and $Y$ are correlated which in context of a BN means they should be connected by an edge. So, mutual information is a natural way of measuring strength of dependency among variables. In a similar fashion mutual information is defined for sets of variables $\vars{X},\vars{Y}$ rather than for single variables $X,Y$, we just sum over all possible instantiations $\vars{x},\vars{y}$ of $\vars{X},\vars{Y}$. It can be shown (for details see~\cite[p.~792]{pgm}) that the overall likelihood score decomposes over a~BN with general structure $\mathcal{G}$ as follows:
 \begin{equation}
     score_L(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
 \end{equation}
-where $H_{\hat P}(\cdot)$ is entropy of an individual variable which is a constant relative to the structure of $\mathcal{G}$. So, in order to compare two network structures we need to consider only the values of the first sum.
+where $H_{\hat P}(\cdot)$ is entropy of an individual variable in the distribution $\hat P$. As we can see, $H_{\hat P}(\cdot)$ is a constant relative to the structure $\mathcal{G}$, so in order to compare two network structures by their likelihood scores we only need to consider value of the sum  over the mutual information terms.
 
 \medskip
 The difference of likelihood scores between a superstructure with more edges and its substructure is always non-negative and, in fact, is equal to zero if and only if the two variables $X,Y$ in the dataset $\mathcal{D}$ appear to be perfectly independent which is due to statistical noise almost never true. Therefore the likelihood score itself almost always suggests the greedy heuristics to add an edge which would eventually lead to a very densely connected network. In other words, the likelihood score is very prone to overfitting. This problem can be addressed by thresholding of the score increase or by restraining complexity of the network (defining maximal number of parents or maximal number of overall network parameters). Another approach is to account for network complexity in the scoring function itself, thus imposing a penalty on complicated structures. The latter is exactly what the BIC score does.
@@ -723,13 +723,13 @@ The likelihood score discussed earlier never favors a simpler structure over a m
 
 %\note{pgm 798 gives nice understanding of the use of gamma function}
 
-The BIC score takes into account both network complexity as well as the size of the dataset and combines these two pieces of information in such a way that with a small dataset the BIC score tends to keep the structure simple and allows only for the strongest dependencies to be be reflected in the network. As the dataset gets larger, the BIC score allows for a more complicated structure that encodes also weaker dependencies.
+The BIC score takes into account both network complexity as well as the size of the dataset and combines these two pieces of information in such a way that with a small dataset the BIC score tends to keep the structure simple and allows only for the strongest dependencies to be be reflected in the network. As the dataset gets larger, the BIC score allows for a more complicated structure that encodes also weaker dependencies indicated by the data.
 
-The BIC score is given as follows (for complete derivation see~\cite[p.~794]{pgm}):
-\begin{equation}
+The BIC score is defined as follows (for complete derivation see~\cite[p.~794]{pgm}):
+\begin{equation}\label{eq:bic_score}
     score_{BIC}(\mathcal{G} : \mathcal{D}) = N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! I_{\hat P}(X_i;Parents(X_i)) - N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i) - \frac{\log N}{2} Dim[\mathcal{G}]
 \end{equation}
-where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters). Notice that the two sums are the likelihood score $score_{L}(\mathcal{G} : \mathcal{D})$. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strong dependencies will be present in the final network, whereas for a~large dataset the penalization increases at slower rate allowing the network to have a~more complicated structure including weaker dependencies.
+where $Dim[\mathcal{G}]$ is dimension of the network (number of its parameters). Notice that the two sums are the likelihood score $score_{L}(\mathcal{G} : \mathcal{D})$. We can see that the BIC score increases linearly in $N$ with dependent variables being connected (the first term) and decreases logarithmically in $N$ with the network complexity (the third term). Thus for a sparse dataset only the strongest dependencies will be reflected in the final network, whereas for a~large dataset the penalization grows at slower rate allowing the network to have a~more complicated structure including also weaker dependencies.
 
 Note that the BIC score decomposes over the graph $\mathcal{G}$, so when we want to evaluate some structural change, we only need to consider the score difference of nodes affected by this change, so called \term{delta score}. This observation is crucial for an effective implementation of structure learning based on local optimization of the score function. 
 
@@ -1004,7 +1004,7 @@ MCMC sampling is implemented by the class \srccode{MCMCSampleProducer}. As a sub
 \medskip
 List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
 \begin{itemize}
-	\item \srccode{void initializeSample(SamplingContext context)}: MCMC actually is a sampling method that views the last generated sample as a state and the next sample is produced by perturbing this state. So, in initialization we need to produce some valid instantiation of all \srccode{sampledVars} variables. Such instantiation has to (1)~respect given evidence and (2)~be a \uv{normal} sample (not something very improbable). Therefore we internally generate one sample using weighted sampling and use this as the initial state of the MCMC sampler.
+	\item \srccode{void initializeSample(SamplingContext context)}: MCMC actually is a sampling method that views the last generated sample as a state of the network (concrete instantiation of variables) and the next sample is produced by perturbing this state. So, in initialization we need to produce some valid instantiation of all \srccode{sampledVars} variables. Such instantiation has to (1)~respect given evidence and (2)~be a \uv{normal} sample (not something very improbable). Therefore we internally generate one sample using weighted sampling and use this as the initial state of the MCMC sampler. \todo{(not true wrt. current implementation)}
 	\item \srccode{void produceSample(SamplingContext context)}: Sample is in MCMC produced by taking the last generated sample and resampling a single variable while values of other variables remain unchanged. For the purpose of resampling we keep an array named \srccode{resamplingActions} with one instance of \srccode{MCMCResamplingAction} for each non-evidence variable (evidence variable cannot be resampled). New sample is then produced by performing a randomly chosen resampling action.
 	
 	The \srccode{MCMCResamplingAction} for a variable $X$ works as follows: For each instantiation $x$ of the variable $X$ we compute the probability $P(x \mid parents(X)) \prod_{C_i \in Children(X)} P(c_i \mid parents(C_i))$\,--\,we don't need to consider variables other than $X \cup Children(X)$ because for other nodes different values $x$ of $X$ don't affect probability at these nodes given parents. Then by normalization we obtain the distribution $P(X \mid \text{rest-of-sample})$ and by sampling $X$ from this distribution we obtain the new value of $X$ which is written to the \srccode{context} object.
@@ -1012,7 +1012,7 @@ List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
 
 
 \subsubsection{Friendly query specification}
-The query $P(\vars{X} \mid \vars{Y}, \vars{e})$, where $\vars{X} \neq \emptyset$, may be specified in the constructor of \srccode{SampleProducer} and any of its subclasses in a user-friendly way as a string. Form of the query string is described bellow using EBNF:
+The query $P(\vars{X} \mid \vars{Y}, \vars{e})$, where $\vars{X} \neq \emptyset$, may be specified in the constructor of \srccode{SampleProducer} and any of its subclasses in a user-friendly way as a string. Form of the query string is described bellow using EBNF-like notation:
 
 \begin{center}
 \begin{tabular}{lcl}
@@ -1179,15 +1179,35 @@ Also, we cannot save time by storing references to dynamically allocated objects
 \section{Structure learning}
 \todo{Could use Warshall algorithm to determine which edges can be added/deleted/reversed without the need to try such modification and consequently check for acyclicity}
 
+\subsubsection{Caching for structure learning using BIC score}
+For structure learning based on local state-space search using the BIC score I use twofold caching\,--\,for delta scores of possible alterations and for mutual information estimates. Caching is important because in order to evaluate the BIC score we have to make a pass through the entire dataset which may be very large. Furthermore, for two networks differing only by a single alteration, most of the possible alterations will yield the same delta score or will be at least partly computable using values that have been already determined in the previous step of local search.
 
+The caches need to be maintained at minimum size to remain effective and the trick is to keep only those values, that will be needed and dropping those that won't. To achieve the correct dropping behavior of the cache keeping delta scores for possible alterations we need to understand how the delta score is computed for the three possible alterations\,--\,edge addition, removal and reversal (for reference see the BIC score definition~\eqref{eq:bic_score}):
+\begin{itemize}
+	\item For addition or removal of edge $(X,Y)$ the delta score is the increase of mutual information $I_{\hat P}(Y,Parents(Y))$ minus the increase of the dimension term $\log(N) Dim[G] / 2$. So, whenever the action taken in the current step of local search changes the set $Parents(Y)$, all cached values for actions add or remove $(X,Y)$ have to be dropped.\medskip \\
+	Note: Some action may be legal, though not picked as the best one, in several consecutive steps of local search, meanwhile the mutual information change for this action may still be the same, provided the sets $Parents(\cdot)$ it uses don't change, but the dimension term change will vary as the network evolves and its dimensionality changes. Therefore we cache only the increase of the mutual information since the dimension term change is easily computable without the need to access the dataset.
+	\item For reversal of edge $(X,Y)$ the delta score is the increase of the two-term sum $I_{\hat P}(X,Parents(X)) + I_{\hat P}(Y,Parents(Y))$ minus the increase of the dimension term. In this case, whenever the action currently taken changes either of the sets $Parents(X)$ or $Parents(Y)$, all cached values for action reverse $(X,Y)$ have to be dropped.
+\end{itemize}
 
+Size of the alterations cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why lets consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be broken. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any immediate BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the remaining possible edges implied by the topological ordering can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
+
+\medskip
+The mutual information cache is useful because if we take some action that modifies say $Parents(X)$, the cached increase of mutual information change for some actions is invalidated as explained earlier.
+\todo{so what?}
+
+The cache of mutual information queries is implemented as a caching proxy \srccode{CachedDataset} of the \srccode{Dataset}.
 
 
 
 
 \section{User interface}
-
-
+\todo{
+Požadavky doc. Zbořila:
+\begin{itemize}
+	\item Interaktivní vzorkování: Buď umět krokovat po jednom vzorku/jedné proměnné, příp. refreshovat průběh samplování a mít možnost zastavit, když bude hotovo.
+	\item Zobrazení sítě: Mělo by umět. Nejdřív rozmístění dle sebe (heuristika, GA, etc.) a potom umožnit přetahováním doupravit pozicování. Při najetí myší na uzel zobrazit CPT.
+\end{itemize}
+}
 
 
 
@@ -1213,7 +1233,18 @@ This chapter will present collection of selected applications suitable for Bayes
 \section{ICU alarm network (general model learning)}
 The \term{ICU alarm network}\footnote{The ICU alarm network is, among others, freely available at The Hebrew University of Jerusalem \ignore{\url{http://www.bnlearn.com/bnrepository/}}\url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}.} (ICU stands for \term{Intensive care unit}) serves in the world of Bayesian networks as a benchmark for parameter and structure learning algorithms. The network itself has been hand-constructed and tuned in cooperation with the ICU personal. There are two types of goals: (a)~we attempt to learn parameters for a known structure, (b)~we attempt to learn both structure and parameters. Because the network is freely available, the usual course of action is to create an artificial dataset by sampling the original network, then performing the learning process and finally evaluating the obtained result by comparison with the original ICU network.
 
-\todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior}
+\todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
+
+As a metric of how closely the original and the learnt networks match I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
+\begin{equation*}
+D_{KL}(P \parallel Q) = \sum_{x_1,\dots,x_m} P(x_1,\dots,x_m) \log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}
+\end{equation*}
+which can be in context of Bayesian networks rewritten to the form:
+\begin{equation*}
+D_{KL}(P \parallel Q) = \sum_{X \in Nodes} \sum_{\vars{pa} \in Val(Par(X))} P(\vars{pa}) \sum_{x_i \in Val(X)} \log \frac{P(x_i \mid \vars{pa})}{Q(x_i \mid \vars{pa})}
+\end{equation*}
+As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than inspecting probability of each atomic event, however probability for parents assignment $P(\vars{pa})$ needs to be inferred. %Luckily, I am entitled to use stochastic inference only.
+From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{x,y}, the normal practice is to artificially set a small positive lower bound for $Q$ probabilities which is therefore what I do.
 
 
 \section{Crime prediction (knowledge discovery)}
