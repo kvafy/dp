@@ -16,7 +16,8 @@ import java.util.*;
 public class NetworkLayoutGenerator {
     
     final static long INLAYER_ITERATIONS = 10 * 1000; // number of iterations in the relative inlayer ordering optimization
-    final static long ITERATIONS_TOTAL = INLAYER_ITERATIONS;
+    final static long PLACEMENT_ITERATIONS = 10 * 1000; // number of iterations in the absolute positioning optimization
+    final static long ITERATIONS_TOTAL = INLAYER_ITERATIONS + PLACEMENT_ITERATIONS;
     
     
     public static GBayesianNetwork getLayout(BayesianNetwork bn, NetworkLayoutGeneratorObserver observer) {
@@ -47,6 +48,9 @@ public class NetworkLayoutGenerator {
         // preliminary node orderings (fully deterministic, for each node
         // in layer: append its children to the next layer if not already present)
         // (set .inlayerIndex property)
+        // !!! it is from now on assumed, that position of a node in relativeOrder on
+        //     indices relativeOrder[layer][i] means that node.layer = layer and
+        //     node.inlayerIndex = i
         LNode[][] relativeOrder = NetworkLayoutGenerator.preliminaryInlayerOrdering(topsortLNode);
         System.out.println("preliminary ordering:");
         for(int layer = 0 ; layer < relativeOrder.length ; layer++) {
@@ -62,9 +66,10 @@ public class NetworkLayoutGenerator {
         NetworkLayoutGenerator.optimizeInlayerOrdering(relativeOrder, observer);
         
         // provisory absolute placement
-        NetworkLayoutGenerator.initialAbsoluteLayout(relativeOrder);
+        NetworkLayoutGenerator.preliminaryAbsoluteLayout(relativeOrder);
         
         // optimize edge lengths, number of different edge lengths (absolute grid positioning within layers)
+        NetworkLayoutGenerator.optimizeAbsoluteLayout(relativeOrder, observer);
         
         // convert LNodes to GNodes (resp. to one of its subclasses) and also convert the grid coordinates to canvas coordinates
         GNode[] gnodes = NetworkLayoutGenerator.lnodesTOgnodes(relativeOrder);
@@ -223,6 +228,7 @@ public class NetworkLayoutGenerator {
             // evaluate score (count number of crossed edges) and possibly accept (similar to simulated annealing)
             int newCrossings = NetworkLayoutGenerator.computeEdgeCrossingsToChildren(ordering);
             double acceptWorseProb = (INLAYER_ITERATIONS - i) / (double)INLAYER_ITERATIONS;
+            acceptWorseProb = Math.pow(acceptWorseProb, 2.0); // similar to expenential decrease
             boolean accept = newCrossings < currentCrossings || rand.nextDouble() < acceptWorseProb;
             if(accept)
                 currentCrossings = newCrossings;
@@ -264,7 +270,7 @@ public class NetworkLayoutGenerator {
         System.out.printf("optimizeInlayerOrdering best number of crossings: %d\n", bestCrossings);
     }
     
-    // perturbation actions
+    // perturbation actions used in optimizeInlayerOrdering(...)
     static abstract class InlayerPerturbationAction {
         int layer, pos1, pos2;
         LNode[][] ordering;
@@ -334,11 +340,119 @@ public class NetworkLayoutGenerator {
         throw new InternalCheckException("Array already full!"); // should never come to this
     }
     
-    private static void initialAbsoluteLayout(LNode[][] relativeOrder) {
+    private static void preliminaryAbsoluteLayout(LNode[][] relativeOrder) {
         for(int layer = 0 ; layer < relativeOrder.length ; layer++) {
             for(int i = 0 ; i < relativeOrder[layer].length ; i++) {
                 relativeOrder[layer][i].gridY = layer;
                 relativeOrder[layer][i].gridX = 2 * i; // one space always in between
+            }
+        }
+    }
+    
+    private static void optimizeAbsoluteLayout(LNode[][] ordering, NetworkLayoutGeneratorObserver observer) {
+        Random rand = new Random();
+        double currentScore = NetworkLayoutGenerator.evaluateGridPlacementScore(ordering),
+               bestScore = -Double.MAX_VALUE;
+        
+        int nodesTotal = 0;
+        for(LNode[] layer : ordering)
+            nodesTotal += layer.length;
+        
+        for(long i = 0 ; i < PLACEMENT_ITERATIONS ; i++) {
+            // perturbe current placement in some layer
+            // generate two random indices on the same layer => swap / reinsert
+            int nodeNO = rand.nextInt(nodesTotal), // layer with more nodes will get picked more often
+                perturbeLayer,
+                perturbeNode = -1,
+                perturbeShift = 0;
+            int tmp = 0; // to determine on which layer the node is
+            for(perturbeLayer = 0 ; perturbeLayer < ordering.length ; perturbeLayer++) {
+                if(nodeNO < tmp + ordering[perturbeLayer].length) {
+                    // we have found the layer
+                    perturbeNode = nodeNO - tmp;
+                    do {
+                        perturbeShift = (int)Math.round(rand.nextGaussian());
+                        perturbeShift = Math.min(3, perturbeShift);
+                        perturbeShift = Math.max(-3, perturbeShift);
+                    } while(perturbeShift == 0);
+                    break;
+                }
+                tmp += ordering[perturbeLayer].length;
+            }
+            
+            GridPlacementPerturbationAction action = new GridPlacementPerturbationAction(perturbeLayer, perturbeNode, perturbeShift, ordering);
+            action.apply();
+            
+            // evaluate score (count number of crossed edges) and possibly accept (similar to simulated annealing)
+            double newScore = NetworkLayoutGenerator.evaluateGridPlacementScore(ordering);
+            double acceptWorseProb = (PLACEMENT_ITERATIONS - i) / (double)PLACEMENT_ITERATIONS;
+            acceptWorseProb = Math.pow(acceptWorseProb, 2.0); // similar to expenential decrease
+            boolean accept = newScore > currentScore || rand.nextDouble() < acceptWorseProb;
+            if(accept)
+                currentScore = newScore;
+            else
+                action.undo();
+            
+            // consistency check
+            for(LNode[] layer : ordering)
+                for(int j = 0 ; j < layer.length - 1 ; j++)
+                    if(layer[j].gridX + 2 > layer[j + 1].gridX)
+                        throw new RuntimeException("invalid gridX padding, accept = " + accept);
+            
+            // if new best, record the current ordering
+            if(currentScore > bestScore) {
+                bestScore = currentScore;
+                for(LNode[] layer : ordering)
+                    for(LNode lnode : layer) {
+                        lnode.gridXBest = lnode.gridX;
+                        lnode.gridYBest = lnode.gridY;
+                    }
+            }
+            observer.notifyLayoutGeneratorStatus(INLAYER_ITERATIONS + i, ITERATIONS_TOTAL, currentScore, bestScore);
+        }
+        
+        // restore the overall best placement seen
+        for(LNode[] layer : ordering) {
+            for(LNode lnode : layer) {
+                lnode.gridX = lnode.gridXBest;
+                lnode.gridY = lnode.gridYBest;
+            }
+        }
+    }
+    
+    // perturbation actions used in optimizeAbsoluteLayout(...)
+    static class GridPlacementPerturbationAction {
+        int layer, node, shift;
+        LNode[][] ordering;
+        private ArrayList<PreviousGridPlacement> originalPlacement = new ArrayList<PreviousGridPlacement>();
+        public GridPlacementPerturbationAction(int layer, int node, int shift, LNode[][] ordering) {
+            this.layer = layer;
+            this.node = node;
+            this.shift = shift;
+            this.ordering = ordering;
+        }
+        public void apply() {
+            originalPlacement.add(new PreviousGridPlacement(ordering[layer][node], ordering[layer][node].gridX));
+            ordering[this.layer][node].gridX += this.shift;
+            int di = (int)Math.signum(shift);
+            for(int i = node + di ; i >= 0 && i < ordering[layer].length ; i += di) {
+                if(Math.abs(ordering[layer][i].gridX - ordering[layer][i - di].gridX) >= 2)
+                    break; // sufficient gap of one free place between nodes
+                originalPlacement.add(new PreviousGridPlacement(ordering[layer][i], ordering[layer][i].gridX));
+                ordering[layer][i].gridX = ordering[layer][i - di].gridX + 2 * di;
+            }
+        }
+        public void undo() {
+            for(PreviousGridPlacement prev : originalPlacement) {
+                prev.lnode.gridX = prev.gridX;
+            }
+        }
+        class PreviousGridPlacement {
+            LNode lnode;
+            int gridX;
+            public PreviousGridPlacement(LNode lnode, int gridX) {
+                this.lnode = lnode;
+                this.gridX = gridX;
             }
         }
     }
@@ -352,6 +466,12 @@ public class NetworkLayoutGenerator {
         ArrayList<LNode> lnodes = new ArrayList<LNode>();
         for(LNode[] layer : relativeOrder)
             lnodes.addAll(Arrays.asList(layer));
+        // adjust the x coordinate to make the leftmost x-position be 0
+        int minX = Integer.MAX_VALUE;
+        for(LNode lnode : lnodes)
+            minX = Math.min(minX, lnode.gridX);
+        for(LNode lnode : lnodes)
+            lnode.gridX = lnode.gridX - minX;
         // create GNode instances and place them (absolutely on canvas)
         ArrayList<GNode> gnodes = new ArrayList<GNode>();
         for(LNode lnode : lnodes) {
@@ -413,6 +533,28 @@ public class NetworkLayoutGenerator {
             }
         }
         return crossings;
+    }
+    
+    private static double evaluateGridPlacementScore(LNode[][] placement) {
+        double edgeLenghtsSum2 = 0;
+        double edgeTypesCountPerNode = 0; // how many different edge lengths are there from a node? sum over all nodes
+        double edgeTypesCountPerLayer = 0; // how many different edge lengths are there from a layer? sum over all layers
+        for(LNode[] layer : placement) {
+            HashSet edgeTypesPerLayer = new HashSet();
+            for(LNode lnode : layer) {
+                HashSet edgeTypesPerNode = new HashSet();
+                for(LNode child : lnode.children) {
+                    double edgeLength2 = Math.pow(lnode.gridX - child.gridX, 2) + Math.pow(lnode.gridY - child.gridY, 2);
+                    edgeLenghtsSum2 += edgeLength2;
+                    edgeTypesPerLayer.add(edgeLength2);
+                    edgeTypesPerNode.add(edgeLength2);
+                }
+                edgeTypesCountPerNode += edgeTypesPerNode.size();
+            }
+            edgeTypesCountPerLayer += edgeTypesPerLayer.size();
+        }
+        
+        return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer);
     }
     
     
