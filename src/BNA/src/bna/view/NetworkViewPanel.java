@@ -8,6 +8,7 @@ import bna.bnlib.BayesianNetwork;
 import bna.bnlib.misc.Toolkit;
 import java.awt.*;
 import javax.swing.JLabel;
+import javax.swing.SwingWorker;
 
 
 /**
@@ -16,7 +17,7 @@ import javax.swing.JLabel;
 public class NetworkViewPanel extends javax.swing.JPanel {
     private GBayesianNetwork gbn;
     // when not null, generating layout is in progress
-    private RepaintingNetworkLayoutGeneratorObserver layoutGeneratorObserver = null; 
+    private NetworkLayoutGeneratorObserver layoutGeneratorObserver = null; 
     
     public NetworkViewPanel() {
         this.gbn = null;
@@ -33,36 +34,96 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             return;
         
         // generate the layout in another thread and then place the final product
+        // worker thread will install labels for status updates and then remove them
         final BayesianNetwork bnFinal = bn;
-        final RepaintingNetworkLayoutGeneratorObserver observer = new RepaintingNetworkLayoutGeneratorObserver();
-        Thread layoutThread = new Thread() {
+        SwingWorker<GBayesianNetwork, StatusNotification> workerThread = new SwingWorker<GBayesianNetwork, StatusNotification>() {
+            private JLabel labelIterations = new JLabel(),
+                           labelScoreCurrent = new JLabel(),
+                           labelScoreBest = new JLabel();
+            
+            void installStatusLabels(NetworkLayoutGeneratorObserver observerInst) {
+                layoutGeneratorObserver = observerInst;
+                add(labelIterations);
+                add(labelScoreCurrent);
+                add(labelScoreBest);
+                FontMetrics fontMetrics = getFontMetrics(getFont());
+                int lineHeight = fontMetrics.getHeight(),
+                    lineYMargin = Math.max(10, (int)(lineHeight * 0.25));
+                labelIterations.setLocation(30, 30);
+                labelScoreCurrent.setLocation(30, 30 + 1 * (lineHeight + lineYMargin));
+                labelScoreBest.setLocation(30,    30 + 2 * (lineHeight + lineYMargin));
+                validate();
+            }
+            
+            private void removeStatusLabels() {
+                layoutGeneratorObserver = null;
+                remove(labelIterations);
+                remove(labelScoreBest);
+                remove(labelScoreBest);
+                validate();
+            }
+            
             @Override
-            public void run() {
+            protected GBayesianNetwork doInBackground() throws Exception {
+                final NetworkLayoutGeneratorObserver observer = new NetworkLayoutGeneratorObserver() {
+                    @Override
+                    public void notifyLayoutGeneratorStatus(long iteration, long maxIterations, double score, double scoreBest) {
+                        publish(new StatusNotification(iteration, maxIterations, score, scoreBest));
+                    }
+                };
+                this.installStatusLabels(observer);
+                return NetworkLayoutGenerator.getLayout(bnFinal, observer);
+            }
+            
+            @Override
+            protected void done() {
                 try {
-                    observer.installObserver();
-                    GBayesianNetwork gbn = NetworkLayoutGenerator.getLayout(bnFinal, observer);
-                    for(long i = 0 ; i < 10 * 1000 * 1000 * 1000 ; i++) ;
-                    observer.removeObserver();
-                    setNetwork(gbn);
+                    removeStatusLabels();
+                    setNetwork(get());
                 }
-                finally {
-                    observer.removeObserver(); // in case of an error
+                catch(Exception ignore) {
+                    ignore.printStackTrace();
                 }
             }
+            
+            @Override
+            protected void process(java.util.List<StatusNotification> notifications) {
+                StatusNotification notif = notifications.get(notifications.size() - 1);
+                labelIterations.setText(String.format("Iteration %d/%d", notif.currentIteration, notif.maxIterations));
+                labelScoreCurrent.setText(String.format("Current score: %.2f", notif.currentSore));
+                labelScoreBest.setText(String.format("Best score: %.2f", notif.bestScore));
+            }
         };
-        layoutThread.setDaemon(true);
-        java.awt.EventQueue.invokeLater(layoutThread);
+        workerThread.execute();
+    }
+    
+    /** Carries currently observed status of layout generator. */
+    class StatusNotification {
+        long currentIteration, maxIterations;
+        double currentSore, bestScore;
+        public StatusNotification(long currentIter, long maxIters, double curScore, double bestScore) {
+            this.currentIteration = currentIter;
+            this.maxIterations = maxIters;
+            this.currentSore = curScore;
+            this.bestScore = bestScore;
+        }
     }
     
     public void setNetwork(GBayesianNetwork bnNew) {
         GBayesianNetwork bnOld = this.gbn;
         if(bnNew != bnOld) {
+            // network nodes are stand-alone JComponents => remove old ones and add new
             this.removeComponentsOfNetwork(bnOld);
             this.gbn = bnNew;
-            this.addComponentsOfNetwork(gbn);
-            // TODO set new size of the canvas to accomodate for new network
+            if(bnNew != null) {
+                Point gbnBottomRight = bnNew.getBottomRight();
+                this.setPreferredSize(new Dimension(gbnBottomRight.x + 50, gbnBottomRight.y + 50));
+                this.addComponentsOfNetwork(gbn);
+            }
+            else
+                this.setPreferredSize(null); // automatic to fit in parent component
             this.repaint();
-            MainWindow.getInstance().enableComponentsByState();
+            MainWindow.getInstance().enableComponentsByState(); 
         }
     }
     
@@ -84,7 +145,6 @@ public class NetworkViewPanel extends javax.swing.JPanel {
     @Override
     public void paint(java.awt.Graphics gPlain) {
         Graphics2D g2D = (Graphics2D)gPlain;
-        
         // nice background
         g2D.setPaint(
                 new GradientPaint(
@@ -115,7 +175,6 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             g2D.setColor(Color.BLACK);
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
             this.paintComponent(gPlain);
-            System.out.printf("painted %d components (JLabels)\n", this.getComponents().length);
         }
         else
             System.out.println("not painted any component");
@@ -152,45 +211,4 @@ public class NetworkViewPanel extends javax.swing.JPanel {
                             3);
         }
     }
-    
-    
-    class RepaintingNetworkLayoutGeneratorObserver implements NetworkLayoutGeneratorObserver {
-            long iteration, maxIterations;
-            double score, scoreBest;
-            JLabel labelIterations = new JLabel(),
-                   labelScoreCurrent = new JLabel(),
-                   labelScoreBest = new JLabel();
-            
-            @Override
-            public void notifyLayoutGeneratorStatus(long iteration, long maxIterations, double score, double scoreBest) {
-                labelIterations.setText(String.format("Iteration %d/%d", iteration, maxIterations));
-                labelScoreCurrent.setText(String.format("Current score: %.3f", score));
-                labelScoreBest.setText(String.format("Best score: %.3f", scoreBest));
-                
-                FontMetrics fontMetrics = getFontMetrics(getFont());
-                int lineHeight = fontMetrics.getHeight(),
-                    lineYMargin = Math.max(10, (int)(lineHeight * 0.25));
-                labelIterations.setLocation(30, 30);
-                labelScoreCurrent.setLocation(30, 30 + 1 * (lineHeight + lineYMargin));
-                labelScoreBest.setLocation(30,    30 + 2 * (lineHeight + lineYMargin));
-                repaint();
-            }
-            
-            void installObserver() {
-                layoutGeneratorObserver = this;
-                add(labelIterations);
-                add(labelScoreCurrent);
-                add(labelScoreBest);
-                validate();
-                this.notifyLayoutGeneratorStatus(0, 0, 0, 0);
-            }
-            
-            void removeObserver() {
-                layoutGeneratorObserver = null;
-                remove(labelIterations);
-                remove(labelScoreBest);
-                remove(labelScoreBest);
-                validate();
-            }
-        }
 }

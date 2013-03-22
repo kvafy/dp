@@ -248,7 +248,8 @@ public class NetworkLayoutGenerator {
                     for(LNode lnode : layer)
                         lnode.inlayerIndexBest = lnode.inlayerIndex;
             }
-            observer.notifyLayoutGeneratorStatus(i, ITERATIONS_TOTAL, -currentCrossings, -bestCrossings);
+            if(observer != null)
+                observer.notifyLayoutGeneratorStatus(i, ITERATIONS_TOTAL, -currentCrossings, -bestCrossings);
             
             if(bestCrossings == 0) // we found structure without any crossings
                 break;
@@ -408,7 +409,8 @@ public class NetworkLayoutGenerator {
                         lnode.gridYBest = lnode.gridY;
                     }
             }
-            observer.notifyLayoutGeneratorStatus(INLAYER_ITERATIONS + i, ITERATIONS_TOTAL, currentScore, bestScore);
+            if(observer != null)
+                observer.notifyLayoutGeneratorStatus(INLAYER_ITERATIONS + i, ITERATIONS_TOTAL, currentScore, bestScore);
         }
         
         // restore the overall best placement seen

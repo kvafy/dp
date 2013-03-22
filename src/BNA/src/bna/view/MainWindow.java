@@ -33,7 +33,7 @@ public class MainWindow extends javax.swing.JFrame {
     }
     
     public void enableComponentsByState() {
-        boolean hasNetwork = ((NetworkViewPanel)this.panelNetworkView).hasNetwork();
+        boolean hasNetwork = this.panelNetworkView.hasNetwork();
         boolean hasDataset = false;
         // menu "Network" and its items
         this.menuItemSaveNetwork.setEnabled(hasNetwork);
@@ -42,7 +42,9 @@ public class MainWindow extends javax.swing.JFrame {
         this.menuItemSaveDataset.setEnabled(hasDataset);
         this.menuItemSampleNewDataset.setEnabled(hasNetwork);
         // menu "Learning" and its items
-        this.menuLearning.setEnabled(hasNetwork);
+        this.menuLearning.setEnabled(hasDataset);
+        this.menuItemLearnParameters.setEnabled(hasNetwork && hasDataset);
+        this.menuItemLearnStructure.setEnabled(hasDataset);
     }
 
     /**
@@ -54,7 +56,7 @@ public class MainWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        panelNetworkView = new bna.view.NetworkViewPanel();
+        paneNetworkView = new javax.swing.JScrollPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         menuItemExit = new javax.swing.JMenuItem();
@@ -67,8 +69,8 @@ public class MainWindow extends javax.swing.JFrame {
         menuItemSaveDataset = new javax.swing.JMenuItem();
         menuItemSampleNewDataset = new javax.swing.JMenuItem();
         menuLearning = new javax.swing.JMenu();
-        jMenuItem3 = new javax.swing.JMenuItem();
-        jMenuItem5 = new javax.swing.JMenuItem();
+        menuItemLearnParameters = new javax.swing.JMenuItem();
+        menuItemLearnStructure = new javax.swing.JMenuItem();
         menuHelp = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -76,18 +78,7 @@ public class MainWindow extends javax.swing.JFrame {
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
 
-        panelNetworkView.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        javax.swing.GroupLayout panelNetworkViewLayout = new javax.swing.GroupLayout(panelNetworkView);
-        panelNetworkView.setLayout(panelNetworkViewLayout);
-        panelNetworkViewLayout.setHorizontalGroup(
-            panelNetworkViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 605, Short.MAX_VALUE)
-        );
-        panelNetworkViewLayout.setVerticalGroup(
-            panelNetworkViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 362, Short.MAX_VALUE)
-        );
+        paneNetworkView.setViewport(null);
 
         menuFile.setText("File");
 
@@ -134,11 +125,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         menuLearning.setText("Learning");
 
-        jMenuItem3.setText("Parameter learning");
-        menuLearning.add(jMenuItem3);
+        menuItemLearnParameters.setText("Parameter learning");
+        menuLearning.add(menuItemLearnParameters);
 
-        jMenuItem5.setText("Structure learning (tabu search)");
-        menuLearning.add(jMenuItem5);
+        menuItemLearnStructure.setText("Structure learning (tabu search)");
+        menuLearning.add(menuItemLearnStructure);
 
         jMenuBar1.add(menuLearning);
 
@@ -153,16 +144,20 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 609, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(panelNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
                 .addContainerGap())
         );
+
+        paneNetworkView.setViewportView(panelNetworkView);
+        panelNetworkView.setLayout(null);
+        panelNetworkView.setPreferredSize(null);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -180,7 +175,7 @@ public class MainWindow extends javax.swing.JFrame {
             return;
         try {
             BayesianNetwork bn = BayesianNetwork.loadFromFile(networkFileChooser.getSelectedFile().getAbsolutePath());
-            ((NetworkViewPanel)this.panelNetworkView).setNetwork(bn);
+            this.panelNetworkView.setNetwork(bn);
         }
         catch(BNLibIOException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "I/O error while loading network", JOptionPane.ERROR_MESSAGE);
@@ -229,12 +224,12 @@ public class MainWindow extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenu menuDataset;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuHelp;
     private javax.swing.JMenuItem menuItemExit;
+    private javax.swing.JMenuItem menuItemLearnParameters;
+    private javax.swing.JMenuItem menuItemLearnStructure;
     private javax.swing.JMenuItem menuItemLoadDataset;
     private javax.swing.JMenuItem menuItemLoadNetwork;
     private javax.swing.JMenuItem menuItemQuery;
@@ -243,6 +238,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem menuItemSaveNetwork;
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;
-    private javax.swing.JPanel panelNetworkView;
+    private javax.swing.JScrollPane paneNetworkView;
     // End of variables declaration//GEN-END:variables
+    private NetworkViewPanel panelNetworkView = new NetworkViewPanel();
 }

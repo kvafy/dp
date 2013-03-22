@@ -11,6 +11,9 @@ import java.util.Arrays;
 
 /**
  * Graphical wrapper of the BayesianNetwork class.
+ * Nodes (dummy as well as variable nodes) are represented as a JComponent
+ * that gets inserted into the NetworkViewPanel. The GNode class also reponds
+ * to dragging by mouse. Edges must be painted by hand.
  */
 public class GBayesianNetwork {
     private final GNode[] gnodes;
@@ -43,7 +46,7 @@ public class GBayesianNetwork {
             xMax = Math.max(xMax, gnodeLocation.x + gnode.getWidth());
             yMax = Math.max(yMax, gnodeLocation.y + gnode.getHeight());
         }
-        return new Point(xMax, yMax);
+        return new Point(xMax + GNodeVariable.RADIUS, yMax + GNodeVariable.RADIUS);
     }
 }
 
