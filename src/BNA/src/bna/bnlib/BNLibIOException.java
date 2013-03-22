@@ -9,4 +9,12 @@ package bna.bnlib;
  */
 public class BNLibIOException extends BNLibException {
 
+    public BNLibIOException() {
+        super();
+    }
+    
+    public BNLibIOException(String msg) {
+        super(msg);
+    }
+
 }

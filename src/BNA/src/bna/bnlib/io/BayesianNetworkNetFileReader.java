@@ -27,7 +27,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     }
 
     @Override
-    public Variable[] readVariables() throws BayesianNetworkException {
+    public Variable[] readVariables() throws BNLibIOException {
         if(!this.parsed)
             parse();
         Variable[] variablesArray = new Variable[this.variables.size()];
@@ -35,20 +35,20 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     }
 
     @Override
-    public Map<String, String[]> readDependencies() throws BayesianNetworkException {
+    public Map<String, String[]> readDependencies() throws BNLibIOException {
         if(!this.parsed)
             parse();
         return this.parents;
     }
 
     @Override
-    public Map<String, double[]> readProbabilities() throws BayesianNetworkException {
+    public Map<String, double[]> readProbabilities() throws BNLibIOException {
         if(!this.parsed)
             parse();
         return this.probabilities;
     }
     
-    private void parse() throws BayesianNetworkException {
+    private void parse() throws BNLibIOException {
         Scanner scanner = null;
         try {
             scanner = new Scanner(new File(this.filename));
@@ -125,18 +125,18 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
             }
             
             if(scanner.hasNext())
-                throw new BayesianNetworkException("Something is left at the footer of input file.");
+                throw new BNLibIOException("Unparsed content left at the end of the input file.");
             
             this.parsed = true; // everything ok
         }
         catch(IOException ioex) {
-            throw new BayesianNetworkException("IO Error while reading BN from a file: " + ioex.getMessage());
+            throw new BNLibIOException("IO Error while reading BN from a file: " + ioex.getMessage());
         }
         catch(NoSuchElementException nseex) { // when scanner has other token than it expects
-            throw new BayesianNetworkException("Invalid format of BN specification file.");
+            throw new BNLibIOException("Invalid format of BN specification file.");
         }
         catch(NumberFormatException nfe) {
-            throw new BayesianNetworkException("Invalid number format in BN specification file.");
+            throw new BNLibIOException("Invalid number format in BN specification file.");
         }
     }
     

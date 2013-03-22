@@ -106,37 +106,37 @@ public class Node {
     
     // modification methods are package-private => users of the library cannot manipulate nodes directly
     
-    void addParent(Node parent) {
+    void addParent(Node parent) throws BNLibInvalidStructuralModificationException {
         if(this.parents.contains(parent))
-            throw new BayesianNetworkRuntimeException("The node is already in Parents(X).");
+            throw new BNLibInvalidStructuralModificationException("The node is already in Parents(X).");
         this.parents.add(parent);
     }
     
-    void addChild(Node child) {
+    void addChild(Node child) throws BNLibInvalidStructuralModificationException {
         if(this.children.contains(child))
-            throw new BayesianNetworkRuntimeException("The node is already in Children(X).");
+            throw new BNLibInvalidStructuralModificationException("The node is already in Children(X).");
         this.children.add(child);
     }
     
-    void removeParent(Node parent) {
+    void removeParent(Node parent) throws BNLibInvalidStructuralModificationException {
         if(!this.parents.contains(parent))
-            throw new BayesianNetworkRuntimeException("The node is not in Parents(X).");
+            throw new BNLibInvalidStructuralModificationException("The node is not in Parents(X).");
         this.parents.remove(parent);
     }
     
-    void removeChild(Node child) {
+    void removeChild(Node child) throws BNLibInvalidStructuralModificationException {
          if(!this.children.contains(child))
-            throw new BayesianNetworkRuntimeException("The node is not in Children(X).");
+            throw new BNLibInvalidStructuralModificationException("The node is not in Children(X).");
         this.children.remove(child);
     }
     
-    void setProbabilityVector(double[] probs) {
+    void setProbabilityVector(double[] probs) throws BNLibIllegalCPDException {
         this.setFactor(new Factor(this.getScope(), probs));
     }
     
-    void setFactor(Factor f) {
+    void setFactor(Factor f) throws BNLibIllegalCPDException {
         if(f != null && !Toolkit.areEqual(f.getScope(), this.getScope()))
-            throw new BayesianNetworkRuntimeException("Factor has invalid scope wrt. current parent nodes.");
+            throw new BNLibIllegalCPDException("Factor has invalid scope wrt. current parent nodes.");
         this.factor = f;
     }
     

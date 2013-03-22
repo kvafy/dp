@@ -20,14 +20,16 @@ public class BayesianNetwork {
     private Node[] nodes;
     
     
-    public BayesianNetwork(Variable[] variables) {
+    public BayesianNetwork(Variable[] variables) throws BNLibIllegalNetworkSpecificationException {
+        if(!Toolkit.unique(variables))
+            throw new BNLibIllegalNetworkSpecificationException("The variables are not unique.");
         this.nodes = new Node[variables.length];
         for(int i = 0 ; i < variables.length ; i++)
             this.nodes[i] = new Node(variables[i]);
     }
     
     /** Create a deep copy of given network. */
-    private BayesianNetwork(BayesianNetwork original, boolean copyStructure, boolean copyCPDs) {
+    private BayesianNetwork(BayesianNetwork original, boolean copyStructure, boolean copyCPDs) throws BNLibInternalException {
         try {
             // duplicate nodes (for now, without connections and CPDs)
             this.nodes = new Node[original.nodes.length];
@@ -54,12 +56,8 @@ public class BayesianNetwork {
             }
             // else the Factors for CPDs will remain null
         }
-        catch(BayesianNetworkException bnex) {
-            throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
-        }
-        catch(BayesianNetworkRuntimeException bnex) {
-            bnex.printStackTrace();
-            throw new BayesianNetworkRuntimeException("Internal error while replicating a network.");
+        catch(BNLibException ex) {
+            throw new BNLibInternalException("Internal error while replicating a network: " + ex.getMessage());
         }
     }
     
@@ -81,43 +79,43 @@ public class BayesianNetwork {
     
     // methods for building/editing a Bayesian network (see BayesianNetworkFileReader or AlterationAction)
     
-    public void addDependency(String parent, String child) throws BayesianNetworkException {
+    public void addDependency(String parent, String child) throws BNLibInvalidStructuralModificationException {
         this.addDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void addDependency(Variable parent, Variable child) throws BayesianNetworkException {
+    public void addDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
         this.addDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void addDependency(Node parent, Node child) throws BayesianNetworkException {
+    public void addDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
         if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
-            throw new BayesianNetworkException("One of the variables is not in the network.");
+            throw new BNLibInvalidStructuralModificationException("One of the variables you want to connect is not in the network.");
         parent.addChild(child);
         child.addParent(parent);
     }
     
-    public void removeDependency(Variable parent, Variable child) throws BayesianNetworkException {
+    public void removeDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
         this.removeDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void removeDependency(Node parent, Node child) throws BayesianNetworkException {
+    public void removeDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
         if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
-            throw new BayesianNetworkException("One of the variables is not in the network.");
+            throw new BNLibInvalidStructuralModificationException("One of the variables you want to disconnect is not in the network.");
         
         parent.removeChild(child);
         child.removeParent(parent);
     }
     
-    public void reverseDependency(Variable parent, Variable child) throws BayesianNetworkException {
+    public void reverseDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
         this.reverseDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void reverseDependency(Node parent, Node child) throws BayesianNetworkException {
+    public void reverseDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
         this.removeDependency(parent, child);
         this.addDependency(child, parent);
     }
     
-    public void setCPT(String variable, double[] probs) throws BayesianNetworkRuntimeException {
+    public void setCPT(String variable, double[] probs) throws BNLibIllegalCPDException {
         Node node = this.getNode(variable);
         node.setProbabilityVector(probs);
     }
@@ -165,7 +163,7 @@ public class BayesianNetwork {
                 throw new BayesianNetworkException("Variable \"" + n.getVariable().getName() + "\" has invalid factor.");
     }
     
-    public static BayesianNetwork loadFromFile(String filename) throws BayesianNetworkException {
+    public static BayesianNetwork loadFromFile(String filename) throws BNLibIOException {
         // all known file readers for various Bayesian network formats
         BayesianNetworkFileReader[] readers = {new BayesianNetworkNetFileReader(filename)};
         
@@ -178,8 +176,9 @@ public class BayesianNetwork {
             // read unsuccesfull => try another reader
             catch(BayesianNetworkException bnex) {}
             catch(BayesianNetworkRuntimeException bnex) {}
+            catch(BNLibIOException ex) {}
         }
-        throw new BayesianNetworkException("Unable to read file \"" + filename + "\" (unknown format or corrupted file).");
+        throw new BNLibIOException("Unable to read file \"" + filename + "\" (unknown format or invalid content).");
     }
     
     public Variable getVariable(String variableName) {

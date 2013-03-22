@@ -1,14 +1,17 @@
 
 package bna;
 
+import bna.bnlib.misc.Toolkit;
+import bna.bnlib.misc.CmdlineTable;
 import bna.bnlib.*;
 import bna.bnlib.learning.*;
 import bna.bnlib.sampling.*;
+import bna.view.NetworkLayoutGenerator;
 import java.util.Collections;
 import java.util.LinkedList;
 
 /**
- * Class for on-the-fly testing and playing with the bnlib package.
+ * Class for on-the-fly testing and toying with the bnlib package.
  */
 public class BNA {
 
@@ -22,7 +25,8 @@ public class BNA {
         //playing_dataset_testing();
         //playing_parameter_learning();
         //benchmark_parameter_learningMLEVSBayes();
-        playing_structure_learning();
+        //playing_structure_learning();
+        playing_network_layout();
     }
     
     
@@ -116,9 +120,7 @@ public class BNA {
             timeEnd = System.currentTimeMillis();
             System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));*/
         }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-        }
+        finally {}
     }
     
     private static void playing_sampling_string_query() {
@@ -166,12 +168,13 @@ public class BNA {
     private static void benchmarkSampling_sequentialVSMultithreaded() {
         /* test settings */
         // which network to sample and what sampling method to use
-        NetworkVariant networkVariant = NetworkVariant.ICUNet;
+        NetworkVariant networkVariant = NetworkVariant.SprinklerNet;
         SamplingVariant samplingVariant = SamplingVariant.WeightedSampling;
         // how many samples to generate in a single run
         final long SAMPLES_COUNT = 16 * 3 * 208400*2; // cca 20.000.000 but dividible by any used threadcount
         // how many runs to compute an average from
-        final int RUNS_COUNT = 25;
+        final int RUNS_COUNT = 35,
+                  TRIMM_COUNT = 5;
         // how many threads
         final int[] THREAD_COUNTS = {1, 2, 3, 4, 6, 8};
         
@@ -249,7 +252,8 @@ public class BNA {
                     System.out.print(String.format(" %.3f", runningTimes.getLast()));
                 }
                 long samplesPerRun = SAMPLES_COUNT;
-                double timePerRun = computeMedian(runningTimes);
+                //double timePerRun = computeMedian(runningTimes);
+                double timePerRun = computeTrimmedMean(runningTimes, TRIMM_COUNT);
                 int samplesPerSecond = (int)(samplesPerRun / timePerRun);
                 if(threadcount == 1) {
                     // new referential value for speedup computation
@@ -260,9 +264,6 @@ public class BNA {
                         "- %d thread(s): %d samples/second (%.2f speedup)",
                         threadcount, samplesPerSecond, ((double)samplesPerSecond) / samplesPerSecondSingleThread));
             }
-        }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
         }
         catch(BayesianNetworkRuntimeException bnex) {
             bnex.printStackTrace();
@@ -276,6 +277,19 @@ public class BNA {
             return values.get(values.size() / 2);
         else
             return (values.get(values.size() / 2 - 1) + values.get(values.size() / 2)) / 2;
+    }
+    
+    private static double computeTrimmedMean(LinkedList<Double> values, int trimmCount) {
+        values = new LinkedList<Double>(values); // make a local copy
+        Collections.sort(values);
+        for(int i = 0 ; i < trimmCount ; i++) {
+            values.removeFirst();
+            values.removeLast();
+        }
+        double sum = 0;
+        for(double v : values)
+            sum += v;
+        return sum / values.size();
     }
     
     enum NetworkVariant {SprinklerNet, ICUNet}
@@ -302,9 +316,7 @@ public class BNA {
             double mutualInf = dataset.mutualInformation(XVars, YVars);
             System.out.println(String.format("Mutual information of independent variables: %.2f (should be close to zero)",mutualInf));
         }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-        }
+        finally {}
     }
     
     private static void playing_parameter_learning() {
@@ -329,9 +341,6 @@ public class BNA {
             System.out.println(bnLearnt.dumpCPTs());
             
             // TODO other methods than MLE
-        }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
         }
         catch(OutOfMemoryError oome) {
             oome.printStackTrace();
@@ -390,26 +399,26 @@ public class BNA {
             System.out.println("# Benchmark of parameter learning quality (ICU network, MLE & Bayesian estimation, relative entropy)");
             System.out.println(table.toString());
         }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-        }
+        finally {}
     }
     
     private static void playing_structure_learning() {
-        final long SAMPLES = 100;
-        final long MAX_ITERATIONS = 300;
-        final double TABU_LIST_RELATIVE_SIZE = 0.3;
-        final double RANDOM_RESTART_STEPS_RELATIVE = 0.5;
+        final long SAMPLES = 50 * 1000;
+        final long MAX_ITERATIONS = 50 * 1000;
+        final double TABU_LIST_RELATIVE_SIZE = 0.1;
+        final int RANDOM_RESTART_STEPS = 15;
+        //final String NETWORK_FILE = "../../networks/sprinkler.net";
+        //final String NETWORK_FILE = "../../networks/john_marry.net";
+        final String NETWORK_FILE = "../../networks/asia.net";
         try {
             long timeStart, timeEnd;
             System.out.println("Structure learning");
             // sample some original network
             System.out.println("Loading original network...");
-            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile("../../networks/sprinkler.net");
+            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
             int N = bnOriginal.getNodeCount();
             int maxAlterations = 2 * (N * (N - 1) / 2);
-            int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE),
-                RANDOM_RESTART_STEPS = (int)(maxAlterations * RANDOM_RESTART_STEPS_RELATIVE);
+            int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE);
             // sample the network
             System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
             DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
@@ -418,11 +427,11 @@ public class BNA {
             Dataset dataset = datasetSampler.getDataset();
             
             LearningController controller = new LearningController(MAX_ITERATIONS);
-            BayesianNetwork bnInitial = BayesianNetwork.loadFromFile("../../networks/sprinkler-empty.net");
+            BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
             
             // put the dataset cache in place
-            int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2);
-            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 1.2); // 20 % edge
+            int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
+            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
             CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
             
             // learn using likelihood score
@@ -449,8 +458,16 @@ public class BNA {
             System.out.println(bnResultBIC.dumpStructure());
             System.out.println("best total score: " + bicScoringMethod.absoluteScore(bnResultBIC));
         }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
+        finally {}
+    }
+    
+    private static void playing_network_layout() {
+        final String NETWORK_FILE = "../../networks/asia.net";
+        try {
+            System.out.println("Network layout for " + NETWORK_FILE);
+            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
+            NetworkLayoutGenerator.getLayout(bnOriginal, null);
         }
+        finally {}
     }
 }

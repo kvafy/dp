@@ -9,5 +9,10 @@ package bna.bnlib;
  * Whenever an impossible operation is attempted (eg. removing non-existent edge to a graph).
  */
 public class BNLibIllegalOperationException extends BNLibException {
-
+    public BNLibIllegalOperationException() {
+    }
+    
+    public BNLibIllegalOperationException(String msg) {
+        super(msg);
+    }
 }

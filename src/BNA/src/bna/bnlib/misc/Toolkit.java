@@ -12,6 +12,7 @@ import bna.bnlib.Node;
 import bna.bnlib.Variable;
 import bna.bnlib.VariableSubsetMapper;
 import bna.bnlib.sampling.*;
+import java.awt.Point;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -340,6 +341,21 @@ public class Toolkit {
         }
         
         return closure;
+    }
+    
+    /** Compute the angle (in radians) of vector determined by the specified points. */
+    public static double angleOfVector(Point begin, Point end) {
+        double dx = end.x - begin.x,
+               dy = end.y - begin.y;
+        
+        if(dx == 0)
+            return (dy >= 0) ? Math.PI / 2 : 3.0 / 2.0 * Math.PI;
+        else {
+            if(dx > 0)
+                return Math.atan(dy / dx);
+            else
+                return Math.PI + Math.atan(dy / dx);
+        }
     }
     
     /** Method to overcome the "generic array creation" problem. */

@@ -9,5 +9,11 @@ package bna.bnlib;
  * The base exception of all other exceptions in the bnlib package and subpackages.
  */
 public class BNLibException extends RuntimeException {
-
+    public BNLibException() {
+        super();
+    }
+    
+    public BNLibException(String msg) {
+        super(msg);
+    }
 }
