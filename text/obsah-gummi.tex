@@ -1201,6 +1201,20 @@ The cache of mutual information queries is implemented as a caching proxy \srcco
 
 
 \section{User interface}
+
+\todo{state machine (what is enabled, what isn't)}
+
+\subsection{Network layout}
+Specific task that needs to be addressed when presenting a BN in user interface is generating graphical layout of given BN so that it would be esthetically pleasing. Under this vague criteria we could imagine, for example, minimizing the number of crossing edges, minimizing edges lengths or forcing the graph or its parts to be symmetric. I used a modification of hierarchical approach described in~\cite[p.~22]{graph_drawing}. The basic outline of my method is as follows:
+\begin{itemize}
+	\item For a given DAG assign nodes to layers. Lets denote $l(n)$ label of the layer the node $n$ is assigned to. Initially, for nodes without any parents $l(n)=0$, for the other nodes $l(n) = 1 + max \lbrace l(p) \mid p \in Parents(n)\rbrace$. After the initial layer assignment is complete I move nodes without parents from layer 0 to layer $min \lbrace l(p) \mid p \in Children(n)\rbrace - 1$.
+	\item Break down edges connecting nodes from layers that are not adjacent by inserting a~dummy node on every layer in-between. This way we achieve that any edge is from layer $i$ to layer $i+1$.
+	\item Optimize the permutation of nodes on each layer so that there would be minimum of crossed edges. At this point we take full advantage of the graph structure from previous step. Note that we don't need to work with absolute positioning of nodes to determine the number of crossed edges. As optimization procedure I use simulated annealing with operators \uv{swap two nodes on the same layer} and \uv{remove a node and reinsert on random position within the same layer}.
+    \item Determine the absolute positioning within layers, ie. $x$-coordinate of each node. I~use a grid-like coordinate system with integral scale where $x$-distance of any two nodes within layer has to be at least 2. This way we simply achieve for a node with two children that $x$ position of the parent is between $x$ positions of children while sum of edge lengths is smallest possible. Absolute positioning is an optimization task which I address, again, by simulated annealing with single operator \uv{shift a random node left/right}. The operator shifts also others adjacent nodes as needed to maintain the $x$ distance of any two nodes at the value of at least 2. To allow for larger changes the shift magnitude is randomly selected from normal distribution with parameters $\mu=0, \sigma = 1$ over values $\lbrace -3, -2, -1, 1, 2, 3\rbrace$.
+\end{itemize}
+
+
+
 \todo{
 Požadavky doc. Zbořila:
 \begin{itemize}
@@ -1208,6 +1222,8 @@ Požadavky doc. Zbořila:
 	\item Zobrazení sítě: Mělo by umět. Nejdřív rozmístění dle sebe (heuristika, GA, etc.) a potom umožnit přetahováním doupravit pozicování. Při najetí myší na uzel zobrazit CPT.
 \end{itemize}
 }
+
+
 
 
 
