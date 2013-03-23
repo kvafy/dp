@@ -4,6 +4,7 @@
 
 package bna.view;
 
+import bna.bnlib.Factor;
 import bna.bnlib.Node;
 import java.awt.*;
 import java.util.Arrays;
@@ -21,6 +22,7 @@ public class GBayesianNetwork {
     // TODO kompletne jinak (uz NetworkLayoutGenerator vrati GBayesianNetwork)
     public GBayesianNetwork(GNode[] gnodes) {
         this.gnodes = Arrays.copyOf(gnodes, gnodes.length);
+        this.notifyCPDsChange();
     }
     
     public GNode[] getGNodes() {
@@ -46,7 +48,22 @@ public class GBayesianNetwork {
             xMax = Math.max(xMax, gnodeLocation.x + gnode.getWidth());
             yMax = Math.max(yMax, gnodeLocation.y + gnode.getHeight());
         }
-        return new Point(xMax + GNodeVariable.RADIUS, yMax + GNodeVariable.RADIUS);
+        return new Point(xMax, yMax);
+    }
+    
+    public void notifyCPDsChange() {
+        for(GNode gnode : this.gnodes) {
+            if(!(gnode instanceof GNodeVariable))
+                continue;
+            String cpdAsText;
+            GNodeVariable gnodev = (GNodeVariable)gnode;
+            Factor cpd = gnodev.node.getFactor();
+            if(cpd == null)
+                cpdAsText = null;
+            else
+                cpdAsText = "<html><pre><font face=\"monospace\">" + cpd.toString() + "</font></pre></html>";
+            gnodev.setToolTipText(cpdAsText);
+        }
     }
 }
 
