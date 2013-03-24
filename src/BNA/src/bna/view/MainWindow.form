@@ -41,6 +41,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Query"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuItemQueryActionPerformed"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>
@@ -129,7 +132,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="paneNetworkView" pref="370" max="32767" attributes="0"/>
+              <Component id="paneNetworkView" pref="374" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -137,11 +140,6 @@
   </Layout>
   <SubComponents>
     <Container class="javax.swing.JScrollPane" name="paneNetworkView">
-      <Properties>
-        <Property name="viewport" type="javax.swing.JViewport" editor="org.netbeans.modules.form.ComponentChooserEditor">
-          <ComponentRef name="null"/>
-        </Property>
-      </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="paneNetworkView.setViewportView(panelNetworkView);&#xa;panelNetworkView.setLayout(null);&#xa;panelNetworkView.setPreferredSize(null);"/>
       </AuxValues>

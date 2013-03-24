@@ -106,27 +106,31 @@ public class Node {
     
     // modification methods are package-private => users of the library cannot manipulate nodes directly
     
-    void addParent(Node parent) throws BNLibInvalidStructuralModificationException {
+    void addParent(Node parent) throws BNLibIllegalStructuralModificationException {
         if(this.parents.contains(parent))
-            throw new BNLibInvalidStructuralModificationException("The node is already in Parents(X).");
+            throw new BNLibIllegalStructuralModificationException("The node is already in Parents(X).");
+        if(this.variable.equals(parent.variable))
+            throw new BNLibIllegalStructuralModificationException("Variable cannot be parent to itself.");
         this.parents.add(parent);
     }
     
-    void addChild(Node child) throws BNLibInvalidStructuralModificationException {
+    void addChild(Node child) throws BNLibIllegalStructuralModificationException {
         if(this.children.contains(child))
-            throw new BNLibInvalidStructuralModificationException("The node is already in Children(X).");
+            throw new BNLibIllegalStructuralModificationException("The node is already in Children(X).");
+        if(this.variable.equals(child.variable))
+            throw new BNLibIllegalStructuralModificationException("Variable cannot be child to itself.");
         this.children.add(child);
     }
     
-    void removeParent(Node parent) throws BNLibInvalidStructuralModificationException {
+    void removeParent(Node parent) throws BNLibIllegalStructuralModificationException {
         if(!this.parents.contains(parent))
-            throw new BNLibInvalidStructuralModificationException("The node is not in Parents(X).");
+            throw new BNLibIllegalStructuralModificationException("The node is not in Parents(X).");
         this.parents.remove(parent);
     }
     
-    void removeChild(Node child) throws BNLibInvalidStructuralModificationException {
+    void removeChild(Node child) throws BNLibIllegalStructuralModificationException {
          if(!this.children.contains(child))
-            throw new BNLibInvalidStructuralModificationException("The node is not in Children(X).");
+            throw new BNLibIllegalStructuralModificationException("The node is not in Children(X).");
         this.children.remove(child);
     }
     

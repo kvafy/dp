@@ -25,6 +25,7 @@ public class MainWindow extends javax.swing.JFrame {
     
     private MainWindow() {
         initComponents();
+        this.setLocationRelativeTo(null);
         this.enableComponentsByState();
     }
     
@@ -78,8 +79,6 @@ public class MainWindow extends javax.swing.JFrame {
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
 
-        paneNetworkView.setViewport(null);
-
         menuFile.setText("File");
 
         menuItemExit.setText("Exit");
@@ -106,6 +105,11 @@ public class MainWindow extends javax.swing.JFrame {
         menuNetwork.add(menuItemSaveNetwork);
 
         menuItemQuery.setText("Query");
+        menuItemQuery.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemQueryActionPerformed(evt);
+            }
+        });
         menuNetwork.add(menuItemQuery);
 
         jMenuBar1.add(menuNetwork);
@@ -151,7 +155,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
+                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -174,6 +178,7 @@ public class MainWindow extends javax.swing.JFrame {
         if(networkFileChooser.getSelectedFile() == null)
             return;
         try {
+            this.panelNetworkView.setNetwork((GBayesianNetwork)null);
             BayesianNetwork bn = BayesianNetwork.loadFromFile(networkFileChooser.getSelectedFile().getAbsolutePath());
             this.panelNetworkView.setNetwork(bn);
         }
@@ -181,6 +186,12 @@ public class MainWindow extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "I/O error while loading network", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_menuItemLoadNetworkActionPerformed
+
+    private void menuItemQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemQueryActionPerformed
+        BayesianNetwork bn = this.panelNetworkView.getNetwork();
+        DialogQuerySampling dialog = new DialogQuerySampling(this, false, bn);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_menuItemQueryActionPerformed
 
     /**
      * @param args the command line arguments

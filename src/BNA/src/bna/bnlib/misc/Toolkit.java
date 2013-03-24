@@ -129,7 +129,7 @@ public class Toolkit {
     
     /** Compute relative entropy between two networks with identical structure. */
     public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact, BayesianNetwork bnApprox) {
-        final double MINIMAL_Q_PROB = 1e-5;
+        final double MINIMAL_Q_PROB = 1e-6; // hard constant used when probability Q(x) = 0 && P(x) != 0
         try {
             double relativeEntropy = 0;
             for(Node nodeExact : bnExact.getNodes()) {
@@ -200,7 +200,7 @@ public class Toolkit {
     }
     
     private static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) throws BayesianNetworkException {
-        final long SAMPLES_COUNT = 500 * 1000;
+        final long SAMPLES_COUNT = 5000 * 1000;
         final int THREAD_COUNT = 5;
         SampleProducer sampleProducer = new WeightedSampleProducer(bn, vars, new Variable[]{}, new Variable[]{}, new int[]{});
         QuerySamplerMultithreaded querySamplerMultithreaded = new QuerySamplerMultithreaded(sampleProducer, THREAD_COUNT);
@@ -356,6 +356,21 @@ public class Toolkit {
             else
                 return Math.PI + Math.atan(dy / dx);
         }
+    }
+    
+    /** Compute unique floating point numbers when considering epsilon tolerance. */
+    public static int countPseudouniqueNumbers(Collection<Double> col) {
+        if(col.isEmpty())
+            return 0;
+        List<Double> colSorted = new ArrayList<Double>();
+        colSorted.addAll(col);
+        Collections.sort(colSorted);
+        int count = 1;
+        for(int i = 1 ; i < colSorted.size() ; i++) {
+            if(!Toolkit.doubleEquals(colSorted.get(i - 1), colSorted.get(i)))
+                count++;
+        }
+        return count;
     }
     
     /** Method to overcome the "generic array creation" problem. */

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 /**
  * Package-private class to parse a textual query of the form "P(X | Y, E = e)".
  * The parsed values are stored to arrays X, Y, E, e. If an error occurs,
- * BayesianNetworkException is thrown.
+ * BNLibIllegalQueryException is thrown.
  * <p>
  * Syntax description:
  * The general "P(...)" structure must be met. X is a non-empty comma separated
@@ -37,13 +37,13 @@ class ParsedQuery {
                          varvalueRegex = "[^,|=\\s-]+";
     
     
-    public ParsedQuery(BayesianNetwork bn, String query) throws BayesianNetworkException {
+    public ParsedQuery(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
         this.bn = bn;
         this.query = query;
         this.parse();
     }
     
-    private void parse() throws BayesianNetworkException {
+    private void parse() throws BNLibIllegalQueryException {
         String varnameListRegex = String.format("%s(?:\\s*,\\s*%s)*", varnameRegex, varnameRegex);
         String varnassignmentListRegex = String.format("%s\\s*=\\s*%s(?:\\s*,\\s*%s\\s*=\\s*%s)*", varnameRegex, varvalueRegex, varnameRegex, varvalueRegex);
         String queryRegex = 
@@ -65,15 +65,15 @@ class ParsedQuery {
         Pattern queryPattern = Pattern.compile(queryRegex);
         Matcher queryMatcher = queryPattern.matcher(query);
         if(!queryMatcher.matches())
-            throw new BayesianNetworkException("QueryParser: Query is invalid.");
+            throw new BNLibIllegalQueryException("Query is invalid.");
         this.parseX(queryMatcher.group(1));
         this.parseY(queryMatcher.group(2));
         this.parseEe(queryMatcher.group(3));
     }
     
-    private void parseX(String strX) throws BayesianNetworkException {
+    private void parseX(String strX) throws BNLibIllegalQueryException {
         if(strX == null)
-            throw new BayesianNetworkException("QueryParser: There must be at least one X variable.");
+            throw new BNLibIllegalQueryException("There must be at least one X variable (as in P(X | Y, E = e).");
         
         ArrayList<Variable> listX = new ArrayList<Variable>();
         this.parseVariableList(strX, listX);
@@ -81,7 +81,7 @@ class ParsedQuery {
         listX.toArray(this.X);
     }
     
-    private void parseY(String strY) throws BayesianNetworkException {
+    private void parseY(String strY) throws BNLibIllegalQueryException {
         if(strY == null) {
             this.Y = new Variable[0];
             return;
@@ -93,7 +93,7 @@ class ParsedQuery {
         listY.toArray(this.Y);
     }
     
-    private void parseEe(String strEe) throws BayesianNetworkException {
+    private void parseEe(String strEe) throws BNLibIllegalQueryException {
         if(strEe == null) {
             this.E = new Variable[0];
             this.e = new int[0];
@@ -110,7 +110,7 @@ class ParsedQuery {
         }
     }
     
-    private void parseVariableList(String varlistStr, ArrayList<Variable> varlist) throws BayesianNetworkException {
+    private void parseVariableList(String varlistStr, ArrayList<Variable> varlist) throws BNLibIllegalQueryException {
         varlistStr = varlistStr.trim();
         for(String varName : varlistStr.split("\\s*,\\s*")) {
             // check if the variable is in the network
@@ -118,13 +118,13 @@ class ParsedQuery {
                 Variable var = this.bn.getVariable(varName);
                 varlist.add(var);
             }
-            catch(BayesianNetworkRuntimeException bne) {
-                throw new BayesianNetworkException("QueryParser: " + bne.getMessage());
+            catch(BNLibNonexistentVariableException bne) {
+                throw new BNLibIllegalQueryException("Variable \"" + varName + "\" doesn't exist.");
             }
         }
     }
     
-    private void parseEvidence(String EeStr, ArrayList<Variable> varlist, ArrayList<Integer> valuelist) throws BayesianNetworkException {
+    private void parseEvidence(String EeStr, ArrayList<Variable> varlist, ArrayList<Integer> valuelist) throws BNLibIllegalQueryException {
         EeStr = EeStr.trim();
         for(String assignment : EeStr.split("\\s*,\\s*")) {
             // check if the variable is in the network
@@ -137,8 +137,11 @@ class ParsedQuery {
                 varlist.add(var);
                 valuelist.add(value);
             }
-            catch(BayesianNetworkRuntimeException bne) {
-                throw new BayesianNetworkException("QueryParser: " + bne.getMessage());
+            catch(BNLibNonexistentVariableException ex) {
+                throw new BNLibIllegalQueryException(ex.getMessage());
+            }
+            catch(BNLibNonexistentVariableValueException ex) {
+                throw new BNLibIllegalQueryException(ex.getMessage());
             }
         }
     }

@@ -9,10 +9,10 @@ import java.util.LinkedList;
 
 
 /**
- * Provides a clean interface to produce a nice structured tabular output to command line.
+ * Provides a clean interface to produce a nice structured tabular output as a string.
  * Columns of the table are auto-size to accomodate for their content.
  */
-public class CmdlineTable {
+public class TextualTable {
     private static final int MIN_COLUMN_WIDTH = 1;
     private static final int CELL_PADDING = 1; // number of spaces on the left and right
     private static char COLUMN_SEPARATOR = '|';
@@ -24,7 +24,7 @@ public class CmdlineTable {
     private boolean separateColumns;   // use extra character (COLUMN_SEPARATOR) between columns?
     
     
-    public CmdlineTable(String[] columnHeaders, int precision, boolean separateColumns) {
+    public TextualTable(String[] columnHeaders, int precision, boolean separateColumns) {
         this.columnCount = columnHeaders.length;
         this.rows = new LinkedList<Object[]>();
         this.rows.add(columnHeaders);
@@ -80,7 +80,7 @@ public class CmdlineTable {
     
     private int[] getColumnWidths() {
         int[] widths = new int[this.columnCount];
-        Arrays.fill(widths, CmdlineTable.MIN_COLUMN_WIDTH);
+        Arrays.fill(widths, TextualTable.MIN_COLUMN_WIDTH);
         for(Object[] row : this.rows) {
             for(int i = 0 ; i < this.columnCount ; i++)
                 widths[i] = Math.max(widths[i], this.objectToString(row[i]).length());

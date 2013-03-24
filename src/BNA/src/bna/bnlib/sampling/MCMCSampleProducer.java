@@ -46,7 +46,7 @@ public class MCMCSampleProducer extends SampleProducer {
      *              given network and to their values.
      * @throws BayesianNetworkException When the query string is invalid.
      */
-    public MCMCSampleProducer(BayesianNetwork bn, String query) throws BayesianNetworkException {
+    public MCMCSampleProducer(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
         this(new ParsedQuery(bn, query));
     }
     

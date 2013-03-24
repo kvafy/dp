@@ -79,38 +79,38 @@ public class BayesianNetwork {
     
     // methods for building/editing a Bayesian network (see BayesianNetworkFileReader or AlterationAction)
     
-    public void addDependency(String parent, String child) throws BNLibInvalidStructuralModificationException {
+    public void addDependency(String parent, String child) throws BNLibIllegalStructuralModificationException {
         this.addDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void addDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
+    public void addDependency(Variable parent, Variable child) throws BNLibIllegalStructuralModificationException {
         this.addDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void addDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
+    public void addDependency(Node parent, Node child) throws BNLibIllegalStructuralModificationException {
         if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
-            throw new BNLibInvalidStructuralModificationException("One of the variables you want to connect is not in the network.");
+            throw new BNLibIllegalStructuralModificationException("One of the variables you want to connect is not in the network.");
         parent.addChild(child);
         child.addParent(parent);
     }
     
-    public void removeDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
+    public void removeDependency(Variable parent, Variable child) throws BNLibIllegalStructuralModificationException {
         this.removeDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void removeDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
+    public void removeDependency(Node parent, Node child) throws BNLibIllegalStructuralModificationException {
         if(!this.containsVariable(child.getVariable()) || !this.containsVariable(parent.getVariable()))
-            throw new BNLibInvalidStructuralModificationException("One of the variables you want to disconnect is not in the network.");
+            throw new BNLibIllegalStructuralModificationException("One of the variables you want to disconnect is not in the network.");
         
         parent.removeChild(child);
         child.removeParent(parent);
     }
     
-    public void reverseDependency(Variable parent, Variable child) throws BNLibInvalidStructuralModificationException {
+    public void reverseDependency(Variable parent, Variable child) throws BNLibIllegalStructuralModificationException {
         this.reverseDependency(this.getNode(parent), this.getNode(child));
     }
     
-    public void reverseDependency(Node parent, Node child) throws BNLibInvalidStructuralModificationException {
+    public void reverseDependency(Node parent, Node child) throws BNLibIllegalStructuralModificationException {
         this.removeDependency(parent, child);
         this.addDependency(child, parent);
     }
@@ -136,31 +136,31 @@ public class BayesianNetwork {
      *   <li> normalized factors (optional for non-skeletal networks)
      * </ul>
      */
-    public void validate() throws BayesianNetworkException {
+    public void validate() throws BNLibIllegalNetworkSpecificationException {
         this.validateAcyclicity();
         this.validateVariableUniqueness();
         this.validateFactors();
     }
     
-    private void validateAcyclicity() throws BayesianNetworkException {
+    private void validateAcyclicity() throws BNLibIllegalNetworkSpecificationException {
         // create a general graph representation and test for acyclicity
         Digraph g = this.convertToDigraph();
         if(!g.isAcyclic())
-            throw new BayesianNetworkException("The network is not acyclic.");
+            throw new BNLibIllegalNetworkSpecificationException("The network is not acyclic.");
     }
     
-    private void validateVariableUniqueness() throws BayesianNetworkException {
+    private void validateVariableUniqueness() throws BNLibIllegalNetworkSpecificationException {
         ArrayList<String> names = new ArrayList<String>();
         for(Node n : this.nodes)
             names.add(n.getVariable().getName());
         if(!Toolkit.unique(names))
-            throw new BayesianNetworkException("Variable names are not unique.");
+            throw new BNLibIllegalNetworkSpecificationException("Variable names are not unique.");
     }
     
-    private void validateFactors() throws BayesianNetworkException {
+    private void validateFactors() throws BNLibIllegalNetworkSpecificationException {
         for(Node n : this.nodes)
             if(!n.hasValidFactor())
-                throw new BayesianNetworkException("Variable \"" + n.getVariable().getName() + "\" has invalid factor.");
+                throw new BNLibIllegalNetworkSpecificationException("Variable \"" + n.getVariable().getName() + "\" has invalid factor.");
     }
     
     public static BayesianNetwork loadFromFile(String filename) throws BNLibIOException {
@@ -177,22 +177,6 @@ public class BayesianNetwork {
             throw new BNLibIOException(msg);
         }
         return reader.load();
-        
-        /*// all known file readers for various Bayesian network formats
-        BayesianNetworkFileReader[] readers = {new BayesianNetworkNetFileReader(filename)};
-        
-        for(BayesianNetworkFileReader reader : readers) {
-            try {
-                BayesianNetwork bn = reader.load();
-                bn.validate();
-                return bn;
-            }
-            // read unsuccesfull => try another reader
-            catch(BayesianNetworkException bnex) {}
-            catch(BayesianNetworkRuntimeException bnex) {}
-            catch(BNLibIOException ex) {}
-        }
-        throw new BNLibIOException("Unable to read file \"" + filename + "\" (unknown format or invalid content).");*/
     }
     
     public Variable getVariable(String variableName) {
@@ -226,18 +210,18 @@ public class BayesianNetwork {
         return this.nodes.length;
     }
     
-    public Node getNode(String variableName) {
+    public Node getNode(String variableName) throws BNLibNonexistentVariableException {
         for(Node n : this.nodes)
             if(n.getVariable().getName().equals(variableName))
                 return n;
-        throw new BayesianNetworkRuntimeException("Node with variable \"" + variableName + "\" is not in the network.");
+        throw new BNLibNonexistentVariableException("Node with variable \"" + variableName + "\" is not in the network.");
     }
     
-    public Node getNode(Variable variable) {
+    public Node getNode(Variable variable) throws BNLibNonexistentVariableException {
         for(Node n : this.nodes)
             if(n.getVariable().equals(variable))
                 return n;
-        throw new BayesianNetworkRuntimeException("Node with variable \"" + variable.getName() + "\" is not in the network.");
+        throw new BNLibNonexistentVariableException("Node with variable \"" + variable.getName() + "\" is not in the network.");
     }
     
     public Node[] getNodes() {
@@ -282,7 +266,7 @@ public class BayesianNetwork {
     
     // Graph operations
     
-    public Variable[] topologicalSort() {
+    public Variable[] topologicalSort() throws BNLibIllegalNetworkSpecificationException {
         Node[] topologicalOrderNodes = this.topologicalSortNodes();
         Variable[] topologicalOrderVariables = new Variable[topologicalOrderNodes.length];
         for(int i = 0 ; i < topologicalOrderNodes.length ; i++)
@@ -290,9 +274,11 @@ public class BayesianNetwork {
         return topologicalOrderVariables;
     }
     
-    public Node[] topologicalSortNodes() {
+    public Node[] topologicalSortNodes() throws BNLibIllegalNetworkSpecificationException {
         Digraph digraph = this.convertToDigraph();
         Object[] topologicalOrderObjects = digraph.topologicalSort();
+        if(topologicalOrderObjects == null)
+            throw new BNLibIllegalNetworkSpecificationException("Network is not acyclic.");
         Node[] topologicalOrderNodes = new Node[topologicalOrderObjects.length];
         for(int i = 0 ; i < topologicalOrderObjects.length ; i++)
             topologicalOrderNodes[i] = (Node)topologicalOrderObjects[i];

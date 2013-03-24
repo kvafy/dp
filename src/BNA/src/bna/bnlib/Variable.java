@@ -39,13 +39,13 @@ public class Variable {
     }
     
     /** Convert textual assignment to index in this.values array. */
-    public int getValueIndex(String value) {
+    public int getValueIndex(String value) throws BNLibNonexistentVariableValueException {
         for(int i = 0 ; i < this.values.length ; i++) {
             if(this.values[i].equals(value))
                 return i;
         }
-        String msg = String.format("Unknown assignment \"%s\" of variable \"%s\".", value, this.name);
-        throw new BayesianNetworkRuntimeException(msg);
+        String msg = String.format("\"%s\" is not an assignment of variable \"%s\".", value, this.name);
+        throw new BNLibNonexistentVariableValueException(msg);
     }
     
     public int getCardinality() {

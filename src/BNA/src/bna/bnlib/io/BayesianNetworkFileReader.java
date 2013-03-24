@@ -46,10 +46,14 @@ public abstract class BayesianNetworkFileReader {
                 bn.setCPT(var, probVector);
             }
 
+            bn.validate();
             return bn;
         }
-        catch(BNLibInvalidStructuralModificationException ex) {
-            throw new BNLibIOException("The network structure in given file is invalid (variables cannot be connected).");
+        catch(BNLibIllegalStructuralModificationException ex) {
+            throw new BNLibIOException("The network structure in given file is invalid (variables cannot be connected as specified).");
+        }
+        catch(BNLibIllegalNetworkSpecificationException ex) {
+            throw new BNLibIOException(ex.getMessage());
         }
         catch(BNLibIllegalCPDException ex) {
             throw new BNLibIOException("CPDs specification is invalid.");

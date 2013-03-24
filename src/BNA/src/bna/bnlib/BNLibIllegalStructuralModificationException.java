@@ -7,12 +7,12 @@ package bna.bnlib;
 /**
  * When we attempt a structural change of a network (ie. edges) which is invalid.
  */
-public class BNLibInvalidStructuralModificationException extends BNLibIllegalOperationException {
-    public BNLibInvalidStructuralModificationException() {
+public class BNLibIllegalStructuralModificationException extends BNLibIllegalOperationException {
+    public BNLibIllegalStructuralModificationException() {
         super();
     }
     
-    public BNLibInvalidStructuralModificationException(String msg) {
+    public BNLibIllegalStructuralModificationException(String msg) {
         super(msg);
     }
 }

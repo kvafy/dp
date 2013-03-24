@@ -15,12 +15,13 @@ import javax.swing.table.TableModel;
  * Views a factor in form of a JTable.
  * By default the table is empty.
  */
-public class FactorTableView extends javax.swing.JTable {
+public class FactorViewTable extends javax.swing.JTable {
+    public static final TableModel EMPTY_TABLE_MODEL = new DefaultTableModel();
+    
     private Factor factor;
-    private static final TableModel EMPTY_TABLE_MODEL = new DefaultTableModel();
     
     
-    public FactorTableView() {
+    public FactorViewTable() {
         this.factor = null;
         this.setNewTableModel();
     }

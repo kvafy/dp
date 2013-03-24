@@ -2,7 +2,7 @@
 package bna;
 
 import bna.bnlib.misc.Toolkit;
-import bna.bnlib.misc.CmdlineTable;
+import bna.bnlib.misc.TextualTable;
 import bna.bnlib.*;
 import bna.bnlib.learning.*;
 import bna.bnlib.sampling.*;
@@ -24,9 +24,9 @@ public class BNA {
         //playing_sampling_string_query();
         //playing_dataset_testing();
         //playing_parameter_learning();
-        //benchmark_parameter_learningMLEVSBayes();
+        benchmark_parameter_learningMLEVSBayes();
         //playing_structure_learning();
-        playing_network_layout();
+        //playing_network_layout();
     }
     
     
@@ -160,9 +160,7 @@ public class BNA {
             timeEnd = System.currentTimeMillis();
             System.out.println(String.format("(action took %.2f seconds)\n", (timeEnd - timeStart) / 1000.0));
         }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-        }
+        finally {}
     }
     
     private static void benchmarkSampling_sequentialVSMultithreaded() {
@@ -352,11 +350,12 @@ public class BNA {
         final long SAMPLES_MIN = 50,
                    SAMPLES_MAX = 5000,
                    STEP_COUNT = 30;
+        final String NETWORK = "../../networks/child.net";
         final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
         String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
-        CmdlineTable table = new CmdlineTable(headers, 5, false);
+        TextualTable table = new TextualTable(headers, 5, false);
         try {
-            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile("../../networks/alarm.net");
+            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK);
             double samplesDbl = SAMPLES_MIN;
             for(int i = 0 ; i < STEP_COUNT ; i++, samplesDbl *= SAMPLES_EXP_STEP) {
                 long samples = Math.round(samplesDbl);
@@ -396,7 +395,7 @@ public class BNA {
                 Object[] entropyRow = dataRowList.toArray();
                 table.addRow(entropyRow);
             }
-            System.out.println("# Benchmark of parameter learning quality (ICU network, MLE & Bayesian estimation, relative entropy)");
+            System.out.println("# Benchmark of parameter learning quality (" + NETWORK + ", MLE & Bayesian estimation, relative entropy)");
             System.out.println(table.toString());
         }
         finally {}

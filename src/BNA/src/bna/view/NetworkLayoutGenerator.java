@@ -14,7 +14,10 @@ import java.util.*;
  * For a Bayesian network determine an estetically pleasing layout.
  */
 public class NetworkLayoutGenerator {
-    
+    // absolute layout parameters
+    final static int NETWORK_ABSOLUTE_MARGIN_X = GNodeVariable.RADIUS;
+    final static int NETWORK_ABSOLUTE_MARGIN_Y = GNodeVariable.RADIUS;
+    // optimization parameters
     final static long INLAYER_ITERATIONS = 10 * 1000; // number of iterations in the relative inlayer ordering optimization
     final static long PLACEMENT_ITERATIONS = 10 * 1000; // number of iterations in the absolute positioning optimization
     final static long ITERATIONS_TOTAL = INLAYER_ITERATIONS + PLACEMENT_ITERATIONS;
@@ -31,19 +34,9 @@ public class NetworkLayoutGenerator {
         // assign nodes to layers (topsort forward & backward pass)
         // (set .layer property)
         NetworkLayoutGenerator.assignNodesToLayers(topsortLNode);
-        System.out.println("after assignning layers:");
-        for(LNode n : topsortLNode) {
-            String label = n.node != null ? n.node.getVariable().getName() : "<dummy>";
-            System.out.printf(" - variable %s, layer %d\n", label, n.layer);
-        }
         
         // insert dummy nodes and adjust the links
         topsortLNode = NetworkLayoutGenerator.insertDummyNodes(topsortLNode);
-        System.out.println("after inserting dummy nodes:");
-        for(LNode n : topsortLNode) {
-            String label = n.node != null ? n.node.getVariable().getName() : "<dummy>";
-            System.out.printf(" - variable %s, layer %d\n", label, n.layer);
-        }
         
         // preliminary node orderings (fully deterministic, for each node
         // in layer: append its children to the next layer if not already present)
@@ -52,15 +45,6 @@ public class NetworkLayoutGenerator {
         //     indices relativeOrder[layer][i] means that node.layer = layer and
         //     node.inlayerIndex = i
         LNode[][] relativeOrder = NetworkLayoutGenerator.preliminaryInlayerOrdering(topsortLNode);
-        System.out.println("preliminary ordering:");
-        for(int layer = 0 ; layer < relativeOrder.length ; layer++) {
-            System.out.printf(" - layer %d: ", layer);
-            for(LNode n : relativeOrder[layer]) {
-                String label = n.node != null ? n.node.getVariable().getName() : "<dummy>";
-                System.out.printf("%s  ", label);
-            }
-            System.out.println("");
-        }
         
         // optimize crossings (relative order of nodes on layers)
         NetworkLayoutGenerator.optimizeInlayerOrdering(relativeOrder, observer);
@@ -74,7 +58,7 @@ public class NetworkLayoutGenerator {
         // convert LNodes to GNodes (resp. to one of its subclasses) and also convert the grid coordinates to canvas coordinates
         GNode[] gnodes = NetworkLayoutGenerator.lnodesTOgnodes(relativeOrder);
         
-        return new GBayesianNetwork(gnodes);
+        return new GBayesianNetwork(bn, gnodes);
     }
     
     private static LNode[] copyNodeStructure(Node[] nodes) {
@@ -236,6 +220,7 @@ public class NetworkLayoutGenerator {
                 action.undo();
             
             // consistency check
+            // TODO remove
             for(LNode[] layer : ordering)
                 for(int j = 0 ; j < layer.length ; j++)
                     if(layer[j].inlayerIndex != j)
@@ -268,7 +253,6 @@ public class NetworkLayoutGenerator {
             // ensure that nodes in each layer are sorted by the inlayerIndex
             Arrays.sort(layer, lnodeInlayerComparator);
         }
-        System.out.printf("optimizeInlayerOrdering best number of crossings: %d\n", bestCrossings);
     }
     
     // perturbation actions used in optimizeInlayerOrdering(...)
@@ -395,6 +379,7 @@ public class NetworkLayoutGenerator {
                 action.undo();
             
             // consistency check
+            // TODO remove
             for(LNode[] layer : ordering)
                 for(int j = 0 ; j < layer.length - 1 ; j++)
                     if(layer[j].gridX + 2 > layer[j + 1].gridX)
@@ -460,8 +445,6 @@ public class NetworkLayoutGenerator {
     }
     
     private static GNode[] lnodesTOgnodes(LNode[][] relativeOrder) {
-        int PADDING_X = GNodeVariable.RADIUS,
-            PADDING_Y = GNodeVariable.RADIUS;
         int dx = GNodeVariable.RADIUS * 2,
             dy = GNodeVariable.RADIUS * 4;
         // place LNodes to a linear structure => corresponding GNodes will be on the same indices
@@ -484,8 +467,8 @@ public class NetworkLayoutGenerator {
             else
                 gnode = new GNodeDummy();
             // absolute placement of GNode
-            int canvasX = PADDING_X + dx / 2 + lnode.gridX * dx,
-                canvasY = PADDING_Y + dy / 2 + lnode.gridY * dy;
+            int canvasX = NETWORK_ABSOLUTE_MARGIN_X + dx / 2 + lnode.gridX * dx,
+                canvasY = NETWORK_ABSOLUTE_MARGIN_Y + dy / 4 + lnode.gridY * dy;
             gnode.setLocationByCenter(canvasX, canvasY);
             gnodes.add(gnode);
         }
@@ -542,18 +525,18 @@ public class NetworkLayoutGenerator {
         double edgeTypesCountPerNode = 0; // how many different edge lengths are there from a node? sum over all nodes
         double edgeTypesCountPerLayer = 0; // how many different edge lengths are there from a layer? sum over all layers
         for(LNode[] layer : placement) {
-            HashSet edgeTypesPerLayer = new HashSet();
+            HashSet<Double> edgeTypesPerLayer = new HashSet<Double>();
             for(LNode lnode : layer) {
-                HashSet edgeTypesPerNode = new HashSet();
+                HashSet<Double> edgeTypesPerNode = new HashSet<Double>();
                 for(LNode child : lnode.children) {
                     double edgeLength2 = Math.pow(lnode.gridX - child.gridX, 2) + Math.pow(lnode.gridY - child.gridY, 2);
                     edgeLenghtsSum2 += edgeLength2;
                     edgeTypesPerLayer.add(edgeLength2);
                     edgeTypesPerNode.add(edgeLength2);
                 }
-                edgeTypesCountPerNode += edgeTypesPerNode.size();
+                edgeTypesCountPerNode += Toolkit.countPseudouniqueNumbers(edgeTypesPerNode);
             }
-            edgeTypesCountPerLayer += edgeTypesPerLayer.size();
+            edgeTypesCountPerLayer += Toolkit.countPseudouniqueNumbers(edgeTypesPerLayer);
         }
         
         return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer);

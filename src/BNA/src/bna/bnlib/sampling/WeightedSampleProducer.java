@@ -45,7 +45,7 @@ public class WeightedSampleProducer extends SampleProducer {
      *              given network and to their values.
      * @throws BayesianNetworkException When the query string is invalid.
      */
-    public WeightedSampleProducer(BayesianNetwork bn, String query) throws BayesianNetworkException {
+    public WeightedSampleProducer(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
         this(new ParsedQuery(bn, query));
     }
     

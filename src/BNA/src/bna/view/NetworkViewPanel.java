@@ -27,6 +27,10 @@ public class NetworkViewPanel extends javax.swing.JPanel {
         return this.gbn != null;
     }
     
+    public BayesianNetwork getNetwork() {
+        return this.gbn.getNetwork();
+    }
+    
     public void setNetwork(BayesianNetwork bn) {
         this.setNetwork((GBayesianNetwork)null);
         MainWindow.getInstance().enableComponentsByState();
@@ -117,7 +121,8 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             this.gbn = bnNew;
             if(bnNew != null) {
                 Point gbnBottomRight = bnNew.getBottomRight();
-                this.setPreferredSize(new Dimension(gbnBottomRight.x + 50, gbnBottomRight.y + 50));
+                this.setPreferredSize(new Dimension(gbnBottomRight.x + NetworkLayoutGenerator.NETWORK_ABSOLUTE_MARGIN_X,
+                                                    gbnBottomRight.y + NetworkLayoutGenerator.NETWORK_ABSOLUTE_MARGIN_Y));
                 this.addComponentsOfNetwork(gbn);
             }
             else
@@ -176,8 +181,6 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
             this.paintComponent(gPlain);
         }
-        else
-            System.out.println("not painted any component");
         
         // frame of the whole area
         g2D.setColor(Color.DARK_GRAY);

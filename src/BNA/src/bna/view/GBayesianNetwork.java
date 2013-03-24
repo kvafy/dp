@@ -4,6 +4,7 @@
 
 package bna.view;
 
+import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Factor;
 import bna.bnlib.Node;
 import java.awt.*;
@@ -17,12 +18,18 @@ import java.util.Arrays;
  * to dragging by mouse. Edges must be painted by hand.
  */
 public class GBayesianNetwork {
+    private final BayesianNetwork bn;
     private final GNode[] gnodes;
     
     // TODO kompletne jinak (uz NetworkLayoutGenerator vrati GBayesianNetwork)
-    public GBayesianNetwork(GNode[] gnodes) {
+    public GBayesianNetwork(BayesianNetwork bn, GNode[] gnodes) {
+        this.bn = bn;
         this.gnodes = Arrays.copyOf(gnodes, gnodes.length);
         this.notifyCPDsChange();
+    }
+    
+    public BayesianNetwork getNetwork() {
+        return this.bn;
     }
     
     public GNode[] getGNodes() {
@@ -61,9 +68,17 @@ public class GBayesianNetwork {
             if(cpd == null)
                 cpdAsText = null;
             else
-                cpdAsText = "<html><pre><font face=\"monospace\">" + cpd.toString() + "</font></pre></html>";
+                cpdAsText = "<html><pre><font face=\"monospace\">"
+                          + this.quoteHTMLChars(cpd.toString())
+                          + "</font></pre></html>";
             gnodev.setToolTipText(cpdAsText);
         }
+    }
+    
+    private String quoteHTMLChars(String toHtml) {
+       return toHtml.replace("&", "&quot;")
+                    .replace(">", "&gt;")
+                    .replace("<", "&lt;");
     }
 }
 
