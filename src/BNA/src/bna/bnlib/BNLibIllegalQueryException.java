@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+
 /**
  * Thrown when query specified as a string is invalid.
  */

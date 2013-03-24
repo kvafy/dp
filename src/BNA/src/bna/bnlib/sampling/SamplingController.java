@@ -4,6 +4,7 @@
 
 package bna.bnlib.sampling;
 
+
 /**
  * To control the sampling process, possibly in context of more threads.
  */

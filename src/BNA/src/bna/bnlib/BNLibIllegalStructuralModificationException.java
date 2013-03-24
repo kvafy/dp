@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+
 /**
  * When we attempt a structural change of a network (ie. edges) which is invalid.
  */

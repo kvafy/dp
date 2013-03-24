@@ -44,7 +44,7 @@ public class MCMCSampleProducer extends SampleProducer {
      *              The names of variables as well as their values of evidence
      *              must conform exactly (case sensitively) to variables from
      *              given network and to their values.
-     * @throws BayesianNetworkException When the query string is invalid.
+     * @throws BNLibIllegalQueryException When the query string is invalid.
      */
     public MCMCSampleProducer(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
         this(new ParsedQuery(bn, query));

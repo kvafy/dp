@@ -2,8 +2,8 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/10
 
-
 package bna.bnlib;
+
 
 /**
  * Iterate over all possible assignments of given variables.

@@ -38,13 +38,13 @@ public class DatafileCreationSampler extends Sampler {
     @Override
     protected void registerSample(int[] XYVarsValues, double sampleWeight) {
         if(sampleWeight != 1.0)
-            throw new BayesianNetworkRuntimeException("Internal error: Weight of a sample for datafile is not 1.0.");
+            throw new BNLibInternalException("Internal error: Weight of a sample for datafile is not 1.0.");
         try {
             this.printFileEntry(XYVarsValues);
         }
         catch(IOException ioex) {
             this.fileWriter = null;
-            throw new BayesianNetworkRuntimeException("Error manipulating dataset output file: " + ioex.getMessage());
+            throw new BNLibInternalException("Error manipulating dataset output file: " + ioex.getMessage());
         }
     }
 
@@ -56,7 +56,7 @@ public class DatafileCreationSampler extends Sampler {
         }
         catch(IOException ioex) {
             this.fileWriter = null;
-            throw new BayesianNetworkRuntimeException("Error manipulating dataset output file: " + ioex.getMessage());
+            throw new BNLibInternalException("Error manipulating dataset output file: " + ioex.getMessage());
         }
     }
 
@@ -66,7 +66,7 @@ public class DatafileCreationSampler extends Sampler {
             this.fileWriter.close();
         }
         catch(IOException ioex) {
-            throw new BayesianNetworkRuntimeException("Error manipulating dataset output file: " + ioex.getMessage());
+            throw new BNLibInternalException("Error manipulating dataset output file: " + ioex.getMessage());
         }
         finally {
             this.fileWriter = null;
@@ -106,7 +106,6 @@ public class DatafileCreationSampler extends Sampler {
                 this.fileWriter.write(RECORD_SEPARATOR);
             String[] ithVariableValues = this.XYVars[i].getValues();
             this.fileWriter.write(ithVariableValues[sampleAssignment[i]]);
-            //this.fileWriter.write(String.valueOf(sampleAssignment[i]));
         }
     }
 }

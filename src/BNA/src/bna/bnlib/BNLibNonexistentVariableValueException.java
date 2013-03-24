@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+
 /**
  * Thrown when we ask for a variable value that doesn't exist.
  */

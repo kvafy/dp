@@ -6,7 +6,8 @@ package bna.bnlib;
 
 
 /**
- * Whenever an impossible operation is attempted (eg. removing non-existent edge to a graph).
+ * Whenever an impossible operation is attempted.
+ * Examples: removing non-existent edge of a graph, marginalizing over wrong variables etc.
  */
 public class BNLibIllegalOperationException extends BNLibException {
     public BNLibIllegalOperationException() {

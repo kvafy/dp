@@ -6,6 +6,7 @@ package bna.bnlib.learning;
 
 import bna.bnlib.BayesianNetwork;
 
+
 /**
  * General interface of a structure learning algorithm that takes initial structure,
  * learning controller and learns the new network.

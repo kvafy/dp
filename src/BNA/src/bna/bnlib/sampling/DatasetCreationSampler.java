@@ -33,7 +33,7 @@ public class DatasetCreationSampler extends Sampler {
     @Override
     protected void registerSample(int[] XYVarsValues, double sampleWeight) {
         if(sampleWeight != 1.0)
-            throw new BayesianNetworkRuntimeException("Internal error: Weight of a sample for dataset is not 1.0.");
+            throw new BNLibInternalException("Internal error: Weight of a sample for dataset is not 1.0.");
         this.dataset.addRecord(XYVarsValues);
     }
 

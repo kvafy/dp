@@ -16,7 +16,6 @@ public class QuerySamplerObserved extends QuerySampler {
     
     public QuerySamplerObserved(SampleProducer sampleProducer) {
         super(sampleProducer);
-        this.notifyNewSample();
     }
     
     private void notifyNewSample() {
@@ -28,6 +27,7 @@ public class QuerySamplerObserved extends QuerySampler {
     @Override
     protected void registerSample(int[] XYVarsValues, double sampleWeight) {
         super.registerSample(XYVarsValues, sampleWeight);
+        this.notifyNewSample();
     }
     
     public void registerObserver(QuerySamplerObserver observer) {

@@ -6,6 +6,7 @@ package bna.bnlib.sampling;
 
 import java.util.Random;
 
+
 /**
  * Context of a SampleProducer (thread-local) - defines current state by last sample.
  */

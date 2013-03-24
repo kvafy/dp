@@ -24,12 +24,12 @@ public class AssignmentIndexMapper {
             accessVector[i] = accessVector[i - 1] * variables[i - 1].getCardinality();
     }
     
-    public int assignmentToIndex(int[] assignment) {
+    public int assignmentToIndex(int[] assignment) throws BNLibInvalidInstantiationException {
         // validate parameters
         if(assignment == null)
             throw new BayesianNetworkRuntimeException("Null assignment.");
         if(!Toolkit.validateAssignment(this.vars, assignment))
-            throw new BayesianNetworkRuntimeException("Invalid assignment for given list of variables.");
+            throw new BNLibInvalidInstantiationException("Invalid assignment for given list of variables.");
         // index computation
         int index = 0;
         for(int i = 0 ; i < assignment.length ; i++)
@@ -37,9 +37,9 @@ public class AssignmentIndexMapper {
         return index;
     }
     
-    public int[] indexToAssignment(int index) {
+    public int[] indexToAssignment(int index) throws BNLibInvalidInstantiationException {
         if(index < 0 || index >= this.assignmentsCount)
-            throw new BayesianNetworkRuntimeException(String.format("Assignment index %i out of valid range [0, %i).", index, this.assignmentsCount));
+            throw new BNLibInvalidInstantiationException(String.format("Assignment index %i out of valid range [0, %i).", index, this.assignmentsCount));
         int[] assignment = new int[this.vars.length];
         for(int i = 0 ; i < assignment.length ; i++) {
             assignment[i] = index % this.vars[i].getCardinality();

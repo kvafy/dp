@@ -6,6 +6,7 @@ package bna.bnlib.misc;
 
 import java.util.ArrayList;
 
+
 /**
  * A general digraph with valued nodes (each node has some associated data).
  */

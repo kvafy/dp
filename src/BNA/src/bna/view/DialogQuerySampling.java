@@ -6,7 +6,6 @@ package bna.view;
 
 import bna.bnlib.BNLibIllegalQueryException;
 import bna.bnlib.BayesianNetwork;
-import bna.bnlib.BayesianNetworkException;
 import bna.bnlib.Factor;
 import bna.bnlib.sampling.*;
 import java.awt.event.ActionEvent;
@@ -15,7 +14,7 @@ import javax.swing.JOptionPane;
 
 
 /**
- *
+ * Dialog that takes a BN and allows to sample it with various options.
  */
 public class DialogQuerySampling extends javax.swing.JDialog {
     private BayesianNetwork bn;

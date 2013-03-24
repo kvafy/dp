@@ -4,6 +4,7 @@
 
 package bna.bnlib.sampling;
 
+
 /**
  * The most general sampler of a BN.
  */

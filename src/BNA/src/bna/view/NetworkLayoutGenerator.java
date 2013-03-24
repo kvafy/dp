@@ -4,6 +4,7 @@
 
 package bna.view;
 
+import bna.bnlib.BNLibInternalException;
 import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Node;
 import bna.bnlib.misc.Toolkit;
@@ -322,7 +323,7 @@ public class NetworkLayoutGenerator {
                 return;
             }
         }
-        throw new InternalCheckException("Array already full!"); // should never come to this
+        throw new BNLibInternalException("Array already full!"); // TODO defensive
     }
     
     private static void preliminaryAbsoluteLayout(LNode[][] relativeOrder) {

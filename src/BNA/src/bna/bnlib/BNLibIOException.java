@@ -4,6 +4,7 @@
 
 package bna.bnlib;
 
+
 /**
  * Exception of an I/O operation in the bnlib.
  */

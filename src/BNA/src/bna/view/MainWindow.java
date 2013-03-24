@@ -5,10 +5,7 @@
 package bna.view;
 
 import bna.bnlib.BNLibIOException;
-import bna.bnlib.BNLibIllegalNetworkSpecificationException;
 import bna.bnlib.BayesianNetwork;
-import bna.bnlib.BayesianNetworkException;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 

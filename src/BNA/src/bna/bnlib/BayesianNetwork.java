@@ -10,6 +10,7 @@ import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+
 /**
  * General Bayesian network class.
  * The network consists of network nodes (Node class), each node has associated

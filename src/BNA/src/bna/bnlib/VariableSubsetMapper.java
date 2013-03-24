@@ -29,11 +29,11 @@ public class VariableSubsetMapper {
         return this.map(supersetAssignment, subsetAssignment);
     }
     
-    public int[] map(int[] supersetAssignment, int[] subsetAssignment) {
+    public int[] map(int[] supersetAssignment, int[] subsetAssignment) throws BNLibInvalidInstantiationException {
         if(subsetAssignment.length != this.mapping.length)
             throw new BayesianNetworkRuntimeException("Invalid array for target assignment.");
         if(!Toolkit.validateAssignment(this.superset, supersetAssignment))
-            throw new BayesianNetworkRuntimeException("Invalid assignment of the superset.");
+            throw new BNLibInvalidInstantiationException("Invalid assignment of the superset variables.");
         for(int i = 0 ; i < this.mapping.length ; i++)
             subsetAssignment[i] = supersetAssignment[this.mapping[i]];
         return subsetAssignment;

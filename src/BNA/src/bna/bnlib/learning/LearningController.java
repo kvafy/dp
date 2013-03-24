@@ -6,7 +6,7 @@ package bna.bnlib.learning;
 
 
 /**
- *
+ * Via this object user can instantly stop learning process and set the maximal number of iterations.
  */
 public class LearningController {
     private Long maxIterations;

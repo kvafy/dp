@@ -4,7 +4,8 @@
 
 package bna.bnlib.learning;
 
-import bna.bnlib.*;
+import bna.bnlib.AlterationAction;
+import bna.bnlib.BayesianNetwork;
 
 
 /**

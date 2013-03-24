@@ -17,9 +17,9 @@ public abstract class AlterationAction {
         this.child = child;
     }
     
-    public abstract void apply(BayesianNetwork bn) throws BayesianNetworkException;
+    public abstract void apply(BayesianNetwork bn) throws BNLibIllegalStructuralModificationException;
     
-    public abstract void undo(BayesianNetwork bn) throws BayesianNetworkException;
+    public abstract void undo(BayesianNetwork bn) throws BNLibIllegalStructuralModificationException;
     
     public abstract AlterationAction getUndoAction();
     

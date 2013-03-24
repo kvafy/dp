@@ -4,14 +4,11 @@
 
 package bna.bnlib.misc;
 
-import bna.bnlib.BayesianNetwork;
-import bna.bnlib.BayesianNetworkException;
-import bna.bnlib.BayesianNetworkRuntimeException;
-import bna.bnlib.Factor;
-import bna.bnlib.Node;
-import bna.bnlib.Variable;
-import bna.bnlib.VariableSubsetMapper;
-import bna.bnlib.sampling.*;
+import bna.bnlib.*;
+import bna.bnlib.sampling.QuerySamplerMultithreaded;
+import bna.bnlib.sampling.SampleProducer;
+import bna.bnlib.sampling.SamplingController;
+import bna.bnlib.sampling.WeightedSampleProducer;
 import java.awt.Point;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -136,7 +133,7 @@ public class Toolkit {
                 // check if the two nodes have the same parents
                 Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
                 if(!Toolkit.areEqual(nodeExact.getParentVariables(), nodeApprox.getParentVariables()))
-                    throw new BayesianNetworkRuntimeException("A variable differs in parents in the two networks.");
+                    throw new BayesianNetworkRuntimeException("A variable differs by its parents in the two networks.");
                 
                 // relative entropy decomposes over the nodes in a BN
                 if(nodeExact.getParentCount() > 0) { // node with parents
@@ -165,7 +162,7 @@ public class Toolkit {
                                     qXgivenP = MINIMAL_Q_PROB; // correction so that all values are accounted for
                                 sumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
                             }
-                            else if(pXgivenP < 0 || qXgivenP < 0)
+                            else if(pXgivenP < 0 || qXgivenP < 0) // TODO defensive
                                 throw new BayesianNetworkRuntimeException("unexpected");
                         }
                         double pParents = parentsJointProbabilityFactor.getProbability(scopeParentsAssignment);
@@ -182,7 +179,7 @@ public class Toolkit {
                                 qX = MINIMAL_Q_PROB;
                             sumOverX += pX * Math.log(pX / qX);
                         }
-                        else if(pX < 0 || qX < 0)
+                        else if(pX < 0 || qX < 0) // TODO defensive
                             throw new BayesianNetworkRuntimeException("unexpected");
                     }
                     relativeEntropy += sumOverX;
@@ -194,12 +191,9 @@ public class Toolkit {
             bnrex.printStackTrace();
             throw new BayesianNetworkRuntimeException("Internal error while computing relative entropy.");
         }
-        catch(BayesianNetworkException bnrex) {
-            throw new BayesianNetworkRuntimeException("Internal error while computing relative entropy.");
-        }
     }
     
-    private static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) throws BayesianNetworkException {
+    private static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) {
         final long SAMPLES_COUNT = 5000 * 1000;
         final int THREAD_COUNT = 5;
         SampleProducer sampleProducer = new WeightedSampleProducer(bn, vars, new Variable[]{}, new Variable[]{}, new int[]{});

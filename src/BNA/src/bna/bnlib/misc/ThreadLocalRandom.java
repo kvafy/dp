@@ -7,6 +7,7 @@ package bna.bnlib.misc;
 import java.util.HashMap;
 import java.util.Random;
 
+
 /**
  * Custom implementation of java.util.concurrent.ThreadLocalRandom from Java7.
  */

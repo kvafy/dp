@@ -88,9 +88,9 @@ public class Node {
         return this.factor.getProbability(assignment);
     }
     
-    public int sampleVariable(int[] assignmentOfParents, Random random) {
-        if(this.getParentCount() != assignmentOfParents.length)
-            throw new BayesianNetworkRuntimeException("Invalid assignment of parents.");
+    public int sampleVariable(int[] assignmentOfParents, Random random) throws BNLibInvalidInstantiationException {
+        if(!Toolkit.validateAssignment(this.getParentVariables(), assignmentOfParents)) // TODO defensive
+            throw new BNLibInvalidInstantiationException("Invalid assignment of parents.");
         double[] probabilities = new double[this.variable.getCardinality()];
         int[] assignment = new int[1 + assignmentOfParents.length];
         System.arraycopy(assignmentOfParents, 0, assignment, 1, assignmentOfParents.length);

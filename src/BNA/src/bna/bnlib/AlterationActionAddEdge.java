@@ -15,12 +15,12 @@ public class AlterationActionAddEdge extends AlterationAction {
     }
 
     @Override
-    public void apply(BayesianNetwork bnOrig) throws BayesianNetworkException {
+    public void apply(BayesianNetwork bnOrig) throws BNLibIllegalStructuralModificationException {
         bnOrig.addDependency(this.parent, this.child);
     }
     
     @Override
-    public void undo(BayesianNetwork bn) throws BayesianNetworkException {
+    public void undo(BayesianNetwork bn) throws BNLibIllegalStructuralModificationException {
         bn.removeDependency(this.parent, this.child);
     }
     

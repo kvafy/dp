@@ -15,12 +15,12 @@ public class AlterationActionReverseEdge extends AlterationAction {
     }
 
     @Override
-    public void apply(BayesianNetwork bnOrig) throws BayesianNetworkException {
+    public void apply(BayesianNetwork bnOrig) throws BNLibIllegalStructuralModificationException {
         bnOrig.reverseDependency(this.parent, this.child);
     }
     
     @Override
-    public void undo(BayesianNetwork bn) throws BayesianNetworkException {
+    public void undo(BayesianNetwork bn) throws BNLibIllegalStructuralModificationException {
         bn.reverseDependency(this.child, this.parent);
     }
     

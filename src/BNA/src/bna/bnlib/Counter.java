@@ -40,7 +40,7 @@ public class Counter {
     
     public void add(int[] assignment, double delta) {
         if(!Toolkit.validateAssignment(this.variables, assignment))
-            throw new BayesianNetworkRuntimeException("Invalid variables assignment for mapper.");
+            throw new BNLibInvalidInstantiationException("Invalid variables assignment of variables for mapper.");
         int index = this.indexMapper.assignmentToIndex(assignment);
         this.values[index] += delta;
     }

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+
 /**
  * Immutable representation of a factor.
  * The factor is iterable over all possible assignments to its scope (not values!).
@@ -33,9 +34,9 @@ public class Factor implements Iterable<int[]> {
         return this.values[index];
     }
     
-    public double getProbability(int[] assignment) {
+    public double getProbability(int[] assignment) throws BNLibInvalidInstantiationException {
         if(!Toolkit.validateAssignment(this.scope, assignment))
-            throw new BayesianNetworkRuntimeException("Invalid assignment wrt. scope of the factor.");
+            throw new BNLibInvalidInstantiationException("Invalid assignment wrt. scope of the factor.");
         return this.values[this.mapper.assignmentToIndex(assignment)];
     }
     
@@ -48,11 +49,11 @@ public class Factor implements Iterable<int[]> {
     }
     
     /** Perform factor marginalization over given set of variables. */
-    public Factor marginalize(Variable[] over) {
+    public Factor marginalize(Variable[] over) throws BNLibIllegalOperationException {
         Variable[] newScope = Toolkit.difference(this.scope, over);
         if(newScope.length == 0)
             // TODO create a special "ONE" factor (??)
-            throw new BayesianNetworkRuntimeException("Marginalizing over all variables yields an empty factor.");
+            throw new BNLibIllegalOperationException("Marginalizing over all variables yields an empty factor.");
         double[] newValues = new double[Toolkit.cardinality(newScope)];
         VariableSubsetMapper scopeToNewScopeMapper = new VariableSubsetMapper(this.scope, newScope);
         AssignmentIndexMapper newScopeIndexMapper = new AssignmentIndexMapper(newScope);
@@ -72,9 +73,9 @@ public class Factor implements Iterable<int[]> {
     }
     
     /** Values for assignments that differ only in (n+1)-th variable and higher will sum to one. */
-    public Factor normalizeByFirstNVariables(int n) {
+    public Factor normalizeByFirstNVariables(int n) throws BNLibIllegalOperationException {
         if(n < 1 || n > this.scope.length)
-            throw new BayesianNetworkRuntimeException("Normalization by invalid number of variables.");
+            throw new BNLibIllegalOperationException("Normalization by invalid number of variables.");
         double[] normalizedValues = new double[this.values.length];
         // determine how many consequent values have to sum to 1.0
         int valuesInABlock = 1;
