@@ -4,8 +4,8 @@
 
 package bna.bnlib;
 
+import bna.bnlib.misc.TextualTable;
 import bna.bnlib.misc.Toolkit;
-import bna.bnlib.misc.CmdlineTable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -134,13 +134,13 @@ public class Factor implements Iterable<int[]> {
     
     @Override
     public String toString() {
-        final int PRECISION = 9;
+        final int PRECISION = 6;
         // first generate header
         String[] header = new String[this.scope.length + 1];
         for(int i = 0 ; i < this.scope.length ; i++)
             header[i] = this.scope[i].getName();
         header[this.scope.length] = "probability";
-        CmdlineTable table = new CmdlineTable(header, PRECISION, true);
+        TextualTable table = new TextualTable(header, PRECISION, true);
         // generate the data part, row by row
         for(int[] assignment : this) {
             LinkedList<Object> row = new LinkedList<Object>();

@@ -164,7 +164,21 @@ public class BayesianNetwork {
     }
     
     public static BayesianNetwork loadFromFile(String filename) throws BNLibIOException {
-        // all known file readers for various Bayesian network formats
+        int lastdotPos = filename.lastIndexOf('.');
+        String extension = (lastdotPos == -1) ? "" : filename.substring(lastdotPos + 1);
+        
+        BayesianNetworkFileReader reader;
+        if(extension.equals("net"))
+            reader = new BayesianNetworkNetFileReader(filename); // throws BNLibIOException
+        else {
+            int dirSeparatorPos = filename.lastIndexOf(System.getProperty("file.separator"));
+            String basename = (dirSeparatorPos == -1) ? filename : filename.substring(dirSeparatorPos + 1);
+            String msg = String.format("Unknown format of file \"%s\" (by extension).", basename);
+            throw new BNLibIOException(msg);
+        }
+        return reader.load();
+        
+        /*// all known file readers for various Bayesian network formats
         BayesianNetworkFileReader[] readers = {new BayesianNetworkNetFileReader(filename)};
         
         for(BayesianNetworkFileReader reader : readers) {
@@ -178,7 +192,7 @@ public class BayesianNetwork {
             catch(BayesianNetworkRuntimeException bnex) {}
             catch(BNLibIOException ex) {}
         }
-        throw new BNLibIOException("Unable to read file \"" + filename + "\" (unknown format or invalid content).");
+        throw new BNLibIOException("Unable to read file \"" + filename + "\" (unknown format or invalid content).");*/
     }
     
     public Variable getVariable(String variableName) {

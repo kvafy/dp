@@ -7,7 +7,6 @@ package bna.bnlib;
 import bna.bnlib.misc.Toolkit;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
 
 
 /**
@@ -64,7 +63,7 @@ public class Variable {
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.name);
+        hash = 97 * hash + this.name.hashCode();
         return hash;
     }
 }
