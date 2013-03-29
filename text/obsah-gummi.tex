@@ -1011,7 +1011,7 @@ List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
 \end{itemize}
 
 
-\subsubsection{Friendly query specification}
+\subsection{Friendly query specification}
 The query $P(\vars{X} \mid \vars{Y}, \vars{e})$, where $\vars{X} \neq \emptyset$, may be specified in the constructor of \srccode{SampleProducer} and any of its subclasses in a user-friendly way as a string. Form of the query string is described bellow using EBNF-like notation:
 
 \begin{center}
@@ -1031,7 +1031,7 @@ The query $P(\vars{X} \mid \vars{Y}, \vars{e})$, where $\vars{X} \neq \emptyset$
 \end{tabular}
 \end{center}
 
-Variable name \bnfgroup{var} and variable value \bnfgroup{val} may consist, for simplicity, of any characters except for {\tt , | = -} and whitespaces. Variable names and values are case sensitive.
+Variable name \bnfgroup{var} and variable value \bnfgroup{val} may consist, for simplicity, of any characters except for {\tt , | = ( )} and whitespaces. Variable names and values are case sensitive.
 
 Some examples of valid query strings are \srccode{P(RAIN)}, \srccode{P(CLOUDY $\mid$ WETGRASS = TRUE)}, \srccode{P(SPRINKLER, CLOUDY)} or \srccode{P(CLOUDY $\mid$ RAIN, WETGRASS = TRUE)}.
 
@@ -1162,11 +1162,31 @@ Speedup of the multi-threaded variant has been measured on multiple computers wi
     \end{center}
 \end{table}
 
-\medskip
-\todo{Provide a code snippnet of creating a sample producer, query sampler and running the query.}
+\subsection{Implementation notes}
+In this section I will discuss some of the difficulties I encountered during implementation. Also, the following code snippet demonstrates the usage of classes described earlier to answer a probabilistic query via sampling:
 
-\medskip
-During implementation there have been some difficulties regarding thread-safety and sharing of resources among threads. The main problem turned out to be that an instance of \srccode{java.util.Random} (further just \srccode{Random}) cannot be shared among multiple threads because the key method \srccode{Random.next(int bits)} for generating pseudorandom bits is synchronized and sharing of a \srccode{Random} instance among $n$ threads degrades computation time to virtually running the sampling $n$-times sequentially. The problem is easily solved by using \srccode{java.util.concurrent.ThreadLocalRandom} class that provides the caller with a~thread-local instance of \srccode{Random} on demand. Still, generating of random data itself is the bottleneck of sampling.
+\begin{figure}[ht]
+\begin{center}
+\begin{verbatim}
+final long SAMPLES_COUNT = 10 * 1000;
+final int THREAD_COUNT = 3;
+final String NETWORK_FILE = "networks/sprinkler.net";
+final String QUERY_STR = "P(RAIN | SPRINKLER = TRUE, WETGRASS = TRUE)";
+long samplesPerThread = SAMPLES_COUNT / THREAD_COUNT;
+
+BayesianNetwork bn = BayesianNetwork.loadFromFile(NETWORK_FILE);
+SampleProducer sampleProducer = new WeightedSampleProducer(bn, QUERY_STR);
+SamplerInterface sampler = new QuerySamplerMultithreaded(sampleProducer,
+                                                         THREAD_COUNT);
+SamplingController controller = new SamplingController(samplesPerThread);
+sampler.sample(controller);
+Factor result = ((QuerySamplerMultithreaded)sampler).getSamplesCounterNormalized();
+\end{verbatim}
+\end{center}
+\caption{Usage of the BN library classes to perform inference by sampling.}
+\end{figure}
+
+During implementation there have been some difficulties regarding thread-safety and sharing of resources among threads. Considering the overall performance of sampling, the ultimate problem turned out to be that generating pseudorandom numbers consumes the majority of time of sampling and therefore an instance of \srccode{java.util.Random} (further just \srccode{Random}) cannot be shared among threads. Because the method \srccode{Random.next(int bits)} for generating pseudorandom bits is synchronized, sharing of a \srccode{Random} instance among $n$ threads degrades computation time to virtually running the sampling $n$-times sequentially. The problem is easily solved by using \srccode{java.util.concurrent.ThreadLocalRandom} class that provides the caller with a~thread-local instance of \srccode{Random} on demand. Still, generating of random data remains the bottleneck of sampling.
 
 Also, we cannot save time by storing references to dynamically allocated objects (eg. arrays) holding intermediate results if theses objects aren't read only, since concurrent threads would rewrite each others values. Fortunately, it turns out that frequent memory allocation for such intermediate results in Java doesn't introduce a bottleneck.
 
@@ -1198,11 +1218,12 @@ Caching of mutual information changes for network alterations is implemented rig
 
 
 \section{User interface}
+two interfaces: GUI and \srccode{bnlib} library interface
 
 \todo{state machine (what is enabled, what isn't)}
 
 \subsection{Network layout}
-Specific task that needs to be addressed when presenting a BN in user interface is generating graphical layout of given BN so that it would be esthetically pleasing. Under this vague criteria we could imagine, for example, minimizing the number of crossing edges, minimizing edges lengths or forcing the graph or its parts to be symmetric. I used a modification of hierarchical approach described in~\cite[p.~22]{graph_drawing}. The basic outline of my method is as follows:
+Specific task that needs to be addressed when presenting a BN in graphical user interface is generating graphical layout of given BN so that it would be esthetically pleasing. Under this vague criteria we could imagine, for example, minimizing the number of crossing edges, minimizing edges lengths or forcing the graph or its parts to be symmetric. To generate such layout I used a~modification of hierarchical approach described in~\cite[p.~22]{graph_drawing}. The basic outline of my method is as follows:
 \begin{itemize}
 	\item For a given DAG assign nodes to layers. Lets denote $l(n)$ label of the layer the node $n$ is assigned to. Initially, for nodes without any parents $l(n)=0$, for the other nodes $l(n) = 1 + max \lbrace l(p) \mid p \in Parents(n)\rbrace$. After the initial layer assignment is complete I move nodes without parents from layer 0 to layer $min \lbrace l(p) \mid p \in Children(n)\rbrace - 1$.
 	\item Break down edges connecting nodes from layers that are not adjacent by inserting a~dummy node on every layer in-between. This way we achieve that any edge is from layer $i$ to layer $i+1$.
@@ -1210,6 +1231,7 @@ Specific task that needs to be addressed when presenting a BN in user interface 
     \item Determine the absolute positioning within layers, ie. $x$-coordinate of each node. I~use a grid-like coordinate system with integral scale where $x$-distance of any two nodes within layer has to be at least 2. This way we simply achieve for a node with two children that $x$ position of the parent is between $x$ positions of children while sum of edge lengths is smallest possible. Absolute positioning is an optimization task which I address, again, by simulated annealing with single operator \uv{shift a random node left/right}. The operator shifts also others adjacent nodes as needed to maintain the $x$ distance of any two nodes at the value of at least 2. To allow for larger changes the shift magnitude is randomly selected from normal distribution with parameters $\mu=0, \sigma = 1$ over values $\lbrace -3, -2, -1, 1, 2, 3\rbrace$.
 \end{itemize}
 
+Parameters of the optimization process are set at such values that the network layout generation doesn't introduce an unpleasant delay (action takes about 1~second). Once the automatic layout is complete, nodes can be manually rearranged by mouse dragging.
 
 
 \todo{
@@ -1257,7 +1279,7 @@ which can be in context of Bayesian networks rewritten to the form:
 D_{KL}(P \parallel Q) = \sum_{X \in Nodes} \sum_{\vars{pa} \in Val(Par(X))} P(\vars{pa}) \sum_{x_i \in Val(X)} \log \frac{P(x_i \mid \vars{pa})}{Q(x_i \mid \vars{pa})}
 \end{equation*}
 As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than inspecting probabilities of atomic events, however probability for parents assignment $P(\vars{pa})$ needs to be inferred. %Luckily, I am entitled to use stochastic inference only.
-From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q$ probabilities, the suggested value is $10^{-6}$.
+From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero, the suggested value is $10^{-6}$.
 
 
 
