@@ -18,5 +18,5 @@ public abstract class StructureLearningAlgorithm {
         this.scoringMethod = method;
     }
     
-    public abstract BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller);
+    public abstract BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller, StructuralConstraints constraints);
 }

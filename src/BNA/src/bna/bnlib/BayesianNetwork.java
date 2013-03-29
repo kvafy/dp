@@ -126,6 +126,18 @@ public class BayesianNetwork {
         node.setFactor(cpt);
     }
     
+    /** Do the two networks have exactly the same set of edges? */
+    public boolean equalsStructurally(BayesianNetwork bn) {
+        if(!Toolkit.areEqual(this.getVariables(), bn.getVariables()))
+            return false;
+        for(Node n : this.nodes) {
+            Node nn = bn.getNode(n.getVariable());
+            if(!Toolkit.areEqual(n.getChildVariables(), nn.getChildVariables()))
+                return false;
+        }
+        return true;
+    }
+    
     /**
      * Check consistency of the network.
      * Following conditions have to be met for a network to be valid:

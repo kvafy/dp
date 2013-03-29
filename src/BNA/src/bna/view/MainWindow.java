@@ -8,6 +8,7 @@ import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.ToolTipManager;
 
 
 /**
@@ -24,6 +25,7 @@ public class MainWindow extends javax.swing.JFrame {
         initComponents();
         this.setLocationRelativeTo(null);
         this.enableComponentsByState();
+        this.configureTooltips();
     }
     
     public static MainWindow getInstance() {
@@ -43,6 +45,11 @@ public class MainWindow extends javax.swing.JFrame {
         this.menuLearning.setEnabled(hasDataset);
         this.menuItemLearnParameters.setEnabled(hasNetwork && hasDataset);
         this.menuItemLearnStructure.setEnabled(hasDataset);
+    }
+    
+    private void configureTooltips() {
+        // tooltips are used to show CPDs, so configure the showing/hiding
+        ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
     }
 
     /**

@@ -64,13 +64,14 @@ public abstract class BayesianNetworkFileReader {
     }
     
     boolean expectInput(ParsingContext context, String regexp, boolean canFail) throws IOException, BNLibIOException {
+        final int MAX_TOKEN_LENGTH = 80;
         StringBuilder dataRead = new StringBuilder();
         String regexpWithWhitespaces = "[\\s\n\r]*" + regexp + "[\\s\n\r]*";
         Pattern pattern = this.compileRegexp(regexpWithWhitespaces);
-        boolean unsuccesfull = false;
+        boolean unsuccesfull = true;
         
         context.input.mark(Integer.MAX_VALUE);
-        while(true) {
+        while(dataRead.toString().trim().length() < MAX_TOKEN_LENGTH) {
             if(pattern.matcher(dataRead.toString()).matches()) {
                 // read as much data as possible until the regexp matches data read
                 while(true) {
@@ -83,13 +84,12 @@ public abstract class BayesianNetworkFileReader {
                         break;
                     }
                 }
+                unsuccesfull = false;
                 break; // we have dataRead mathing our regexp
             }
             int nextchar = context.input.read();
-            if(nextchar == -1) {
-               unsuccesfull = true;
+            if(nextchar == -1)
                break;
-            }
             else
                 dataRead.append((char)nextchar);
         }

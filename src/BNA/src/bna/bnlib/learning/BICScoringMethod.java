@@ -39,16 +39,10 @@ public class BICScoringMethod extends ScoringMethod {
     }
     
     @Override
-    public double deltaScore(BayesianNetwork bn, AlterationAction action) {
-        try {
-            double mutualInformationChange = this.getMutualInformationTermChange(bn, action);
-            double dimensionTermChange = this.getDimensionTermChange(bn, action);
-            return mutualInformationChange - dimensionTermChange;
-        }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-            return Double.NaN;
-        }
+    public double deltaScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
+        double mutualInformationChange = this.getMutualInformationTermChange(bn, action);
+        double dimensionTermChange = this.getDimensionTermChange(bn, action);
+        return mutualInformationChange - dimensionTermChange;
     }
     
     @Override
@@ -96,7 +90,7 @@ public class BICScoringMethod extends ScoringMethod {
     }
     
     /** In the BIC formula, how does the mutual information term change? */
-    private double getMutualInformationTermChange(BayesianNetwork bn, AlterationAction action) throws BayesianNetworkException {
+    private double getMutualInformationTermChange(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
         // try cache lookup
         if(this.bnTheCacheIsFor == bn) {
             Double cachedMutinfChange = this.mutualInformationChangeCache.get(action);
@@ -139,7 +133,7 @@ public class BICScoringMethod extends ScoringMethod {
     }
     
     /** In the BIC formula, how does the dimension term change? */
-    private double getDimensionTermChange(BayesianNetwork bn, AlterationAction action) throws BayesianNetworkException {
+    private double getDimensionTermChange(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
         double N = this.dataset.getSize();
         double dimCurrent = bn.getNetworkDimension();
         action.apply(bn);

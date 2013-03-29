@@ -169,6 +169,16 @@ public class DialogQuerySampling extends javax.swing.JDialog {
             // parse input (exceptions are caught)
             final long sampleCount = Long.valueOf(this.textFieldSampleCount.getText());
             final int threadCount = Integer.valueOf(this.textFieldTheadCount.getText());
+            if(sampleCount <= 0) {
+                String msg = "Number of samples must be non-negative.";
+                JOptionPane.showMessageDialog(this, msg, "Invalid parameter", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if(threadCount <= 0) {
+                String msg = "Number of threads must be non-negative.";
+                JOptionPane.showMessageDialog(this, msg, "Invalid parameter", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             
             SampleProducer sampleProducer;
             int samplingMethodIndex = this.comboBoxMethod.getSelectedIndex();

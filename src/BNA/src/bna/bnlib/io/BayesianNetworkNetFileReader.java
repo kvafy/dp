@@ -56,7 +56,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     private void parse() throws BNLibIOException {
         final String VAR_NAME_REGEXP = "[a-zA-Z0-9_]+",
                      VAR_VALUE_REGEXP = "\"[-+?*a-zA-Z0-9\\.,_/<>=]+\"",
-                     NUMBER_REGEXP = "[0-9\\.]+"; // must be this way because of the expectInput method
+                     NUMBER_REGEXP = "[-+0-9\\.e]+"; // must be this way because of the expectInput method
         ParsingContext context = null;
         try {
             context = new ParsingContext(new BufferedInputStream(new FileInputStream(this.filename)));

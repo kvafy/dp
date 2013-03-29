@@ -27,7 +27,7 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
     }
     
     @Override
-    public BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller) { 
+    public BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller, StructuralConstraints constraints) { 
         // currently inspected network
         BayesianNetwork bnCurrent = bnInitial.copyStructureWithEmptyCPDs(); // so that the initial network won't be affected
         // to keep the best scoring network
@@ -41,9 +41,9 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                 // single step of local search
                 AlterationAction selectedAteration;
                 if(randomStepsToGo == 0)
-                    selectedAteration = this.getBestAlteration(bnCurrent);
+                    selectedAteration = this.getBestAlteration(bnCurrent, constraints);
                 else {
-                    selectedAteration = this.getRandomAlteration(bnCurrent);
+                    selectedAteration = this.getRandomAlteration(bnCurrent, constraints);
                     randomStepsToGo--;
                 }
                 if(selectedAteration != null) {
@@ -59,7 +59,7 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                     }
                     else if(randomStepsToGo == 0 && !Toolkit.doubleEquals(bnBestScore, bnCurrentScore)) {
                         // local maxima => random restart
-                        //randomStepsToGo = this.randomRestartSteps;
+                        randomStepsToGo = this.randomRestartSteps;
                         //System.out.println(String.format("[iteration %d] random restart", iteration));
                     }
                 }
@@ -80,12 +80,12 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
         return bnBest;
     }
     
-    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent) throws BayesianNetworkException {
+    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent, StructuralConstraints constraints) throws BayesianNetworkException {
         // for keeping of the best actions for single step of local search
         ArrayList<AlterationAction> bestActions = new ArrayList<AlterationAction>();
         double bestGain = Double.NEGATIVE_INFINITY;
         // inspect all possibilities
-        AlterationEnumerator alterations = new AlterationEnumerator(bnCurrent);
+        AlterationEnumerator alterations = new AlterationEnumerator(bnCurrent, constraints);
         for(AlterationAction alteration : alterations) {
             if(this.isTabuAction(alteration))
                 continue;
@@ -112,8 +112,8 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
         }
     }
     
-    private AlterationAction getRandomAlteration(BayesianNetwork bnCurrent) {
-        AlterationEnumerator alterations = new AlterationEnumerator(bnCurrent);
+    private AlterationAction getRandomAlteration(BayesianNetwork bnCurrent, StructuralConstraints constraints) {
+        AlterationEnumerator alterations = new AlterationEnumerator(bnCurrent, constraints);
         if(alterations.getAlterationCount() == 0)
             return null;
         else

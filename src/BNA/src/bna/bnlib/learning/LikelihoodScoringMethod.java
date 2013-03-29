@@ -32,19 +32,13 @@ public class LikelihoodScoringMethod extends ScoringMethod {
     }
     
     @Override
-    public double deltaScore(BayesianNetwork bn, AlterationAction action) {
-        try {
-            // TODO better
-            double originalScore = this.absoluteScore(bn);
-            action.apply(bn);
-            double newScore = this.absoluteScore(bn);
-            action.undo(bn);
-            return newScore - originalScore;
-        }
-        catch(BayesianNetworkException bnex) {
-            bnex.printStackTrace();
-            return 0;
-        }
+    public double deltaScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
+        // TODO better
+        double originalScore = this.absoluteScore(bn);
+        action.apply(bn);
+        double newScore = this.absoluteScore(bn);
+        action.undo(bn);
+        return newScore - originalScore;
     }
     
     /** This method is needed if we were to implement some caching scheme of scores. */

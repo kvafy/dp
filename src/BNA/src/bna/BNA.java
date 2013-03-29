@@ -1,12 +1,14 @@
 
 package bna;
 
-import bna.bnlib.misc.Toolkit;
-import bna.bnlib.misc.TextualTable;
-import bna.bnlib.*;
+import bna.bnlib.BayesianNetwork;
+import bna.bnlib.BayesianNetworkRuntimeException;
+import bna.bnlib.Factor;
+import bna.bnlib.Variable;
 import bna.bnlib.learning.*;
+import bna.bnlib.misc.TextualTable;
+import bna.bnlib.misc.Toolkit;
 import bna.bnlib.sampling.*;
-import bna.view.NetworkLayoutGenerator;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -24,9 +26,11 @@ public class BNA {
         //playing_sampling_string_query();
         //playing_dataset_testing();
         //playing_parameter_learning();
-        benchmark_parameter_learningMLEVSBayes();
-        //playing_structure_learning();
+        //benchmark_parameter_learningMLEVSBayes();
+        playing_structure_learning();
+        //playing_structure_learning_evaluation();
         //playing_network_layout();
+        //tabu_pars_optimization();
     }
     
     
@@ -350,7 +354,7 @@ public class BNA {
         final long SAMPLES_MIN = 50,
                    SAMPLES_MAX = 5000,
                    STEP_COUNT = 30;
-        final String NETWORK = "../../networks/child.net";
+        final String NETWORK = "../../networks/insurance.net";
         final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
         String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
         TextualTable table = new TextualTable(headers, 5, false);
@@ -402,13 +406,14 @@ public class BNA {
     }
     
     private static void playing_structure_learning() {
-        final long SAMPLES = 50 * 1000;
-        final long MAX_ITERATIONS = 50 * 1000;
-        final double TABU_LIST_RELATIVE_SIZE = 0.1;
+        final long SAMPLES = 1000;
+        final long MAX_ITERATIONS = 500;
+        final double TABU_LIST_RELATIVE_SIZE = 0.2;
         final int RANDOM_RESTART_STEPS = 15;
-        //final String NETWORK_FILE = "../../networks/sprinkler.net";
-        //final String NETWORK_FILE = "../../networks/john_marry.net";
-        final String NETWORK_FILE = "../../networks/asia.net";
+        final String NETWORK_FILE = "../../networks/earthquake.net";
+        //final String NETWORK_FILE = "../../networks/cancer.net";
+        //final String NETWORK_FILE = "../../networks/asia.net";
+        final int MAX_PARENT_COUNT = 3;
         try {
             long timeStart, timeEnd;
             System.out.println("Structure learning");
@@ -426,6 +431,8 @@ public class BNA {
             Dataset dataset = datasetSampler.getDataset();
             
             LearningController controller = new LearningController(MAX_ITERATIONS);
+            StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
+            constraints.setMaxParentCount(MAX_PARENT_COUNT);
             BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
             
             // put the dataset cache in place
@@ -450,7 +457,7 @@ public class BNA {
             System.out.println("Learning structure by BIC score...");
             ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
             StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
-            BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller);
+            BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller, constraints);
             timeEnd = System.currentTimeMillis();
             System.out.printf("Learning done! (took %.2f s)\n", (timeEnd - timeStart) / 1000.0);
             System.out.println("best structure:");
@@ -460,13 +467,125 @@ public class BNA {
         finally {}
     }
     
-    private static void playing_network_layout() {
+    private static void playing_structure_learning_evaluation() {
+        //final String NETWORK_FILE = "../../networks/sprinkler.net";
+        // - 1k samples, 1k iterations, 0.1 tabulist, 15 random restarts (!!!)
+        //final String NETWORK_FILE = "../../networks/john_marry.net";
+        // - [TODO] 1000 samples, 50k iterations, 0.2 tabulist, 15 random restarts
+        //final String NETWORK_FILE = "../../networks/cancer.net";
+        // - [TODO] 1000 samples, 50k iterations, 0.2 tabulist, 15 random restarts
         final String NETWORK_FILE = "../../networks/asia.net";
-        try {
-            System.out.println("Network layout for " + NETWORK_FILE);
-            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
-            NetworkLayoutGenerator.getLayout(bnOriginal, null);
+        // - [TODO] 10k samples, 1k iterations, 0.2 tabulist, 50 random restarts
+        final int RUN_COUNT = 100; // how many networks learn to make a statistics from
+        
+        // dataset parameters
+        final long SAMPLES = 1 * 1000;
+        // learning parameters - single iteration
+        final long MAX_ITERATIONS = 1000;
+        final double TABU_LIST_RELATIVE_SIZE = 0.2;
+        final int RANDOM_RESTART_STEPS = 50;//25;
+        
+        // sample some original network
+        BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
+        int N = bnOriginal.getNodeCount();
+        int maxAlterations = 2 * (N * (N - 1) / 2);
+        int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE);
+        // sample the network
+        System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+        DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+        SamplingController samplingController = new SamplingController(SAMPLES);
+        datasetSampler.sample(samplingController);
+        Dataset dataset = datasetSampler.getDataset();
+        
+        StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal);
+        for(int run = 0 ; run < RUN_COUNT ; run++) {
+            System.out.printf("run no %d\n", run + 1);
+            // put the dataset cache in place
+            int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
+            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
+            CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+            // learn using likelihood score
+            LearningController controller = new LearningController(MAX_ITERATIONS);
+            StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
+            BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
+            ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+            StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
+            BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, controller, constraints);
+            double resultBIC =  bicScoringMethod.absoluteScore(resultBN);
+            statistics.registerLearntNetwork(resultBN, resultBIC);
         }
-        finally {}
+        statistics.report();
+    }
+    
+    private static void tabu_pars_optimization() {
+        //final String NETWORK_FILE = "../../networks/sprinkler.net";
+        //final String NETWORK_FILE = "../../networks/john_marry.net";
+        final String NETWORK_FILE = "../../networks/earthquake.net"; // 5 nodes
+        //final String NETWORK_FILE = "../../networks/cancer.net"; // 5 nodes
+        //final String NETWORK_FILE = "../../networks/asia.net";   // 8 nodes
+        //final String NETWORK_FILE = "../../networks/child.net";  // 20 nodes
+        //final String NETWORK_FILE = "../../networks/alarm.net";  // 37 nodes
+        final int MAX_PARENT_COUNT = 3; // one more than the maximum expected parent count
+        
+        final int RUN_COUNT = 1000; // how many networks learn to make a statistics from
+        // dataset parameters
+        final long SAMPLES = 1000;//2000;
+        // learning parameters - single iteration
+        final long MAX_ITERATIONS = 1000;
+        
+        final double[] TABU_LIST_RELATIVE_SIZES = {0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3};
+        final double[] RANDOM_RESTART_RELATIVE_STEPS = {0.01, 0.02, 0.04, 0.08, 0.015, 0.03, 0.06, 0.1, 0.2, 0.3};
+                
+        // sample some original network
+        BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
+        DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+        SamplingController samplingController = new SamplingController(SAMPLES);
+        datasetSampler.sample(samplingController);
+        Dataset dataset = datasetSampler.getDataset();
+        
+        int N = bnOriginal.getNodeCount();
+        int MAX_ALTERATIONS = 2 * (N * (N - 1) / 2);
+        System.out.printf("# %s, %d samples, %d runs, %d iterations/run, max parent count %d, alterations upper bound %d\n", NETWORK_FILE, SAMPLES, RUN_COUNT, MAX_ITERATIONS, MAX_PARENT_COUNT, MAX_ALTERATIONS);
+        TextualTable successTable = new TextualTable(new String[]{"# rel_tabulist_size", "rel_rnd_steps", "success_freq"}, 6, false);
+        System.err.printf("# %s, %d samples, %d runs, %d iterations/run, alterations upper bound %d\n", NETWORK_FILE, SAMPLES, RUN_COUNT, MAX_ITERATIONS, MAX_ALTERATIONS);
+        TextualTable meanscoreTable = new TextualTable(new String[]{"# rel_tabulist_size", "rel_rnd_steps", "mean_score"}, 6, false);
+        
+        for(double randomRestartRelativeSteps : RANDOM_RESTART_RELATIVE_STEPS) {
+            int randomRestartSteps = (int)(randomRestartRelativeSteps * MAX_ALTERATIONS);
+            for(double tabulistRelativeSize : TABU_LIST_RELATIVE_SIZES) {
+                StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal);
+                for(int run = 0 ; run < RUN_COUNT ; run++) {
+                    // put the dataset cache in place
+                    int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
+                    LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
+                    CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+                    // learn using likelihood score
+                    LearningController controller = new LearningController(MAX_ITERATIONS);
+                    StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
+                    constraints.setMaxParentCount(MAX_PARENT_COUNT);
+                    BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
+                    ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+                    int TABU_LIST_SIZE = (int)(MAX_ALTERATIONS * tabulistRelativeSize);
+                    StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, randomRestartSteps);
+                    BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, controller, constraints);
+                    double resultBIC =  bicScoringMethod.absoluteScore(resultBN);
+                    statistics.registerLearntNetwork(resultBN, resultBIC);
+                }
+                successTable.addRow(new Object[] {
+                    new Double(tabulistRelativeSize),
+                    new Double(randomRestartRelativeSteps),
+                    new Double(statistics.getSuccessFrequency())
+                });
+                meanscoreTable.addRow(new Object[] {
+                    new Double(tabulistRelativeSize),
+                    new Double(randomRestartRelativeSteps),
+                    new Double(statistics.getMeanScore())
+                });
+            }
+            successTable.addRow(new Object[] {"", "", ""}); // blank line needed for gnuplot pm3d plotting
+            meanscoreTable.addRow(new Object[] {"", "", ""}); // blank line needed for gnuplot pm3d plotting
+        }
+        System.out.println(successTable.toString());
+        System.err.println(meanscoreTable.toString());
     }
 }

@@ -33,8 +33,8 @@ class ParsedQuery {
     Variable[] X, Y, E;
     int[] e;
     
-    private final String varnameRegex = "[^,|=\\s-]+",
-                         varvalueRegex = "[^,|=\\s-]+";
+    private final String varnameRegex =  "[^,|=()\\s]+",
+                         varvalueRegex = "[^,|=()\\s]+";
     
     
     public ParsedQuery(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
