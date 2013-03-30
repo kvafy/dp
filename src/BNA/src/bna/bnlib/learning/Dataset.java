@@ -5,9 +5,12 @@
 package bna.bnlib.learning;
 
 import bna.bnlib.*;
+import bna.bnlib.io.DatasetCSVFileReader;
+import bna.bnlib.io.DatasetFileReader;
 import bna.bnlib.misc.Toolkit;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,21 +24,6 @@ public class Dataset implements DatasetInterface {
     
     
     /**
-     * Create new dataset by reading data from given CSV file.
-     * @throws BayesianNetworkException When an IO error occurs or the datafile
-     *                                  has invalid format.
-     */
-    public Dataset(String csvFileName) throws BayesianNetworkException {
-        try {
-            this.loadFile(csvFileName);
-        }
-        catch(IOException ioex) {
-            String msg = String.format("Dataset loading error: %s.", ioex.getMessage());
-            throw new BayesianNetworkException(msg);
-        }
-    }
-    
-    /**
      * Create a dataset containing
      * @param variables
      * @param records 
@@ -43,6 +31,16 @@ public class Dataset implements DatasetInterface {
     public Dataset(Variable[] variables) {
         this.variables = Arrays.copyOf(variables, variables.length);
         this.records = new LinkedList<int[]>();
+    }
+    
+    /**
+     * Create new dataset by reading data from given CSV file.
+     * @throws BNLibIOException When an IO error occurs or the datafile content
+     *                          is invalid.
+     */
+    public static Dataset loadCSVFile(String csvFileName, String separator) throws BNLibIOException {
+        DatasetFileReader reader = new DatasetCSVFileReader(csvFileName, separator);
+        return reader.load();
     }
     
     @Override
@@ -55,15 +53,9 @@ public class Dataset implements DatasetInterface {
         return this.records.size();
     }
     
-    private void loadFile(String csvFileName) throws IOException {
-        LinkedList<int[]> data = new LinkedList<int[]>();
-        // TODO read variables (name and list of possible assignments)
-        // TODO read records
-        
-        // make the data read-only
-        //this.records = Collections.unmodifiableList(data);
-        this.records = data;
-        throw new UnsupportedOperationException();
+    /** Return all records in a read only list. */
+    public List<int[]> getDataReadOnly() {
+        return Collections.unmodifiableList(this.records);
     }
     
     /** Add new record to the dataset. */

@@ -1,15 +1,13 @@
 
 package bna;
 
-import bna.bnlib.BayesianNetwork;
-import bna.bnlib.BayesianNetworkRuntimeException;
-import bna.bnlib.Factor;
-import bna.bnlib.Variable;
+import bna.bnlib.*;
 import bna.bnlib.learning.*;
 import bna.bnlib.misc.TextualTable;
 import bna.bnlib.misc.Toolkit;
 import bna.bnlib.sampling.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -27,10 +25,11 @@ public class BNA {
         //playing_dataset_testing();
         //playing_parameter_learning();
         //benchmark_parameter_learningMLEVSBayes();
-        playing_structure_learning();
+        //playing_structure_learning();
         //playing_structure_learning_evaluation();
         //playing_network_layout();
         //tabu_pars_optimization();
+        
     }
     
     
@@ -351,66 +350,68 @@ public class BNA {
     
     private static void benchmark_parameter_learningMLEVSBayes() {
         // take network with independent variables (no connections) and check the mutual information
-        final long SAMPLES_MIN = 50,
+        final long SAMPLES_MIN = 10,
                    SAMPLES_MAX = 5000,
-                   STEP_COUNT = 30;
-        final String NETWORK = "../../networks/insurance.net";
+                   STEP_COUNT = 100;
+        final String NETWORK = "../../networks/child.net";
         final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
+        
         String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
         TextualTable table = new TextualTable(headers, 5, false);
-        try {
-            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK);
-            double samplesDbl = SAMPLES_MIN;
-            for(int i = 0 ; i < STEP_COUNT ; i++, samplesDbl *= SAMPLES_EXP_STEP) {
-                long samples = Math.round(samplesDbl);
-                // sample the original network
-                DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
-                SamplingController samplingController = new SamplingController(samples);
-                datasetSampler.sample(samplingController);
-                Dataset dataset = datasetSampler.getDataset();
-                // learn the parameters using MLE and Bayesian estimation with various equivalent sample sizes
-                LinkedList<BayesianNetwork> networks = new LinkedList<BayesianNetwork>();
-                networks.addLast(ParameterLearner.learnMLE(bnOriginal, dataset));
-                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 1.0));
-                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 2.5));
-                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 5.0));
-                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 10.0));
-                networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 20.0));
-                /*System.out.println("Dump of original network:");
-                System.out.println(bnOriginal.dumpCPTs());
-                System.out.println("=======================================");
-                System.out.println("Dump of MLE network:");
-                System.out.println(ParameterLearner.learnMLE(bnOriginal, dataset).dumpCPTs());
-                System.out.println("=======================================");
-                System.out.println("Dump of Bayes(1) network:");
-                System.out.println(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 1.0).dumpCPTs());
-                System.out.println("=======================================");
-                System.out.println("Dump of Bayes(5) network:");
-                System.out.println(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, dataset, 5.0).dumpCPTs());
-                if(1==1)break;*/
-                // produce one line of output
-                System.err.printf("computing case for %d samples...\n", samples);
-                LinkedList<Object> dataRowList = new LinkedList<Object>();
-                dataRowList.add(samples);
-                for(BayesianNetwork bnLearned : networks) {
-                    Double entropy = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, bnLearned);
-                    dataRowList.addLast(entropy);
-                }
-                Object[] entropyRow = dataRowList.toArray();
-                table.addRow(entropyRow);
+        
+        BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK);
+        // sample the original network
+        DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+        SamplingController samplingController = new SamplingController(SAMPLES_MAX);
+        datasetSampler.sample(samplingController);
+        Dataset completeDataset = datasetSampler.getDataset();
+
+        // infer probability distributions over Parents(X) for all X variables just once
+        System.err.printf("precomputing probability distributions over Parents(X) for all X...\n");
+        HashMap<Variable, Factor> distributionsOverParents = new HashMap<Variable, Factor>();
+        for(Node node : bnOriginal.getNodes()) {
+            if(node.getParentCount() > 0) {
+                Factor distribution = Toolkit.inferJointDistribution(bnOriginal, node.getParentVariables());
+                distributionsOverParents.put(node.getVariable(), distribution);
             }
-            System.out.println("# Benchmark of parameter learning quality (" + NETWORK + ", MLE & Bayesian estimation, relative entropy)");
-            System.out.println(table.toString());
         }
-        finally {}
+        
+        double samplesDbl = SAMPLES_MIN;
+        for(int i = 0 ; i < STEP_COUNT ; i++, samplesDbl *= SAMPLES_EXP_STEP) {
+            // take only first "samples" samples from the completeDataset
+            long samples = Math.round(samplesDbl);
+            Dataset partialDataset = new Dataset(completeDataset.getVariables());
+            for(int[] sample : completeDataset.getDataReadOnly().subList(0, (int)samples))
+                partialDataset.addRecord(sample);
+            // learn the parameters using MLE and Bayesian estimation with various equivalent sample sizes
+            LinkedList<BayesianNetwork> networks = new LinkedList<BayesianNetwork>();
+            networks.addLast(ParameterLearner.learnMLE(bnOriginal, partialDataset));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 1.0));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 2.5));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 5.0));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 10.0));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 20.0));
+            // produce one line of output
+            System.err.printf("computing case for %d samples...\n", samples);
+            LinkedList<Object> dataRowList = new LinkedList<Object>();
+            dataRowList.add(samples);
+            for(BayesianNetwork bnLearned : networks) {
+                Double entropy = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, distributionsOverParents, bnLearned);
+                dataRowList.addLast(entropy);
+            }
+            Object[] entropyRow = dataRowList.toArray();
+            table.addRow(entropyRow);
+        }
+        System.out.println("# Benchmark of parameter learning quality (" + NETWORK + ", MLE & Bayesian estimation, relative entropy)");
+        System.out.println(table.toString());
     }
     
     private static void playing_structure_learning() {
         final long SAMPLES = 1000;
-        final long MAX_ITERATIONS = 500;
-        final double TABU_LIST_RELATIVE_SIZE = 0.2;
-        final int RANDOM_RESTART_STEPS = 15;
-        final String NETWORK_FILE = "../../networks/earthquake.net";
+        final long MAX_ITERATIONS = 1000;
+        final double TABU_LIST_RELATIVE_SIZE = 0.15;
+        final int RANDOM_RESTART_STEPS = 20;
+        final String NETWORK_FILE = "../../networks/child.net";
         //final String NETWORK_FILE = "../../networks/cancer.net";
         //final String NETWORK_FILE = "../../networks/asia.net";
         final int MAX_PARENT_COUNT = 3;
@@ -474,16 +475,17 @@ public class BNA {
         // - [TODO] 1000 samples, 50k iterations, 0.2 tabulist, 15 random restarts
         //final String NETWORK_FILE = "../../networks/cancer.net";
         // - [TODO] 1000 samples, 50k iterations, 0.2 tabulist, 15 random restarts
-        final String NETWORK_FILE = "../../networks/asia.net";
+        final String NETWORK_FILE = "../../networks/child.net";
         // - [TODO] 10k samples, 1k iterations, 0.2 tabulist, 50 random restarts
         final int RUN_COUNT = 100; // how many networks learn to make a statistics from
         
         // dataset parameters
-        final long SAMPLES = 1 * 1000;
+        final long SAMPLES = 10 * 1000;
         // learning parameters - single iteration
         final long MAX_ITERATIONS = 1000;
-        final double TABU_LIST_RELATIVE_SIZE = 0.2;
-        final int RANDOM_RESTART_STEPS = 50;//25;
+        final double TABU_LIST_RELATIVE_SIZE = 0.15;
+        final int RANDOM_RESTART_STEPS = 20;
+        final int MAX_PARENT_COUNT = 3; // one more than the maximum expected parent count
         
         // sample some original network
         BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
@@ -507,6 +509,7 @@ public class BNA {
             // learn using likelihood score
             LearningController controller = new LearningController(MAX_ITERATIONS);
             StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
+            constraints.setMaxParentCount(MAX_PARENT_COUNT);
             BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
             ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
             StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
@@ -515,6 +518,13 @@ public class BNA {
             statistics.registerLearntNetwork(resultBN, resultBIC);
         }
         statistics.report();
+        
+        System.out.println("\nMost probable network:");
+        int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
+            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
+        CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+        ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+        System.out.println(statistics.getMostProbableNetwork(bicScoringMethod).dumpStructure());
     }
     
     private static void tabu_pars_optimization() {

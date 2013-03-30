@@ -9,6 +9,7 @@ import bna.bnlib.misc.Digraph;
 import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 
 /**
@@ -136,6 +137,20 @@ public class BayesianNetwork {
                 return false;
         }
         return true;
+    }
+    
+    /** Check whether "descendant" is an (indirect) descendant of "var". */
+    public boolean hasDescendant(Variable var, Variable descendant) {
+        LinkedList<Node> openQueue = new LinkedList<Node>();
+        openQueue.add(this.getNode(var));
+        while(!openQueue.isEmpty()) {
+            Node firstNode = openQueue.removeFirst();
+            if(firstNode.getVariable().equals(descendant))
+                return true;
+            for(Node childNode : firstNode.getChildNodes())
+                openQueue.addLast(childNode);
+        }
+        return false;
     }
     
     /**

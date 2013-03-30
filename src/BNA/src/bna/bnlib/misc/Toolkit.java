@@ -125,7 +125,9 @@ public class Toolkit {
     }*/
     
     /** Compute relative entropy between two networks with identical structure. */
-    public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact, BayesianNetwork bnApprox) {
+    public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact,
+                                                         Map<Variable, Factor> distributionsOverParents,
+                                                         BayesianNetwork bnApprox) {
         final double MINIMAL_Q_PROB = 1e-6; // hard constant used when probability Q(x) = 0 && P(x) != 0
         try {
             double relativeEntropy = 0;
@@ -145,7 +147,8 @@ public class Toolkit {
                     int[] scopeAssignment = new int[scope.length],
                           exactAssignment = new int[scope.length],
                           approxAssignment = new int[scope.length];
-                    Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, scopeParents);
+                    //Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, scopeParents);
+                    Factor parentsJointProbabilityFactor = distributionsOverParents.get(nodeExact.getVariable());
                     for(int[] scopeParentsAssignment : parentsJointProbabilityFactor) { // sum over instantiations of parents
                         double sumOverX = 0;
                         System.arraycopy(scopeParentsAssignment, 0, scopeAssignment, 1, scope.length - 1);
@@ -193,8 +196,8 @@ public class Toolkit {
         }
     }
     
-    private static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) {
-        final long SAMPLES_COUNT = 5000 * 1000;
+    public static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) {
+        final long SAMPLES_COUNT = 100 * 1000 * 1000;
         final int THREAD_COUNT = 5;
         SampleProducer sampleProducer = new WeightedSampleProducer(bn, vars, new Variable[]{}, new Variable[]{}, new int[]{});
         QuerySamplerMultithreaded querySamplerMultithreaded = new QuerySamplerMultithreaded(sampleProducer, THREAD_COUNT);

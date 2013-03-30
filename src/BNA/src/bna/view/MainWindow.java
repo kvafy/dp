@@ -6,6 +6,7 @@ package bna.view;
 
 import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
+import bna.bnlib.learning.Dataset;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
@@ -32,9 +33,9 @@ public class MainWindow extends javax.swing.JFrame {
         return MainWindow.instance;
     }
     
-    public void enableComponentsByState() {
+    private void enableComponentsByState() {
         boolean hasNetwork = this.panelNetworkView.hasNetwork();
-        boolean hasDataset = false;
+        boolean hasDataset = ((DatasetViewTable)this.datasetTable).hasDataset();
         // menu "Network" and its items
         this.menuItemSaveNetwork.setEnabled(hasNetwork);
         this.menuItemQuery.setEnabled(hasNetwork);
@@ -51,6 +52,14 @@ public class MainWindow extends javax.swing.JFrame {
         // tooltips are used to show CPDs, so configure the showing/hiding
         ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
     }
+    
+    public void notifyActiveNetworkChange() {
+        this.enableComponentsByState();
+    }
+    
+    public void notifyActiveDatasetChange() {
+        this.enableComponentsByState();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -61,7 +70,10 @@ public class MainWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        tabbedPane = new javax.swing.JTabbedPane();
         paneNetworkView = new javax.swing.JScrollPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        datasetTable = new DatasetViewTable();
         jMenuBar1 = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         menuItemExit = new javax.swing.JMenuItem();
@@ -82,6 +94,18 @@ public class MainWindow extends javax.swing.JFrame {
         setTitle("Bayesian networks applications");
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
+
+        tabbedPane.addTab("Network view", paneNetworkView);
+        paneNetworkView.setViewportView(panelNetworkView);
+        panelNetworkView.setLayout(null);
+        panelNetworkView.setPreferredSize(null);
+
+        datasetTable.setModel(DatasetViewTable.EMPTY_TABLE_MODEL);
+        datasetTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        datasetTable.setEnabled(false);
+        jScrollPane1.setViewportView(datasetTable);
+
+        tabbedPane.addTab("Dataset view", jScrollPane1);
 
         menuFile.setText("File");
 
@@ -121,6 +145,11 @@ public class MainWindow extends javax.swing.JFrame {
         menuDataset.setText("Dataset");
 
         menuItemLoadDataset.setText("Load from file");
+        menuItemLoadDataset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemLoadDatasetActionPerformed(evt);
+            }
+        });
         menuDataset.add(menuItemLoadDataset);
 
         menuItemSaveDataset.setText("Save to file");
@@ -152,20 +181,16 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 609, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 607, Short.MAX_VALUE)
+                .addGap(14, 14, 14))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(paneNetworkView, javax.swing.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 376, Short.MAX_VALUE)
+                .addGap(14, 14, 14))
         );
-
-        paneNetworkView.setViewportView(panelNetworkView);
-        panelNetworkView.setLayout(null);
-        panelNetworkView.setPreferredSize(null);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -196,6 +221,20 @@ public class MainWindow extends javax.swing.JFrame {
         DialogQuerySampling dialog = new DialogQuerySampling(this, false, bn);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemQueryActionPerformed
+
+    private void menuItemLoadDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLoadDatasetActionPerformed
+        DialogLoadDataset dialog = new DialogLoadDataset(this, true);
+        dialog.setVisible(true);
+        if(dialog.confirmed) {
+            try {
+                Dataset dataset = Dataset.loadCSVFile(dialog.datafile, dialog.separator);
+                ((DatasetViewTable)this.datasetTable).setDataset(dataset);
+            }
+            catch(BNLibIOException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "IO Errror", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_menuItemLoadDatasetActionPerformed
 
     /**
      * @param args the command line arguments
@@ -238,7 +277,9 @@ public class MainWindow extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable datasetTable;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenu menuDataset;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuHelp;
@@ -254,6 +295,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;
     private javax.swing.JScrollPane paneNetworkView;
+    private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
     private NetworkViewPanel panelNetworkView = new NetworkViewPanel();
 }

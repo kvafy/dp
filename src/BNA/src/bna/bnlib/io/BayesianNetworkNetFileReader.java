@@ -14,8 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- *
+ * Class for reading specification of a BN in .net file format.
  */
 public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     private boolean parsed = false;

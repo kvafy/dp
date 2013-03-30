@@ -33,7 +33,7 @@ public class NetworkViewPanel extends javax.swing.JPanel {
     
     public void setNetwork(BayesianNetwork bn) {
         this.setNetwork((GBayesianNetwork)null);
-        MainWindow.getInstance().enableComponentsByState();
+        MainWindow.getInstance().notifyActiveNetworkChange();
         if(bn == null)
             return;
         
@@ -128,7 +128,7 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             else
                 this.setPreferredSize(null); // automatic to fit in parent component
             this.repaint();
-            MainWindow.getInstance().enableComponentsByState(); 
+            MainWindow.getInstance().notifyActiveNetworkChange();
         }
     }
     
