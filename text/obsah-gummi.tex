@@ -844,7 +844,7 @@ general graphs
 \subsection{Method for finding all possible alterations of a network}
 During structure learning, at some point we always need to determine the set of all possible alterations of a concrete network, ie. which edges may be added, removed or reversed. Method of determining this set should be time-efficient as well as mathematically plausible. With these criteria in mind I have devised the following approach.
 
-The main problem we must face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ will denote the transitive closure of the relation $r$. Lets now inspect the three possible alteration cases\,--\,edge removal, addition and reversal. In further text, we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
+The main problem we have to face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ will denote the transitive closure of the relation $r$. Lets now inspect the three possible alteration cases\,--\,edge removal, addition and reversal. In further text, we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
 
 
 \subsubsection{Removing an edge}
@@ -860,10 +860,10 @@ Formally, edge $(X,Y)$ may be added iff $\neg(Y r^+ X) \land \neg(X r Y)$.
 
 
 \subsubsection{Reversing an edge}
-To grasp the problem of edge reversion we will need to make use of a topological ordering of the given network. Let the ordering be denoted $\prec$. Then we can write for all nodes of the network $A_1 \prec \dots \prec A_a \prec X \prec M_1 \prec \dots \prec M_m \prec Y \prec B_1 \prec \dots \prec B_b$ which can be, for the sake of clarity, written using sets of variables as $\vars{A} \prec X \prec \vars{M} \prec Y \prec \vars{B}$; of course, any of the sets $\vars{A}$, $\vars{M}$, $\vars{B}$ may be empty.
+To grasp the problem of edge reversion we make use of a topological ordering of the given network. Let the ordering be denoted $\prec$. Then we can write for all nodes of the network $A_1 \prec \dots \prec A_a \prec X \prec M_1 \prec \dots \prec M_m \prec Y \prec B_1 \prec \dots \prec B_b$ which can be, for the sake of clarity, written using sets of variables as $\vars{A} \prec X \prec \vars{M} \prec Y \prec \vars{B}$; of course, any of the sets $\vars{A}$, $\vars{M}$, $\vars{B}$ may be empty.
 
 Lets think about what would happen if the edge $(X,Y)$ was reversed? First, we would have to change the relative order of $X$ and $Y$ in the $\prec$ ordering to obtain a new ordering $\prec'$ for the new network. Suppose we get the ordering $\prec'$ by just swapping positions of $X$ and $Y$ in the original ordering $\prec$. Now the question is what conditions have to be met for $\vars{A} \prec' Y \prec' \vars{M} \prec' X \prec' \vars{B}$ to be a valid topological ordering of the new network? In other words, under which conditions is the new network acyclic (a~graph has a topological ordering iff it is a DAG)?
-For one, we can see that if we omit variables $\vars{M}$, the relation $\vars{A} \prec' Y \prec' X \prec' \vars{B}$ is a valid topological ordering for nodes $\vars{A} \cup \vars{B} \cup \lbrace X,Y \rbrace$ in the new network:
+For one, we can see that if we don't consider variables $\vars{M}$, the relation $\vars{A} \prec' Y \prec' X \prec' \vars{B}$ is a valid topological ordering for nodes $\vars{A} \cup \vars{B} \cup \lbrace X,Y \rbrace$ in the new network:
 
 \begin{adjustwidth}{1cm}{0cm}
 That is because variables $\vars{A}$ precede both $X$ and also $Y$ in the original $\prec$ relation (ie. $\vars{A} \prec X \land \vars{A} \prec Y$) and since no edge among variables $\vars{A} \cup \lbrace X \rbrace$ nor among $\vars{A} \cup \lbrace Y \rbrace$ has changed, relative order remains the same, ie. $\vars{A} \prec' X$ and $\vars{A} \prec' Y$, which along with $Y \prec' X$ implies $\vars{A} \prec' Y \prec' X$. Similarly, variables $\vars{B}$ come after both $X$ and also after $Y$ in the original relation $\prec$ and by analogous rationale holds $Y \prec' X \prec' \vars{B}$. Therefore $\vars{A} \prec' Y \prec' X \prec' \vars{B}$.
@@ -917,16 +917,19 @@ Let $n$ be the number of variables (for asymptotic running-time analysis).
 
 
 \chapter{Implementation}
-This chapter will present the program realization of this thesis and should be treated as program documentation. I will describe:
+This chapter will present the program realization of this thesis and should be also considered program documentation and reference for anyone who wishes to write an extension. I will describe:
 \begin{itemize}
 	\item What data structures are used for representing factors/CPDs, network nodes and the overall Bayesian network.
-	\item Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.
-	\item The overall design of the resulting application, a class diagram and description of single classes, their dependencies and responsibilities.
+	\item The overall design of the resulting library and \todo{application}, \todo{a class diagram} and description of single classes, their dependencies and responsibilities.
+	\item \todo{Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.}
 \end{itemize}
-The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will sometimes describe the inter-class dependencies in terms of names of used design patterns as described in~\cite{head_first_design_patterns}.
+The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will describe the inter-class dependencies in terms of names of used design patterns as presented in~\cite{head_first_design_patterns}.
 
 \todo{Extent of this chapter is expected to be about 10 pages.}
 
+
+\section{Package structure}
+\todo{listing of packages, brief description}
 
 
 \section{Data structures}
@@ -1218,7 +1221,7 @@ Caching of mutual information changes for network alterations is implemented rig
 
 
 \section{User interface}
-two interfaces: GUI and \srccode{bnlib} library interface
+When speaking about user interface, we consider the \srccode{bnlib} library interface, which has been described in detail earlier, and also graphical user interface of the application presented in this thesis. This section will deal with the latter interpretation. We will briefly take a look at the internal logic and at some of its non-trivial parts.
 
 \todo{state machine (what is enabled, what isn't)}
 
@@ -1263,23 +1266,52 @@ Požadavky doc. Zbořila:
 
 
 \chapter{Selected applications}
-This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, reason why it is interesting, approach to its solution and the achieved results. At the time of writing the term project, candidate applications are the ones described in the rest of this chapter. Extent of this chapter is expected to be 10-15 pages.
+This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, reason why it is interesting, approach to its solution and the achieved results. \todo{This chapter is expected to be 10-15 pages.}
 
-\section{ICU alarm network (general model learning)}
-The \term{ICU alarm network}\footnote{The ICU alarm network is, among others, freely available at The Hebrew University of Jerusalem \ignore{\url{http://www.bnlearn.com/bnrepository/}}\url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}.} (ICU stands for \term{Intensive care unit}) serves in the world of Bayesian networks as a benchmark for parameter and structure learning algorithms. The network itself has been hand-constructed and tuned in cooperation with the ICU personal. There are two types of goals: (a)~we attempt to learn parameters for a known structure, (b)~we attempt to learn both structure and parameters. Because the network is freely available, the usual course of action is to create an artificial dataset by sampling the original network, then performing the learning process and finally evaluating the obtained result by comparison with the original ICU network.
+\section{Learning of a known model}
+In this chapter I will perform a series of benchmarks of the parameter and structure learning methods presented in this thesis. We will use a collection of well known networks and attempt to relearn them based on artificial datasets sampled from these networks. The goal is to get a feel for optimal learning parameters for networks of various sizes as well as for the quality of obtained results depending of the size of our dataset. These findings will be referred to provide justification for conclusions stated in the subsequent sections in this chapter.
+
+We will examine two classes of problems: (a)~learn parameters for a known network structure, (b)~learn both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/} and as classical examples in BN-related literature.}:
+\begin{itemize}
+	\item Sprinkler network with 4 variables.
+	\item Cancer network with 5 variables. There is a weak dependence of Polution--Cancer, so we need to have a larger dataset (1k samples is not enough) to completely recover the original structure using BIC score.
+	\item Asia network with 8 variables, single non-deterministic variable.
+	\item Child network with 20 variables, no deterministic variable.
+	\item ICU alarm network with 37 variables, one deterministic variable.
+\end{itemize}
+
+
+\subsection{Learning parameters}
 
 \todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
+
+We will examine how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior is considered).
 
 As a metric of how closely the original and the learnt networks match I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
 \begin{equation*}
 D_{KL}(P \parallel Q) = \sum_{x_1,\dots,x_m} P(x_1,\dots,x_m) \log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}
 \end{equation*}
-which can be in context of Bayesian networks rewritten to the form:
+which can be in context of Bayesian networks rewritten to the following form ($P$ is distribution induced by the original network, $Q$ is induced by the learnt network):
 \begin{equation*}
 D_{KL}(P \parallel Q) = \sum_{X \in Nodes} \sum_{\vars{pa} \in Val(Par(X))} P(\vars{pa}) \sum_{x_i \in Val(X)} \log \frac{P(x_i \mid \vars{pa})}{Q(x_i \mid \vars{pa})}
 \end{equation*}
-As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than inspecting probabilities of atomic events, however probability for parents assignment $P(\vars{pa})$ needs to be inferred. %Luckily, I am entitled to use stochastic inference only.
-From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero, the suggested value is $10^{-6}$.
+As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than exhaustively inspecting probabilities of all atomic events $x_1, \dots, x_m$ which would take $O(2^m)$ time. However, probability for parents assignment $P(\vars{pa})$ needs to be inferred. According to the requirements of this thesis I use a stochastic inference method, namely weighted sampling, with such number of samples that leads to reasonably accurate results in the KL-divergence analysis\footnote{I use $10^8$ samples to approximate the probability distribution $P(Parents(X))$ when computing the KL-divergence. This number has been chosen because the KL-divergence graphs for $10^7$, $10^8$ and $10^9$ samples have been empirically proved to converge (for the ICU alarm network with 37 variables).}.
+
+Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \neq D_{KL}(Q \parallel P)$ but it is commonly used for evaluation of how closely two probability distributions match because the true metrics of probability distributions don't decompose over the network structure and therefore are impractical for larger networks.
+
+From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with uniform prior is not penalized (in fact, doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify and also, we don't really have any solid prior knowledge of the target domains. 
+
+
+
+
+\subsection{Learning structure}
+Evaluation of structure learning proved to be a little problematic. We cannot use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as I explained earlier. Also, there is the problem that typically more than one network structure can capture the probability distribution induced by the \uv{true} network. Strictly speaking, a network structure can capture the desired distribution if it doesn't imply any independency that isn't implied by the \uv{true} network.
+
+I have tried to find optimal set of parameters for tabu-search algorithm (tabu-list size and random restart step count) for networks of various degrees of complexity but, surprisingly, the space of results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count.
+
+\todo{for Child works well it seems, count number of times each edge was ok}
+
+
 
 
 
