@@ -355,7 +355,7 @@ In Figure~\ref{fig:bn_d-separation_abstract} we will examine three more complica
 \begin{figure}[h]
     \begin{subfigure}[b]{0.42\linewidth}
         \includegraphics[scale=0.4]{fig/bn-naive-bayes}
-        \caption{General Naïve Bayes model in which holds $\forall i \neq j: X_i \perp X_j \mid C$}
+        \caption{General Naïve Bayes model in which holds $X_i \perp X_j \mid C$ for $i \neq j$}
         \label{fig:bn_d-separation_a}
     \end{subfigure}
     \qquad\qquad\qquad
@@ -1271,7 +1271,7 @@ This chapter will present collection of selected applications suitable for Bayes
 \section{Learning of a known model}
 In this chapter I will perform a series of benchmarks of the parameter and structure learning methods presented in this thesis. We will use a collection of well known networks and attempt to relearn them based on artificial datasets sampled from these networks. The goal is to get a feel for optimal learning parameters for networks of various sizes as well as for the quality of obtained results depending of the size of our dataset. These findings will be referred to provide justification for conclusions stated in the subsequent sections in this chapter.
 
-We will examine two classes of problems which are (a)~learn parameters for a known network structure, (b)~learn both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}}:
+We will examine two classes of problems which are (a)~learn parameters for a known network structure, (b)~learn both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}. They are also on the enclosed CD in \srccode{networks/} directory.}:
 \begin{itemize}
 	\item \uv{Cancer} network (5 variables, 4 edges, 10 CPD entries)
 	\item \uv{Asia} network (8 variables, 8 edges, 18 CPD entries)
@@ -1281,7 +1281,7 @@ We will examine two classes of problems which are (a)~learn parameters for a kno
 
 
 \subsection{Learning parameters}
-The first step will be to inspect how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior is considered).
+The first step will be to inspect how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a~dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior is considered).
 
 As a metric of how closely the original and the learnt networks match (respectively probability distributions they induce) I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
 \begin{equation*}
@@ -1297,7 +1297,7 @@ Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \
 
 From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with uniform prior is not penalized (in fact, doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify and also, we don't really have any solid prior knowledge of the target domains.
 
-Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially for \uv{asia} network, we can see rapid drops in the relative entropy. Cause of such a drop is a new sample that just manages to erase a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section. Also, the MLE seems to be steadily outperformed; of course if we had an excessive amount of training data then MLE would actually be more suitable than Bayesian estimation because the pseudosamples representing prior distribution would be a hard-to-override source of inaccuracy. However, having a lot of training data is usually not the case in practice. Nonetheless, if accuracy of network parameters is our concern, similar analysis as I just presented is called for to determine the optimal learning method and its parameters wrt. size of the network and of the dataset used.
+Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in case of \uv{asia} network, we can see rapid drops in the relative entropy. Cause of such a drop is a newly added sample that to erases a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section.
 
 \begin{center}
 \begin{figure}[h]
@@ -1327,13 +1327,15 @@ Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of paramet
 \end{figure}
 \end{center}
 
+Also, according to the tests performed, MLE might seem to be steadily outperformed. Of course, if we had an excessive amount of training data, which is usually not the case in practice, then MLE would actually be more suitable than Bayesian estimation because the pseudosamples representing prior distribution would be a hard-to-overcome source of inaccuracy. Nonetheless, if a concrete application demands estimation of network parameters which are as close to the \uv{real ones} as possible, similar analysis as I just performed is a~sensible thing to do\,--\,pick a network of similar complexity, plot the learning curves for this network and determine what is the best parameter estimation method for dataset of given size.
+
 \todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
 
 
 \subsection{Learning structure}
-Evaluation of structure learning proved to be a little problematic. We cannot use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as I explained earlier. Also, there is the problem that typically more than one network structure can capture the probability distribution induced by the \uv{true} network. Strictly speaking, a network structure can capture the desired distribution if it doesn't imply any independency that isn't implied by the \uv{true} network.
+Evaluation of structure learning proved to be a little problematic. We cannot use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as they are based on complete enumeration of atomic events. Also, there is the problem that typically more than one network structure can capture the probability distribution induced by the \uv{true} network. Strictly speaking, a network structure can capture desired distribution $P$ if the network structure doesn't imply any independency that isn't implied by the \uv{true} network.
 
-I have tried to find optimal set of parameters for tabu-search algorithm (tabu-list size and random restart step count) for networks of various degrees of complexity but, surprisingly, the space of results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count.
+I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count.
 
 \todo{for Child works well it seems, count number of times each edge was ok}
 
@@ -1378,7 +1380,7 @@ The usefulness of Naïve Bayesian model for spam classification has been studied
 \chapter{Conclusion}
 During the term project I focused on studying the theory of Bayesian networks, mainly from the books~\cite{pgm,russell_norvig_ed2}. As a supporting material I also attended an on-line course called Probabilistic Graphical Models at \url{http://www.coursera.org} taught by professor Daphne Koller at Stanford University.
 
-I explained the fundamentals of Bayesian networks, described various methods of inference (exact, stochastic and message passing) and methods of model learning. I also focused on explaining strong points and limitations throughout this thesis. All techniques have been studied and presented in such a detail that is needed in order to successfully implement them and to understand their limitations.
+I studied and explained the fundamentals of Bayesian networks, described various inference methods and methods of model learning. To get better hold of the theoretical concepts and to gain some insight I supplied commented formal proofs or derivations of multiple statements, some of the proofs were constructed by myself. I also focused on explaining strong points and limitations throughout this thesis. All techniques have been studied and presented in such a detail that is fully sufficient in order to implement them and to understand their limitations.
 
 \medskip
 
@@ -1387,6 +1389,11 @@ In the summer semester I am going to study the selected application cases in dep
 My original contributions:
 \begin{itemize}
 	\item I myself devised some proofs and nice formal theories: Joint probability distribution induces by a BN indeed is a probability distribution (sums to one). Derivation of the formula for weighted sampling. Nice theory for finding all possible alterations of a network (for state-space search in structure learning).
+\end{itemize}
+
+What I did in the practical part:
+\begin{itemize}
+    \item I have demonstrated the analysis which should be performed if our goal is to learn network parameters as accurately as possible.
 \end{itemize}
 %=========================================================================
 %begin-of-inserted-footer
