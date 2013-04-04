@@ -23,6 +23,10 @@ public class SamplingController {
         return this.stopFlag || (this.maxSamples != null && currentSample >= this.maxSamples);
     }
     
+    public boolean getStopFlag() {
+        return this.stopFlag;
+    }
+    
     public void setStopFlag() {
         this.stopFlag = true;
     }

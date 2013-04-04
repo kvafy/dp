@@ -25,6 +25,7 @@ public class BNA {
         //playing_dataset_testing();
         //playing_parameter_learning();
         //benchmark_parameter_learningMLEVSBayes();
+        benchmark_parameter_learningMLEVSBayesINSPECTION();
         //playing_structure_learning();
         //playing_structure_learning_evaluation();
         //playing_network_layout();
@@ -351,10 +352,10 @@ public class BNA {
     private static void benchmark_parameter_learningMLEVSBayes() {
         // take network with independent variables (no connections) and check the mutual information
         final long SAMPLES_MIN = 10,
-                   SAMPLES_MAX = 5000,
-                   STEP_COUNT = 100;
-        final String NETWORK = "../../networks/child.net";
-        final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
+                   SAMPLES_MAX = 1000;
+                   //STEP_COUNT = 100;
+        final String NETWORK = "../../networks/cancer.net";
+        //final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
         
         String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
         TextualTable table = new TextualTable(headers, 5, false);
@@ -376,10 +377,12 @@ public class BNA {
             }
         }
         
-        double samplesDbl = SAMPLES_MIN;
+        /*double samplesDbl = SAMPLES_MIN;
         for(int i = 0 ; i < STEP_COUNT ; i++, samplesDbl *= SAMPLES_EXP_STEP) {
             // take only first "samples" samples from the completeDataset
-            long samples = Math.round(samplesDbl);
+            long samples = Math.round(samplesDbl);*/
+        for(long samples = SAMPLES_MIN ; samples <= SAMPLES_MAX ; samples++) {
+            // take only first "samples" samples from the completeDataset
             Dataset partialDataset = new Dataset(completeDataset.getVariables());
             for(int[] sample : completeDataset.getDataReadOnly().subList(0, (int)samples))
                 partialDataset.addRecord(sample);
@@ -404,6 +407,59 @@ public class BNA {
         }
         System.out.println("# Benchmark of parameter learning quality (" + NETWORK + ", MLE & Bayesian estimation, relative entropy)");
         System.out.println(table.toString());
+    }
+    
+    private static void benchmark_parameter_learningMLEVSBayesINSPECTION() {
+        // reason: why are such rapid decreases in KL-divergence for small networks?
+        // => a samples manages to erase a zero from some CPD => lesser penalization
+        
+        // take network with independent variables (no connections) and check the mutual information
+        final long SAMPLES_MIN = 10,
+                   SAMPLES_MAX = 1000;
+        final String NETWORK = "../../networks/asia.net";
+
+        BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK);
+        // sample the original network
+        DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+        SamplingController samplingController = new SamplingController(SAMPLES_MAX);
+        datasetSampler.sample(samplingController);
+        Dataset completeDataset = datasetSampler.getDataset();
+
+        // infer probability distributions over Parents(X) for all X variables just once
+        System.err.printf("precomputing probability distributions over Parents(X) for all X...\n");
+        HashMap<Variable, Factor> distributionsOverParents = new HashMap<Variable, Factor>();
+        for(Node node : bnOriginal.getNodes()) {
+            if(node.getParentCount() > 0) {
+                Factor distribution = Toolkit.inferJointDistribution(bnOriginal, node.getParentVariables());
+                distributionsOverParents.put(node.getVariable(), distribution);
+            }
+        }
+        
+        BayesianNetwork bnPreviousMLE = null;
+        Double klPreviousMLE = null;
+        
+        for(long samples = SAMPLES_MIN ; samples <= SAMPLES_MAX ; samples++) {
+            // take only first "samples" samples from the completeDataset
+            Dataset partialDataset = new Dataset(completeDataset.getVariables());
+            for(int[] sample : completeDataset.getDataReadOnly().subList(0, (int)samples))
+                partialDataset.addRecord(sample);
+            // learn the parameters using MLE and Bayesian estimation with various equivalent sample sizes
+            BayesianNetwork bnCurrentMLE = ParameterLearner.learnMLE(bnOriginal, partialDataset);
+            Double klCurrentMLE = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, distributionsOverParents, bnCurrentMLE);
+            if(klPreviousMLE != null && klPreviousMLE - klCurrentMLE >= 0.15) {
+                System.out.printf("jump of KL-divergence by %.2f at %d samples\n", klPreviousMLE - klCurrentMLE, samples);
+                System.out.println("previous bn:");
+                System.out.println(bnPreviousMLE.dumpCPTs());
+                System.out.println("");
+                System.out.println("new bn:");
+                System.out.println(bnCurrentMLE.dumpCPTs());
+                System.out.println("");
+                System.out.println("");
+                System.out.println("");
+            }
+            bnPreviousMLE = bnCurrentMLE;
+            klPreviousMLE = klCurrentMLE;
+        }        
     }
     
     private static void playing_structure_learning() {

@@ -6,7 +6,9 @@ package bna.view;
 
 import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
+import bna.bnlib.Variable;
 import bna.bnlib.learning.Dataset;
+import bna.bnlib.misc.Toolkit;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
@@ -53,12 +55,20 @@ public class MainWindow extends javax.swing.JFrame {
         ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
     }
     
-    public void notifyActiveNetworkChange() {
+    void notifyActiveNetworkChange() {
         this.enableComponentsByState();
     }
     
-    public void notifyActiveDatasetChange() {
+    void notifyActiveDatasetChange() {
         this.enableComponentsByState();
+    }
+    
+    private boolean networkAndDatasetAreCompatible() {
+        BayesianNetwork currentNetwork = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        Variable[] networkVariables = currentNetwork.getVariables();
+        Dataset currentDataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        Variable[] datasetVariables = currentDataset.getVariables();
+        return Toolkit.areEqual(networkVariables, datasetVariables);
     }
 
     /**
@@ -153,9 +163,19 @@ public class MainWindow extends javax.swing.JFrame {
         menuDataset.add(menuItemLoadDataset);
 
         menuItemSaveDataset.setText("Save to file");
+        menuItemSaveDataset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemSaveDatasetActionPerformed(evt);
+            }
+        });
         menuDataset.add(menuItemSaveDataset);
 
         menuItemSampleNewDataset.setText("Produce by sampling");
+        menuItemSampleNewDataset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemSampleNewDatasetActionPerformed(evt);
+            }
+        });
         menuDataset.add(menuItemSampleNewDataset);
 
         jMenuBar1.add(menuDataset);
@@ -163,9 +183,19 @@ public class MainWindow extends javax.swing.JFrame {
         menuLearning.setText("Learning");
 
         menuItemLearnParameters.setText("Parameter learning");
+        menuItemLearnParameters.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemLearnParametersActionPerformed(evt);
+            }
+        });
         menuLearning.add(menuItemLearnParameters);
 
         menuItemLearnStructure.setText("Structure learning (tabu search)");
+        menuItemLearnStructure.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemLearnStructureActionPerformed(evt);
+            }
+        });
         menuLearning.add(menuItemLearnStructure);
 
         jMenuBar1.add(menuLearning);
@@ -188,7 +218,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 376, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 380, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -200,8 +230,8 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItemExitActionPerformed
 
     private void menuItemLoadNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLoadNetworkActionPerformed
-        String startDirector = ".";
-        JFileChooser networkFileChooser = new JFileChooser(startDirector);
+        String lastNetworkDirectory = ".";
+        JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
         networkFileChooser.setDialogTitle("Load a Bayesian network from file");
         networkFileChooser.showOpenDialog(this);
         if(networkFileChooser.getSelectedFile() == null)
@@ -225,16 +255,44 @@ public class MainWindow extends javax.swing.JFrame {
     private void menuItemLoadDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLoadDatasetActionPerformed
         DialogLoadDataset dialog = new DialogLoadDataset(this, true);
         dialog.setVisible(true);
-        if(dialog.confirmed) {
-            try {
-                Dataset dataset = Dataset.loadCSVFile(dialog.datafile, dialog.separator);
-                ((DatasetViewTable)this.datasetTable).setDataset(dataset);
-            }
-            catch(BNLibIOException ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "IO Errror", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        if(dialog.confirmed)
+            ((DatasetViewTable)this.datasetTable).setDataset(dialog.dataset);
     }//GEN-LAST:event_menuItemLoadDatasetActionPerformed
+
+    private void menuItemSaveDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSaveDatasetActionPerformed
+        
+    }//GEN-LAST:event_menuItemSaveDatasetActionPerformed
+
+    private void menuItemSampleNewDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSampleNewDatasetActionPerformed
+        BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        DialogSampleDataset dialog = new DialogSampleDataset(this, true, bn);
+        dialog.setVisible(true);
+        if(dialog.confirmed)
+            ((DatasetViewTable)this.datasetTable).setDataset(dialog.dataset);
+    }//GEN-LAST:event_menuItemSampleNewDatasetActionPerformed
+
+    private void menuItemLearnParametersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnParametersActionPerformed
+        if(!this.networkAndDatasetAreCompatible()) {
+            String msg = "Current network and current dataset must contain exactly the same variables.";
+            JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        DialogParametersLearning dialog = new DialogParametersLearning(this, true, bn, dataset);
+        dialog.setVisible(true);
+        if(dialog.confirmed)
+            ((NetworkViewPanel)this.panelNetworkView).setNetwork(dialog.bnLearnt);
+    }//GEN-LAST:event_menuItemLearnParametersActionPerformed
+
+    private void menuItemLearnStructureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnStructureActionPerformed
+        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        DialogStructureLearning dialog = new DialogStructureLearning(this, true, dataset);
+        dialog.setVisible(true);
+        //if(dialog.confirmed)
+        //    ((NetworkViewPanel)this.panelNetworkView).setNetwork(dialog.bnLearnt);
+        
+    }//GEN-LAST:event_menuItemLearnStructureActionPerformed
 
     /**
      * @param args the command line arguments

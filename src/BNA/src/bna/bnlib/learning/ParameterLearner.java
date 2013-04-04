@@ -13,10 +13,13 @@ import bna.bnlib.misc.Toolkit;
  */
 public class ParameterLearner {
 
-    /** Produce a new network with identical structure but with CPTs computed by maximum likelihood estimation. */
-    public static BayesianNetwork learnMLE(BayesianNetwork bnOrig, Dataset dataset) {
+    /**
+     * Produce a new network with identical structure but with CPTs computed by maximum likelihood estimation.
+     * @throws BNLibInconsistentVariableSetsException When network and dataset contain different variables.
+     */
+    public static BayesianNetwork learnMLE(BayesianNetwork bnOrig, Dataset dataset) throws BNLibInconsistentVariableSetsException {
         if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
-            throw new BayesianNetworkRuntimeException("Some variables of the network aren't present in the dataset.");
+            throw new BNLibInconsistentVariableSetsException("Some variables of the network aren't present in the dataset.");
         
         BayesianNetwork bnLearnt = bnOrig.copyStructureWithEmptyCPDs();
         for(Node node : bnLearnt.getNodes()) {
@@ -31,8 +34,9 @@ public class ParameterLearner {
     /**
      * Produce a new network with identical structure but with CPTs computed by Bayesian estimation with uniform prior.
      * @param alpha Equivalent sample size.
+     * @throws BNLibInconsistentVariableSetsException When network and dataset contain different variables.
      */
-    public static BayesianNetwork learnBayesianEstimationUniform(BayesianNetwork bnOrig, Dataset dataset, double alpha) {
+    public static BayesianNetwork learnBayesianEstimationUniform(BayesianNetwork bnOrig, Dataset dataset, double alpha) throws BNLibInconsistentVariableSetsException {
         if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
             throw new BayesianNetworkRuntimeException("Some variables of the network aren't present in the dataset.");
         

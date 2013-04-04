@@ -4,18 +4,19 @@
 
 package bna.view;
 
+import bna.bnlib.BNLibIOException;
+import bna.bnlib.learning.Dataset;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 
 /**
- * Dialog that collects specification of a csv file with dataset.
+ * Dialog that collects specification of a csv file with dataset and loads this dataset.
  * The file name and the csv separator are accessible via the dialog attributes
  * "datafile" and "separator".
  */
 public class DialogLoadDataset extends javax.swing.JDialog {
-    String datafile;
-    String separator;
+    Dataset dataset = null;
     boolean confirmed = false;
 
     /**
@@ -132,15 +133,32 @@ public class DialogLoadDataset extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void buttonLoadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadActionPerformed
-        if(this.verifyInputs()) {
-            this.datafile = this.textFieldFilename.getText();
-            this.separator = this.textFieldSeparator.getText();
+        if(!this.verifyInputs())
+            return;
+        String datafile = this.textFieldFilename.getText(),
+                separator = this.textFieldSeparator.getText();
+        try {
+            this.dataset = Dataset.loadCSVFile(datafile, separator);
+            if(dataset.getVariables().length == 1) {
+                String msg = "The loaded dataset contains only one column. You probably entered\n"
+                           + "wrong column separator. Accept the loaded dataset anyway?",
+                    title = "Suspicious dataset";
+                int choice = JOptionPane.showConfirmDialog(this, msg, title,
+                                                           JOptionPane.OK_CANCEL_OPTION,
+                                                           JOptionPane.QUESTION_MESSAGE);
+                if(choice != JOptionPane.OK_OPTION)
+                    return;
+            }
             this.confirmed = true;
             this.dispose();
+        }
+        catch(BNLibIOException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "IO Errror", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_buttonLoadActionPerformed
 
     private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
+        this.confirmed = false;
         this.dispose();
     }//GEN-LAST:event_buttonCancelActionPerformed
 

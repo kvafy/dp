@@ -25,6 +25,10 @@ public class DatasetViewTable extends javax.swing.JTable {
         this.setModel(DatasetViewTable.EMPTY_TABLE_MODEL);
     }
     
+    public Dataset getDataset() {
+        return this.dataset;
+    }
+    
     public boolean hasDataset() {
         return this.dataset != null;
     }
