@@ -23,6 +23,10 @@ public class LearningController {
         return this.stopFlag || (this.maxIterations != null && currentIteration >= this.maxIterations);
     }
     
+    public boolean getStopFlag() {
+        return this.stopFlag;
+    }
+    
     public void setStopFlag() {
         this.stopFlag = true;
     }

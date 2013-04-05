@@ -55,6 +55,10 @@ public class MainWindow extends javax.swing.JFrame {
         ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
     }
     
+    void setActiveNetwork(BayesianNetwork bn) {
+        ((NetworkViewPanel)this.panelNetworkView).setNetwork(bn);
+    }
+    
     void notifyActiveNetworkChange() {
         this.enableComponentsByState();
     }
@@ -218,7 +222,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 380, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 384, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -287,11 +291,9 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void menuItemLearnStructureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnStructureActionPerformed
         Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
-        DialogStructureLearning dialog = new DialogStructureLearning(this, true, dataset);
+        BayesianNetwork bnCurrent = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        DialogStructureLearning dialog = new DialogStructureLearning(this, false, dataset, bnCurrent);
         dialog.setVisible(true);
-        //if(dialog.confirmed)
-        //    ((NetworkViewPanel)this.panelNetworkView).setNetwork(dialog.bnLearnt);
-        
     }//GEN-LAST:event_menuItemLearnStructureActionPerformed
 
     /**

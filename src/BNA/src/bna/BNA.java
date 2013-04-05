@@ -555,7 +555,7 @@ public class BNA {
         datasetSampler.sample(samplingController);
         Dataset dataset = datasetSampler.getDataset();
         
-        StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal);
+        StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal.getVariables());
         for(int run = 0 ; run < RUN_COUNT ; run++) {
             System.out.printf("run no %d\n", run + 1);
             // put the dataset cache in place
@@ -583,7 +583,7 @@ public class BNA {
         System.out.println(statistics.getMostProbableNetwork(bicScoringMethod).dumpStructure());
     }
     
-    private static void tabu_pars_optimization() {
+    /*private static void tabu_pars_optimization() {
         //final String NETWORK_FILE = "../../networks/sprinkler.net";
         //final String NETWORK_FILE = "../../networks/john_marry.net";
         final String NETWORK_FILE = "../../networks/earthquake.net"; // 5 nodes
@@ -619,7 +619,7 @@ public class BNA {
         for(double randomRestartRelativeSteps : RANDOM_RESTART_RELATIVE_STEPS) {
             int randomRestartSteps = (int)(randomRestartRelativeSteps * MAX_ALTERATIONS);
             for(double tabulistRelativeSize : TABU_LIST_RELATIVE_SIZES) {
-                StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal);
+                StructureLearningStatistics statistics = new StructureLearningStatistics(bnOriginal.getVariables());
                 for(int run = 0 ; run < RUN_COUNT ; run++) {
                     // put the dataset cache in place
                     int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
@@ -653,5 +653,5 @@ public class BNA {
         }
         System.out.println(successTable.toString());
         System.err.println(meanscoreTable.toString());
-    }
+    }*/
 }

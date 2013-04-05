@@ -11,6 +11,7 @@ import bna.bnlib.Variable;
 import bna.bnlib.misc.TextualTable;
 import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 
@@ -19,24 +20,18 @@ import java.util.HashMap;
  * This means keeping best scoring networks, connection matrix etc.
  */
 public class StructureLearningStatistics {
-    private final BayesianNetwork bnReferential;
-    // what structures have been found (clustered by equal score)
+    // what structures have been found (clustered by equal score and sorted in decreasing order) TODO memory consuming??
     private ArrayList<LearningRecord> bnLearntHitparade = new ArrayList<LearningRecord>();
-    // simple counting of the number of times the exact referential network is found
-    private int countReferentialOccurences = 0;
-    private int countAllOccurences = 0;
     // for mean score
+    private int allNetworksCount = 0;
     private double scoresSum = 0;
     // edge occurence frequency
     private Variable[] variableOrder; // index of a variable is the same as in edgeOccurences matrix
     private HashMap<Variable, Integer> variable2IndexMapping = new HashMap<Variable, Integer>();
     private int[][] edgeOccurences;
     
-    
-    public StructureLearningStatistics(BayesianNetwork referential) {
-        this.bnReferential = referential.copyStructureWithEmptyCPDs();
-        
-        this.variableOrder = this.bnReferential.getVariables();
+    public StructureLearningStatistics(Variable[] variables) {
+        this.variableOrder = Arrays.copyOf(variables, variables.length);
         this.edgeOccurences = new int[this.variableOrder.length][this.variableOrder.length];
         for(int i = 0 ; i < this.variableOrder.length ; i++)
             this.variable2IndexMapping.put(this.variableOrder[i], new Integer(i));
@@ -47,10 +42,7 @@ public class StructureLearningStatistics {
         
         this.updateEdgeFrequencies(bnLearnt, score);
         
-        this.countAllOccurences++;
-        if(this.bnReferential.equalsStructurally(bnLearnt))
-            this.countReferentialOccurences++;
-        
+        this.allNetworksCount++;
         this.scoresSum += score;
     }
     
@@ -58,18 +50,18 @@ public class StructureLearningStatistics {
         for(int i = 0 ; i < this.bnLearntHitparade.size() ; i++) {
             LearningRecord iRecord = this.bnLearntHitparade.get(i);
             if(Toolkit.doubleEquals(score, iRecord.score)) {
-                if(!iRecord.containsStructure(bnLearnt)) // want to keep unique structures
+                if(!iRecord.containsStructure(bnLearnt)) // want to keep only unique structures
                     iRecord.networks.add(bnLearnt);
                 return;
             }
             else if(score > iRecord.score) {
-                LearningRecord newBestRecord = new LearningRecord(bnLearnt, score);
-                this.bnLearntHitparade.add(0, newBestRecord);
+                LearningRecord newScoreRecord = new LearningRecord(bnLearnt, score);
+                this.bnLearntHitparade.add(i, newScoreRecord);
                 return;
             }
         }
         LearningRecord newWorstRecord = new LearningRecord(bnLearnt, score);
-        this.bnLearntHitparade.add(newWorstRecord);
+        this.bnLearntHitparade.add(this.bnLearntHitparade.size(), newWorstRecord); // append as last
     }
     
     private void updateEdgeFrequencies(BayesianNetwork bnLearnt, double score) {
@@ -111,24 +103,41 @@ public class StructureLearningStatistics {
         }
         System.out.println("Edge frequency table:");
         System.out.println(edgeFreqTable.toString());
-        System.out.println("");
-        
-        // percentage discovered the true network
-        System.out.printf("Correct network found in %.2f %% cases.\n", 100.0 * this.getSuccessFrequency());
     }
     
-    /** Relative number of thimes the exact original structure was found. */
-    public double getSuccessFrequency() {
-        if(this.countAllOccurences > 0)
-            return (double)this.countReferentialOccurences / this.countAllOccurences;
-        else
-            return 0;
+    public Variable[] getVariables() {
+        return Arrays.copyOf(this.variableOrder, this.variableOrder.length);
+    }
+    
+    public int[][] getEdgeCountMatrix() {
+        int variableCount = this.variableOrder.length;
+        int[][] copy = new int[variableCount][];
+        for(int i = 0 ; i < variableCount ; i++)
+            copy[i] = Arrays.copyOf(this.edgeOccurences[i], variableCount);
+        return copy;
+    }
+    
+    public Double getBestScoreSoFar() {
+        if(this.bnLearntHitparade.isEmpty())
+            return null;
+        LearningRecord firstRecord = this.bnLearntHitparade.get(0);
+        return firstRecord.score;
+    }
+    
+    public BayesianNetwork[] getBestScoringNetworks() {
+        if(this.bnLearntHitparade.isEmpty())
+            return null;
+        LearningRecord firstRecord = this.bnLearntHitparade.get(0);
+        ArrayList<BayesianNetwork> bestNetworksList = firstRecord.networks;
+        BayesianNetwork[] bestNetworksArray = new BayesianNetwork[bestNetworksList.size()];
+        bestNetworksList.toArray(bestNetworksArray);
+        return bestNetworksArray;
     }
     
     /** Average score of the best structure found. */
     public double getMeanScore() {
-        if(this.countAllOccurences > 0)
-            return this.scoresSum / this.countAllOccurences;
+        if(this.allNetworksCount > 0)
+            return this.scoresSum / this.allNetworksCount;
         else
             return 0;
     }

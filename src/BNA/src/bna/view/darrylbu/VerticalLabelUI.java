@@ -1,7 +1,10 @@
 /**
  * @(#)VerticalLabelUI.java	1.0 02/18/09
  * 
- * origin: http://tips4java.wordpress.com/2009/02/21/vertical-label-ui/
+ * Origin: http://tips4java.wordpress.com/2009/02/21/vertical-label-ui/
+ * Licence: You are free to use and/or modify any or all code posted on the Java
+ *          Tips Weblog without restriction.
+ *          [http://tips4java.wordpress.com/about/]
  */
 package bna.view.darrylbu;
 

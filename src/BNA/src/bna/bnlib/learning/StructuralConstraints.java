@@ -44,6 +44,12 @@ public class StructuralConstraints {
         return parentsCount <= this.maxParentCount;
     }
     
+    public void setConnectionAllowed(Variable from, Variable to, boolean allowed) {
+        int fromIndex = this.variable2IndexMapping.get(from),
+            toIndex = this.variable2IndexMapping.get(to);
+        this.connectivityMatrix[fromIndex][toIndex] = allowed;
+    }
+    
     public void disallowBeParent(Variable var) {
         int variableCount = this.variable2IndexMapping.size();
         int varIndex = this.variable2IndexMapping.get(var);
