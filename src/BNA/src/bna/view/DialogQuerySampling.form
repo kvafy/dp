@@ -112,14 +112,8 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="textFieldSampleCount">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="10000000"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="textFieldTheadCount">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="2"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
@@ -141,7 +135,7 @@
         <Property name="text" type="java.lang.String" value="On-line results"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="checkBoxOnlineActionPerformed"/>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="checkBoxOnlineStateChanged"/>
       </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="jScrollPane1">

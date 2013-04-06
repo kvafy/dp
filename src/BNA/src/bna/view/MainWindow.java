@@ -9,9 +9,13 @@ import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Variable;
 import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
+import org.ini4j.*;
 
 
 /**
@@ -21,7 +25,8 @@ public class MainWindow extends javax.swing.JFrame {
     // singleton
     private static MainWindow instance = new MainWindow();
     // application configuration
-    
+    private static final String CONFIG_FILENAME = "config.ini";
+    private Ini configuration = null;
 
     
     private MainWindow() {
@@ -29,6 +34,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
         this.enableComponentsByState();
         this.configureTooltips();
+        this.loadConfiguration();
     }
     
     public static MainWindow getInstance() {
@@ -53,6 +59,50 @@ public class MainWindow extends javax.swing.JFrame {
     private void configureTooltips() {
         // tooltips are used to show CPDs, so configure the showing/hiding
         ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
+    }
+    
+    /** Loads configuration from a persistent source. */
+    private void loadConfiguration() {
+        // fill this.configuration variable (either from file or by a blank configuration)
+        try {
+            this.configuration = new Ini(new FileReader(MainWindow.CONFIG_FILENAME));
+        }
+        catch(org.ini4j.InvalidFileFormatException ex) {
+            this.configuration = new Ini();
+        }
+        catch(IOException ex) {
+            this.configuration = new Ini();
+        }
+    }
+    
+    /** Saves configurations in persistent form. */
+    private void saveConfiguration() {
+        try {
+            if(this.configuration != null)
+                this.configuration.store(new File(MainWindow.CONFIG_FILENAME));
+        }
+        catch(IOException ex) {
+            System.err.println("Error saving the configuration to file: " + ex.getMessage());
+        }
+    }
+    
+    /**
+     * Get value associated with given section and option.
+     * @return The string value of null if no such section-option location exists.
+     */
+    public String getConfiguration(String section, String option) {
+        String value = this.configuration.get(section, option);
+        System.out.printf("getConfiguration(%s, %s) => %s\n", section, option, value);
+        return value;
+    }
+    
+    /** Set value associated with given section and option. */
+    public void setConfiguration(String section, String option, String value) {
+        System.out.printf("setConfiguration(%s, %s, %s)\n", section, option, value);
+        this.configuration.remove(section, option);
+        if(value == null)
+            return;
+        this.configuration.add(section, option, value);
     }
     
     void setActiveNetwork(BayesianNetwork bn) {
@@ -108,6 +158,11 @@ public class MainWindow extends javax.swing.JFrame {
         setTitle("Bayesian networks applications");
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
 
         tabbedPane.addTab("Network view", paneNetworkView);
         paneNetworkView.setViewportView(panelNetworkView);
@@ -222,7 +277,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 384, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 392, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -234,12 +289,15 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItemExitActionPerformed
 
     private void menuItemLoadNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLoadNetworkActionPerformed
-        String lastNetworkDirectory = ".";
+        String lastNetworkDirectory = this.getConfiguration("Network", "directory");
+        if(lastNetworkDirectory == null)
+            lastNetworkDirectory = ".";
         JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
         networkFileChooser.setDialogTitle("Load a Bayesian network from file");
         networkFileChooser.showOpenDialog(this);
         if(networkFileChooser.getSelectedFile() == null)
             return;
+        this.setConfiguration("Network", "directory", networkFileChooser.getSelectedFile().getParent());
         try {
             this.panelNetworkView.setNetwork((GBayesianNetwork)null);
             BayesianNetwork bn = BayesianNetwork.loadFromFile(networkFileChooser.getSelectedFile().getAbsolutePath());
@@ -295,6 +353,10 @@ public class MainWindow extends javax.swing.JFrame {
         DialogStructureLearning dialog = new DialogStructureLearning(this, false, dataset, bnCurrent);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemLearnStructureActionPerformed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        this.saveConfiguration();
+    }//GEN-LAST:event_formWindowClosed
 
     /**
      * @param args the command line arguments

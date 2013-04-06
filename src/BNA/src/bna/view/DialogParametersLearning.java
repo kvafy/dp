@@ -27,8 +27,30 @@ public class DialogParametersLearning extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(parent);
+        this.loadConfiguration();
         this.bnOriginal = bn;
         this.dataset = dataset;
+    }
+    
+    private void loadConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // learning method
+        String methodIndexStr = mw.getConfiguration("LearningParameters", "method_index");
+        if(methodIndexStr != null) {
+            try {
+                this.comboBoxMethod.setSelectedIndex(Integer.valueOf(methodIndexStr));
+            }
+            catch(NumberFormatException nfe) {}
+        }
+        // equivalent sample size
+        String alphaStr = mw.getConfiguration("LearningParameters", "alpha");
+        this.textFieldEquivalentSampleSize.setText(alphaStr);
+    }
+    
+    private void saveConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        mw.setConfiguration("LearningParameters", "method_index", String.valueOf(this.comboBoxMethod.getSelectedIndex()));
+        mw.setConfiguration("LearningParameters", "alpha", this.textFieldEquivalentSampleSize.getText());
     }
     
     private boolean verifyInputs() {
@@ -81,7 +103,6 @@ public class DialogParametersLearning extends javax.swing.JDialog {
 
         jLabel2.setText("Equivalent sample size");
 
-        textFieldEquivalentSampleSize.setText("1");
         textFieldEquivalentSampleSize.setEnabled(false);
 
         jLabel3.setText("Method");
@@ -163,6 +184,7 @@ public class DialogParametersLearning extends javax.swing.JDialog {
                 this.bnLearnt = ParameterLearner.learnBayesianEstimationUniform(this.bnOriginal, this.dataset, alpha);
             }
             this.confirmed = true;
+            this.saveConfiguration();
             this.dispose();
         }
         catch(BNLibInconsistentVariableSetsException ex) {

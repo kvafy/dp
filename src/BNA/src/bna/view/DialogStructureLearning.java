@@ -36,6 +36,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.dataset = dataset; // tables need to access the dataset variables
         this.bnOriginal = bnOriginal;
         initComponents();
+        this.loadConfiguration();
         this.setLocationRelativeTo(parent);
         this.initializeEdgeFrequenciesTable();
         this.initializeNetworksSelectionCombobox();
@@ -86,6 +87,36 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         }
         this.comboBoxNetworksSelection.setModel(new javax.swing.DefaultComboBoxModel(bnStrings));
     }
+    
+    private void loadConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // text fields
+        this.textFieldRunCount.setText(mw.getConfiguration("LearningStructure", "run_count"));
+        this.textFieldIterationCount.setText(mw.getConfiguration("LearningStructure", "iteration_count"));
+        this.textFieldRandomRestartStepcount.setText(mw.getConfiguration("LearningStructure", "rnd_restart_step_count"));
+        this.textFieldTabulistRelsize.setText(mw.getConfiguration("LearningStructure", "tabulist_relsize"));
+        this.textFieldMaxParents.setText(mw.getConfiguration("LearningStructure", "max_parents"));
+        // comboboxes
+        String scoringMethodIndexStr = mw.getConfiguration("LearningStructure", "scoring_method_index");
+        try {
+            int scoringMethodIndex = Integer.parseInt(scoringMethodIndexStr);
+            this.comboBoxMethod.setSelectedIndex(scoringMethodIndex);
+        }
+        catch(NumberFormatException nfe) {}
+    }
+    
+    private void saveConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // text fields
+        mw.setConfiguration("LearningStructure", "run_count", this.textFieldRunCount.getText());
+        mw.setConfiguration("LearningStructure", "iteration_count", this.textFieldIterationCount.getText());
+        mw.setConfiguration("LearningStructure", "rnd_restart_step_count", this.textFieldRandomRestartStepcount.getText());
+        mw.setConfiguration("LearningStructure", "tabulist_relsize", this.textFieldTabulistRelsize.getText());
+        mw.setConfiguration("LearningStructure", "max_parents", this.textFieldMaxParents.getText());
+        // comboboxes
+        String scoringMethodIndexStr = String.valueOf(this.comboBoxMethod.getSelectedIndex());
+        mw.setConfiguration("LearningStructure", "scoring_method_index", scoringMethodIndexStr);
+    }
 
     private boolean verifyInputs() {
         int selectedScoringMethod = this.comboBoxMethod.getSelectedIndex();
@@ -131,6 +162,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.textFieldIterationCount.setEnabled(false);
         this.textFieldRandomRestartStepcount.setEnabled(false);
         this.textFieldTabulistRelsize.setEnabled(false);
+        this.textFieldMaxParents.setEnabled(false);
         this.buttonLearn.setEnabled(false);
         this.buttonStop.setEnabled(true);
         this.updateFrequencyMatrix(null);
@@ -149,6 +181,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.textFieldIterationCount.setEnabled(true);
         this.textFieldRandomRestartStepcount.setEnabled(true);
         this.textFieldTabulistRelsize.setEnabled(true);
+        this.textFieldMaxParents.setEnabled(true);
         this.buttonLearn.setEnabled(true);
         this.buttonStop.setEnabled(false);
         if(success)
@@ -289,21 +322,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
 
         jLabel2.setText("Number of runs");
 
-        textFieldRunCount.setText("100");
-
         comboBoxMethod.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "BIC score", "Bayesian score" }));
 
         jLabel4.setText("Number of iterations");
 
-        textFieldIterationCount.setText("100");
-
         jLabel1.setText("per run");
 
         jLabel5.setText("Random restart steps");
-
-        textFieldRandomRestartStepcount.setText("5");
-
-        textFieldTabulistRelsize.setText("0.2");
 
         jLabel6.setText("Relative tabulist size");
 
@@ -330,8 +355,6 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         tableAllowedConnections.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         jScrollPane3.setViewportView(tableAllowedConnections);
         ((AllowedConnectionsTable)tableAllowedConnections).initModel();
-
-        textFieldMaxParents.setText("3");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -520,6 +543,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             return;
         StructureLearningThread thread = new StructureLearningThread((java.awt.Frame)this.getParent());
         thread.start();
+        this.saveConfiguration();
     }//GEN-LAST:event_buttonLearnActionPerformed
 
     private void buttonStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStopActionPerformed

@@ -23,8 +23,19 @@ public class DialogSampleDataset extends javax.swing.JDialog {
     public DialogSampleDataset(java.awt.Frame parent, boolean modal, BayesianNetwork bnToSample) {
         super(parent, modal);
         initComponents();
+        this.loadConfiguration();
         this.setLocationRelativeTo(this.getParent());
         this.bn = bnToSample;
+    }
+    
+    private void loadConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        this.textFieldSampleCount.setText(mw.getConfiguration("DatasetSampling", "sample_count"));
+    }
+    
+    private void saveConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        mw.setConfiguration("DatasetSampling", "sample_count", this.textFieldSampleCount.getText());
     }
 
     private boolean verifyInputs() {
@@ -131,6 +142,7 @@ public class DialogSampleDataset extends javax.swing.JDialog {
                         // the sampling ran till the successful end
                         dataset = datasetSampler.getDataset();
                         confirmed = true;
+                        saveConfiguration();
                         dispose();
                     }
                 }

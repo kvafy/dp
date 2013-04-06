@@ -26,8 +26,46 @@ public class DialogQuerySampling extends javax.swing.JDialog {
     public DialogQuerySampling(java.awt.Frame parent, boolean modal, BayesianNetwork bn) {
         super(parent, modal);
         initComponents();
+        this.loadConfiguration();
         this.setLocationRelativeTo(parent);
         this.bn = bn;
+    }
+    
+    private void loadConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // text fields
+        this.textFieldQuery.setText(mw.getConfiguration("QuerySampling", "query_str"));
+        this.textFieldSampleCount.setText(mw.getConfiguration("QuerySampling", "sample_count"));
+        this.textFieldTheadCount.setText(mw.getConfiguration("QuerySampling", "thread_count"));
+        // comboboxes
+        String methodIndexStr = mw.getConfiguration("QuerySampling", "method_index");
+        try {
+            int methodIndex = Integer.valueOf(methodIndexStr);
+            this.comboBoxMethod.setSelectedIndex(methodIndex);
+        }
+        catch(NumberFormatException nfe) {}
+        // checkboxes
+        String onlineFlagStr = mw.getConfiguration("QuerySampling", "online_results");
+        try {
+            int onlineFlag = Integer.valueOf(onlineFlagStr);
+            this.checkBoxOnline.setSelected(onlineFlag != 0);
+        }
+        catch(NumberFormatException nfe) {}
+        
+    }
+    
+    private void saveConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // text fields
+        mw.setConfiguration("QuerySampling", "query_str", this.textFieldQuery.getText());
+        mw.setConfiguration("QuerySampling", "sample_count", this.textFieldSampleCount.getText());
+        mw.setConfiguration("QuerySampling", "thread_count", this.textFieldTheadCount.getText());
+        // comboboxes
+        String methodIndexStr = String.valueOf(this.comboBoxMethod.getSelectedIndex());
+        mw.setConfiguration("QuerySampling", "method_index", methodIndexStr);
+        // checkboxes
+        String onlineFlagStr = this.checkBoxOnline.isSelected() ? "1" : "0";
+        mw.setConfiguration("QuerySampling", "online_results", onlineFlagStr);
     }
     
     /**
@@ -60,10 +98,6 @@ public class DialogQuerySampling extends javax.swing.JDialog {
 
         jLabel2.setText("Number of threads");
 
-        textFieldSampleCount.setText("10000000");
-
-        textFieldTheadCount.setText("2");
-
         jLabel3.setText("Method");
 
         comboBoxMethod.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Weighted sampling", "MCMC sampling" }));
@@ -74,9 +108,9 @@ public class DialogQuerySampling extends javax.swing.JDialog {
         });
 
         checkBoxOnline.setText("On-line results");
-        checkBoxOnline.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkBoxOnlineActionPerformed(evt);
+        checkBoxOnline.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                checkBoxOnlineStateChanged(evt);
             }
         });
 
@@ -241,6 +275,7 @@ public class DialogQuerySampling extends javax.swing.JDialog {
                 }
             };
             
+            this.saveConfiguration();
             worker.start();
         }
         catch(NumberFormatException nfex) {
@@ -252,9 +287,9 @@ public class DialogQuerySampling extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_buttonStartActionPerformed
 
-    private void checkBoxOnlineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBoxOnlineActionPerformed
+    private void checkBoxOnlineStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_checkBoxOnlineStateChanged
         this.textFieldTheadCount.setEnabled(!this.checkBoxOnline.isSelected());
-    }//GEN-LAST:event_checkBoxOnlineActionPerformed
+    }//GEN-LAST:event_checkBoxOnlineStateChanged
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

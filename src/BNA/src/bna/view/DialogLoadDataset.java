@@ -16,6 +16,7 @@ import javax.swing.JOptionPane;
  * "datafile" and "separator".
  */
 public class DialogLoadDataset extends javax.swing.JDialog {
+    private String datasetDirectory = null;
     Dataset dataset = null;
     boolean confirmed = false;
 
@@ -25,7 +26,24 @@ public class DialogLoadDataset extends javax.swing.JDialog {
     public DialogLoadDataset(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.loadConfiguration();
         this.setLocationRelativeTo(this.getParent());
+    }
+    
+    private void loadConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        // directory from which to load dataset
+        this.datasetDirectory = mw.getConfiguration("Dataset", "directory");
+        if(this.datasetDirectory == null || this.datasetDirectory.isEmpty())
+            this.datasetDirectory = ".";
+        // csv separator
+        this.textFieldSeparator.setText(mw.getConfiguration("Dataset", "separator"));
+    }
+    
+    private void saveConfiguration() {
+        MainWindow mw = MainWindow.getInstance();
+        mw.setConfiguration("Dataset", "directory", this.datasetDirectory);
+        mw.setConfiguration("Dataset", "separator", this.textFieldSeparator.getText());
     }
 
     private boolean verifyInputs() {
@@ -136,7 +154,7 @@ public class DialogLoadDataset extends javax.swing.JDialog {
         if(!this.verifyInputs())
             return;
         String datafile = this.textFieldFilename.getText(),
-                separator = this.textFieldSeparator.getText();
+               separator = this.textFieldSeparator.getText();
         try {
             this.dataset = Dataset.loadCSVFile(datafile, separator);
             if(dataset.getVariables().length == 1) {
@@ -150,6 +168,7 @@ public class DialogLoadDataset extends javax.swing.JDialog {
                     return;
             }
             this.confirmed = true;
+            this.saveConfiguration();
             this.dispose();
         }
         catch(BNLibIOException ex) {
@@ -163,11 +182,13 @@ public class DialogLoadDataset extends javax.swing.JDialog {
     }//GEN-LAST:event_buttonCancelActionPerformed
 
     private void textFieldFilenameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textFieldFilenameMouseClicked
-        JFileChooser chooser = new JFileChooser(".");
+        JFileChooser chooser = new JFileChooser(this.datasetDirectory);
         chooser.setDialogTitle("Pick a csv dataset file...");
         chooser.showOpenDialog(this);
-        if(chooser.getSelectedFile() != null)
+        if(chooser.getSelectedFile() != null) {
             this.textFieldFilename.setText(chooser.getSelectedFile().toString());
+            this.datasetDirectory = chooser.getSelectedFile().getParent();
+        }
     }//GEN-LAST:event_textFieldFilenameMouseClicked
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

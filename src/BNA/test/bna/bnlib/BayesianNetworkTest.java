@@ -50,7 +50,7 @@ public class BayesianNetworkTest {
         try {
             bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         bn.getVariable("CLOUDY");
@@ -66,7 +66,7 @@ public class BayesianNetworkTest {
         try {
             bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         bn.getVariable("cloudy");
@@ -82,7 +82,7 @@ public class BayesianNetworkTest {
         try {
             bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         bn.getNode("CLOUDY");
@@ -98,7 +98,7 @@ public class BayesianNetworkTest {
         try {
             bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         bn.getNode("cloudy");
@@ -114,7 +114,7 @@ public class BayesianNetworkTest {
         try {
             instance = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         int expResult = 4;
@@ -132,7 +132,7 @@ public class BayesianNetworkTest {
         try {
             bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         }
-        catch(BayesianNetworkException bnex) {
+        catch(Exception bnex) {
             fail("Sprinkler net threw an exception.");
         }
         Variable[] expResultA = {

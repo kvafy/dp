@@ -28,7 +28,10 @@ public class NetworkViewPanel extends javax.swing.JPanel {
     }
     
     public BayesianNetwork getNetwork() {
-        return this.gbn.getNetwork();
+        if(this.gbn == null)
+            return null;
+        else
+            return this.gbn.getNetwork();
     }
     
     public void setNetwork(BayesianNetwork bn) {

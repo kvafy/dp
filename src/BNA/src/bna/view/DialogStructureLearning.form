@@ -186,9 +186,6 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldRunCount">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="100"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JComboBox" name="comboBoxMethod">
               <Properties>
@@ -203,9 +200,6 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldIterationCount">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="100"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel1">
               <Properties>
@@ -218,14 +212,8 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldRandomRestartStepcount">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="5"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldTabulistRelsize">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="0.2"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
@@ -281,9 +269,6 @@
               </SubComponents>
             </Container>
             <Component class="javax.swing.JTextField" name="textFieldMaxParents">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="3"/>
-              </Properties>
             </Component>
           </SubComponents>
         </Container>
