@@ -522,8 +522,8 @@ public class NetworkLayoutGenerator {
     }
     
     private static double evaluateGridPlacementScore(LNode[][] placement) {
-        double edgeLenghtsSum2 = 0;
-        double edgeTypesCountPerNode = 0; // how many different edge lengths are there from a node? sum over all nodes
+        double edgeLenghtsSum2 = 0;        // sum of squared lenghts of all edges
+        double edgeTypesCountPerNode = 0;  // how many different edge lengths are there from a node? sum over all nodes
         double edgeTypesCountPerLayer = 0; // how many different edge lengths are there from a layer? sum over all layers
         for(LNode[] layer : placement) {
             HashSet<Double> edgeTypesPerLayer = new HashSet<Double>();
@@ -539,8 +539,33 @@ public class NetworkLayoutGenerator {
             }
             edgeTypesCountPerLayer += Toolkit.countPseudouniqueNumbers(edgeTypesPerLayer);
         }
+        // keep the nodes without any connections (parents or children) close to the rest
+        boolean nonChildlessNodeExists = false;
+        for(LNode lnode : placement[0]) {
+            if(lnode.children.length != 0) {
+                nonChildlessNodeExists = true;
+                break;
+            }
+        }
+        double distanceSum2OfChildlessNodes = 0;
+        for(LNode lnode : placement[0]) { // orphans will always be in the top layer
+            if(lnode.children.length == 0) {
+                double distance2ToClosestNode = Double.MAX_VALUE;
+                for(LNode neighbour : placement[0]) {
+                    if(neighbour == lnode)
+                        continue;
+                    if(neighbour.children.length == 0 && nonChildlessNodeExists)
+                        // avoid cluster of childless nodes far far away from the rest of the network
+                        continue;
+                    distance2ToClosestNode = Math.min(distance2ToClosestNode,
+                                                      Math.pow(lnode.gridX - neighbour.gridX, 2.0));
+                }
+                distanceSum2OfChildlessNodes += distance2ToClosestNode;
+            }
+        }
         
-        return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer);
+        // the final fitness function
+        return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer + distanceSum2OfChildlessNodes);
     }
     
     

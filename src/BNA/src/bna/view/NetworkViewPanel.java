@@ -5,10 +5,9 @@
 package bna.view;
 
 import bna.bnlib.BayesianNetwork;
+import bna.bnlib.misc.LRUCache;
 import bna.bnlib.misc.Toolkit;
 import java.awt.*;
-import javax.swing.JLabel;
-import javax.swing.SwingWorker;
 
 
 /**
@@ -16,8 +15,7 @@ import javax.swing.SwingWorker;
  */
 public class NetworkViewPanel extends javax.swing.JPanel {
     private GBayesianNetwork gbn;
-    // when not null, generating layout is in progress
-    private NetworkLayoutGeneratorObserver layoutGeneratorObserver = null; 
+    private final LRUCache<BayesianNetwork, GBayesianNetwork> layoutCache = new LRUCache<BayesianNetwork, GBayesianNetwork>(10);
     
     public NetworkViewPanel() {
         this.gbn = null;
@@ -34,86 +32,34 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             return this.gbn.getNetwork();
     }
     
+    class LayoutGeneratingThread extends Thread {
+        private BayesianNetwork bn;
+        
+        public LayoutGeneratingThread(BayesianNetwork bn) {
+            this.bn = bn;
+        }
+        
+        @Override
+        public void run() {
+            GBayesianNetwork gbn = layoutCache.get(this.bn);
+            if(gbn == null) {
+                NetworkLayoutGeneratorObserver observer = null;
+                gbn = NetworkLayoutGenerator.getLayout(this.bn, observer);
+                layoutCache.put(this.bn, gbn);
+            }
+            setNetwork(gbn);
+        }
+    }
+    
     public void setNetwork(BayesianNetwork bn) {
         this.setNetwork((GBayesianNetwork)null);
         MainWindow.getInstance().notifyActiveNetworkChange();
         if(bn == null)
             return;
         
-        // generate the layout in another thread and then place the final product
-        // worker thread will install labels for status updates and then remove them
-        final BayesianNetwork bnFinal = bn;
-        SwingWorker<GBayesianNetwork, StatusNotification> workerThread = new SwingWorker<GBayesianNetwork, StatusNotification>() {
-            private JLabel labelIterations = new JLabel(),
-                           labelScoreCurrent = new JLabel(),
-                           labelScoreBest = new JLabel();
-            
-            void installStatusLabels(NetworkLayoutGeneratorObserver observerInst) {
-                layoutGeneratorObserver = observerInst;
-                add(labelIterations);
-                add(labelScoreCurrent);
-                add(labelScoreBest);
-                FontMetrics fontMetrics = getFontMetrics(getFont());
-                int lineHeight = fontMetrics.getHeight(),
-                    lineYMargin = Math.max(10, (int)(lineHeight * 0.25));
-                labelIterations.setLocation(30, 30);
-                labelScoreCurrent.setLocation(30, 30 + 1 * (lineHeight + lineYMargin));
-                labelScoreBest.setLocation(30,    30 + 2 * (lineHeight + lineYMargin));
-                validate();
-            }
-            
-            private void removeStatusLabels() {
-                layoutGeneratorObserver = null;
-                remove(labelIterations);
-                remove(labelScoreBest);
-                remove(labelScoreBest);
-                validate();
-            }
-            
-            @Override
-            protected GBayesianNetwork doInBackground() throws Exception {
-                final NetworkLayoutGeneratorObserver observer = new NetworkLayoutGeneratorObserver() {
-                    @Override
-                    public void notifyLayoutGeneratorStatus(long iteration, long maxIterations, double score, double scoreBest) {
-                        publish(new StatusNotification(iteration, maxIterations, score, scoreBest));
-                    }
-                };
-                this.installStatusLabels(observer);
-                return NetworkLayoutGenerator.getLayout(bnFinal, observer);
-            }
-            
-            @Override
-            protected void done() {
-                try {
-                    removeStatusLabels();
-                    setNetwork(get());
-                }
-                catch(Exception ignore) {
-                    ignore.printStackTrace();
-                }
-            }
-            
-            @Override
-            protected void process(java.util.List<StatusNotification> notifications) {
-                StatusNotification notif = notifications.get(notifications.size() - 1);
-                labelIterations.setText(String.format("Iteration %d/%d", notif.currentIteration, notif.maxIterations));
-                labelScoreCurrent.setText(String.format("Current score: %.2f", notif.currentSore));
-                labelScoreBest.setText(String.format("Best score: %.2f", notif.bestScore));
-            }
-        };
-        workerThread.execute();
-    }
-    
-    /** Carries currently observed status of layout generator. */
-    class StatusNotification {
-        long currentIteration, maxIterations;
-        double currentSore, bestScore;
-        public StatusNotification(long currentIter, long maxIters, double curScore, double bestScore) {
-            this.currentIteration = currentIter;
-            this.maxIterations = maxIters;
-            this.currentSore = curScore;
-            this.bestScore = bestScore;
-        }
+        // generate the layout in another thread which publishes the final product
+        LayoutGeneratingThread workerThread = new LayoutGeneratingThread(bn);
+        workerThread.start();
     }
     
     public void setNetwork(GBayesianNetwork bnNew) {
@@ -161,7 +107,8 @@ public class NetworkViewPanel extends javax.swing.JPanel {
         );
         g2D.fillRect(0, 0, this.getWidth(), this.getHeight());
         
-        // network components (nodes, edges, CPDs)
+        // network components (nodes, edges)
+        // (CPDs are painted as tooltips of nodes automatically)
         if(this.gbn != null) {
             g2D.setColor(Color.DARK_GRAY);
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
@@ -171,18 +118,10 @@ public class NetworkViewPanel extends javax.swing.JPanel {
                     this.paintEdge(g2D, parent, child);
             }
             
-            // nodes get painted as standalone components
+            // nodes get painted as stand-alone components
             g2D.setColor(Color.BLACK);
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
             this.paintComponents(gPlain); // aka nodes
-            
-            // TODO CPDs
-        }
-        else if(this.layoutGeneratorObserver != null) {
-            // components informing about layout generation process
-            g2D.setColor(Color.BLACK);
-            g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
-            this.paintComponent(gPlain);
         }
         
         // frame of the whole area

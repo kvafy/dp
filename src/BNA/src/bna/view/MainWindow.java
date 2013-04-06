@@ -91,14 +91,11 @@ public class MainWindow extends javax.swing.JFrame {
      * @return The string value of null if no such section-option location exists.
      */
     public String getConfiguration(String section, String option) {
-        String value = this.configuration.get(section, option);
-        System.out.printf("getConfiguration(%s, %s) => %s\n", section, option, value);
-        return value;
+        return this.configuration.get(section, option);
     }
     
     /** Set value associated with given section and option. */
     public void setConfiguration(String section, String option, String value) {
-        System.out.printf("setConfiguration(%s, %s, %s)\n", section, option, value);
         this.configuration.remove(section, option);
         if(value == null)
             return;
@@ -310,6 +307,12 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void menuItemQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemQueryActionPerformed
         BayesianNetwork bn = this.panelNetworkView.getNetwork();
+        if(bn == null || !bn.hasValidCPDs()) {
+            String msg = "Current network has invalid CPDs and therefore cannot be sampled.\n"
+                       + "You probably learnt just network structure but not parameters.";
+            JOptionPane.showMessageDialog(this,msg, "Cannot sample network", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         DialogQuerySampling dialog = new DialogQuerySampling(this, false, bn);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemQueryActionPerformed
@@ -327,6 +330,12 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void menuItemSampleNewDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSampleNewDatasetActionPerformed
         BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        if(bn == null || !bn.hasValidCPDs()) {
+            String msg = "Current network has invalid CPDs and therefore cannot be sampled.\n"
+                       + "You probably learnt just network structure but not parameters.";
+            JOptionPane.showMessageDialog(this,msg, "Cannot sample network", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         DialogSampleDataset dialog = new DialogSampleDataset(this, true, bn);
         dialog.setVisible(true);
         if(dialog.confirmed)

@@ -256,6 +256,13 @@ public class BayesianNetwork {
         return Arrays.copyOf(this.nodes, this.nodes.length);
     }
     
+    public boolean hasValidCPDs() {
+        for(Node n : this.nodes)
+            if(!n.hasValidFactor())
+                return false;
+        return true;
+    }
+    
     /** Is there a node with variable v? */
     private boolean containsVariable(Variable v) {
         for(Node node : this.nodes)
