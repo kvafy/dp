@@ -736,73 +736,84 @@ Note that the BIC score decomposes over the graph $\mathcal{G}$, so when we want
 
 
 \subsection{Bayesian score}
-Bayesian score for a graph structure is yet another application of the Bayesian principle which we have already encountered in context of parameter estimation\,--\,whatever we are uncertain about should be modeled as a random variable, ie. parameters $\Theta$ (as in Bayesian parameter estimation) and even the network structure $\mathcal{G}$. To state the idea formally, graph structure $\mathcal{G}$ is a~random variable for which holds $P(\mathcal{G} \mid \mathcal{D}) = P(\mathcal{D} \mid \mathcal{G}) P(\mathcal{G}) / P(\mathcal{D})$. The denominator is independent of the network structure and parameters, so we can safely consider just the numerator. Further we will consider logarithm of the numerator which is perfectly legal because logarithm is a~monotone function. By applying the logarithm we obtain the Bayesian score for structure $\mathcal{G}$ and data $\mathcal{D}$ as:
+Bayesian score for a graph structure is yet another application of the Bayesian principle which we have already encountered in context of parameter estimation\,--\,whatever we are uncertain about should be modeled as a random variable. In case of Bayesian score we are uncertain both about parameters $\Theta$ (as in Bayesian parameter estimation) and even about the network structure $\mathcal{G}$. To state the idea formally, graph structure $\mathcal{G}$ is a~random variable for which holds $P(\mathcal{G} \mid \mathcal{D}) = P(\mathcal{D} \mid \mathcal{G}) P(\mathcal{G}) / P(\mathcal{D})$. The denominator is independent of the network structure and parameters, so we can safely consider just the numerator. Further we will consider logarithm of the numerator which is perfectly legal because logarithm is a~monotone function. By applying the logarithm we obtain the Bayesian score for structure $\mathcal{G}$ and data $\mathcal{D}$ as:
 \begin{equation}\label{eq:bayesian_score_general}
     score_B(\mathcal{G} : \mathcal{D}) = \log P(\mathcal{D} \mid \mathcal{G}) + \log P(\mathcal{G})
 \end{equation}
-The term $P(\mathcal{D} \mid \mathcal{G})$ in equation~\eqref{eq:bayesian_score_general} is a marginal distribution (because all possible parameter settings $\Theta$ are marginalized out) defined as follows:
+The structure prior $P(\mathcal{G})$ in the equation~\eqref{eq:bayesian_score_general} allows us to penalize certain structures. However, effect of the structure prior is rather minor, especially in asymptotic analysis~\cite[p.~804]{pgm}, because this term doesn't change with the number of samples. Literature suggests using a uniform prior or a prior that exponentially penalizes complexity of the structure which is useful for sparse datasets~\cite{pgm}.
+
+The term $P(\mathcal{D} \mid \mathcal{G})$ in equation~\eqref{eq:bayesian_score_general} will be our major concern. It is a marginal distribution (because all possible parameter settings $\Theta$ are marginalized out) usually defined in the following integral form:
 \begin{equation}\label{eq:bayesian_score_marginal}
     P(\mathcal{D} \mid \mathcal{G})
     =
-    \int_{\Theta} P(\mathcal{D} \mid \mathcal{G}, \Theta) P(\Theta \mid \mathcal{G}) \ d \Theta
+    \int_{\Theta} P(\Theta \mid \mathcal{G}) P(\mathcal{D} \mid \mathcal{G}, \Theta) \ d \Theta
 \end{equation}
-The integral expression can be interpreted as computing the average probability of $\mathcal{D}$ given $\mathcal{G}$ weighted by probabilities of possible parameters settings $\Theta$. So, the Bayesian estimation is more conservative when compared to the BIC score which considers only parameters $\Theta$ computed by the maximum likelihood estimation. Therefore Bayesian score is less prone to overfitting.
-
-The integral in equation~\eqref{eq:bayesian_score_marginal} is very abstract. Fortunately, for a BN with multinomial variables, whose prior distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$, the expression can be written in closed form as follows~\cite[p.~796]{pgm}:
-\begin{equation*}
+The integral expression can be interpreted as computing the average probability of $\mathcal{D}$ given $\mathcal{G},\Theta$ weighted by probabilities of possible parameters settings $P(\Theta \mid \mathcal{G})$. So, the Bayesian estimation is more conservative when compared to the BIC score which considers only parameters $\Theta$ computed by the maximum likelihood estimation. Therefore Bayesian score is less prone to overfitting~\cite[p.~795]{pgm}.
+The integral expression~\eqref{eq:bayesian_score_marginal} is hard to deal with practically. Fortunately, for a BN with multinomial variables, whose prior parameter distribution is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$, the expression can be written using chain rule as follows:
+\begin{equation}\label{eq:bayesian_score_chain_rule}
     P(\mathcal{D} \mid \mathcal{G})
     =
-     \prod_{X \in Nodes}
-             \Bigl[
-                \prod_{\vars{p} \in Val(Parents(X))}
-                   \Bigl(
-                      \frac{\Gamma(\alpha_{X \mid \vars{p}})}{\Gamma(\alpha_{X \mid \vars{p}} + N_{\vars{p}})}
-                      \prod_{x \in Val(X)} \frac{\Gamma(\alpha_{x \mid \vars{p}} + N_{x, \vars{p}})}{\Gamma(\alpha_{x \mid \vars{p}})}
-                   \Bigr)
-             \Bigr]
-\end{equation*}
-where $\Gamma$ is the \term{gamma function} which is a continuous generalization of factorial. Gamma function needs to be used because, in general, hyperparameters of a Dirichlet distribution don't necessarily have to be integers.
-\begin{comment}
-The first term $\log P(\mathcal{D} \mid \mathcal{G})$ of equation~\eqref{eq:bayesian_score_general} can be interpreted in many ways. Suppose we have a multinomial distribution over variable $X$ where $Val(X) = \lbrace x_1,\dots,x_k\rbrace$ and suppose that the prior distribution over $X$ is a Dirichlet distribution with hyperparameters $(\alpha_1, \dots, \alpha_n)$. One simple and intuitive way to derive a useful representation for $P(\mathcal{D} \mid \mathcal{G})$ is to use the chain rule and combinatorial derivations as follows~\cite[p.~796]{pgm}:
+     \prod_{i = 1}^{| \mathcal{D} |}
+             P(\xi^{(i)} \mid \mathcal{G}, \xi^{(1)}, \dots, \xi^{(i - 1)})
+\end{equation}
+where $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$ is a dataset. Before we get to the general expression for $P(\mathcal{D} \mid \mathcal{G})$ in context of Bayesian networks lets consider a simple coin flipping example, ie. a binomial distribution over values $\lbrace H, T \rbrace$. Say our dataset is $\mathcal{D} = \lbrace H,H,T,H,T\rbrace$ and the prior distribution is a Dirichlet distribution with hyperparameters $\alpha_H, \alpha_T$ and $\alpha = \alpha_H + \alpha_T$. Also, in this simple example there is really no structure $\mathcal{G}$ to talk about, therefore we can write $P(\mathcal{D} \mid \mathcal{G}) = P(\mathcal{D})$ in the following form (explanation follows immediately):
 \begin{eqnarray*}
-    P(\mathcal{D} \mid \mathcal{G}) & = & P(\xi_1, \dots, \xi_m \mid \mathcal{G}) \\
-    & = & P(\xi_1 \mid \mathcal{G})
-          \cdot
-          P(\xi_2 \mid \xi_1, \mathcal{G})
-          \cdot
-          P(\xi_3 \mid \xi_1, \xi_2, \mathcal{G})
-          \dotsm
-          P(\xi_m \mid \xi_1, \xi_2,\dots,xi_{m-1}, \mathcal{G}) \\
-    & = & \frac
-             {
-              \alpha_{x_1} \dotsm (\alpha_{x_1} + N_{x_1} - 1)
-              \ \cdot \ 
-              \alpha_{x_2} \dotsm (\alpha_{x_2} + N_{x_2} - 1)
-              \ \cdot \ 
-              \dotsm
-              \ \cdot \ 
-              \alpha_{x_k} \dotsm (\alpha_{x_k} + N_{x_k} - 1)
-             }
-             {\alpha (\alpha + 1) (\alpha + 2) \dotsm (\alpha + N - 1)} \\
-    & = & \prod_{X_i \in Nodes}
-             \Bigl[
-                \prod_{\vars{p_i} \in Val(Parents(X))}
-                   \Bigl(
-                      \frac{\Gamma(\alpha_{X_i \mid \vars{p_i}})}{\Gamma(\alpha_{X_i \mid \vars{p_i}} + N_{\vars{p_i}})}
-                      \prod_{x \in Val(X_i)} \frac{\Gamma(\alpha_{x \mid \vars{p_i}} + N_{x, \vars{p_i}})}{\Gamma(\alpha_{x \mid \vars{p_i}})}
-                   \Bigr)
-             \Bigr]
+    P(\mathcal{D})
+     & = & P(\xi^{(1)})
+           P(\xi^{(2)} \mid \xi^{(1)})
+           P(\xi^{(3)} \mid \xi^{(1)},\xi^{(2)})
+           P(\xi^{(4)} \mid \xi^{(1)},\xi^{(2)},\xi^{(3)})
+           P(\xi^{(5)} \mid \xi^{(1)},\xi^{(2)},\xi^{(3)},\xi^{(4)}) \\
+     & = & \frac{\alpha_H}{\alpha} \cdot
+           \frac{\alpha_H + 1}{\alpha + 1} \cdot
+           \frac{\alpha_T}{\alpha + 2} \cdot
+           \frac{\alpha_H + 2}{\alpha + 3} \cdot
+           \frac{\alpha_T + 1}{\alpha + 4}
+       =   \frac{\alpha_H (\alpha_H + 1) (\alpha_H + 2) \cdot \alpha_T (\alpha_T + 1)}{\alpha \dotsm (\alpha + 4)}\\
+     & \Biggl( = & \Bigl \lvert \text{if were } \alpha_H, \alpha_T \in \mathbb{N} \Bigr \rvert = \frac{(\alpha - 1)!}{(\alpha + 4)!} \cdot \frac{(\alpha_H + 2)!}{(\alpha_H - 1)!} \cdot \frac{(\alpha_T + 1)!}{(\alpha_T - 1)!} \Biggr) \\
+     & = & \frac{\Gamma(\alpha)}{\Gamma(\alpha + 5)} \cdot \frac{\Gamma(\alpha_H + 3)}{\Gamma(\alpha_H)} \cdot \frac{\Gamma(\alpha_T + 2)}{\Gamma(\alpha_T)}
 \end{eqnarray*}
-where $\Gamma$ is the \term{gamma function} which is a continuous generalization of factorial. Gamma function needs to be used because, in general, hyperparameters of Dirichlet distribution don't need to be integers.
-\end{comment}
+As states the equation~\eqref{eq:bayesian_score_chain_rule}, probability of $\xi^{(i)}$ is computed based on samples $\xi^{(j)}$ with index $j < i$ and on the pseudosamples from the prior distribution. The computation is fairly straightforward\,--\,suppose $\xi^{(i)} = H$, then the corresponding probability is given as the number of samples and pseudosamples of heads we have seen before $\xi^{(i)}$ divided by the total number of samples and pseudosamples before $\xi^{(i)}$.
+For the first training example $\xi_1$, respectively for $P(\xi_1)$, we have only pseudosamples, so $P(\xi_1) = \alpha_H / \alpha$. For $\xi^{(2)}$ we have already seen one occurrence of heads and also one real sample, so $P(\xi_2) = (\alpha_H + 1) / (\alpha + 1)$. In case of $\xi^{(3)}$ we have not seen any tails yet but there already have been two real samples, hence $P(\xi_3) = \alpha_T / (\alpha + 2)$ a so on. Rest of the work is just to rewrite the expression using \term{gamma function} which is a continuous generalization of factorial for which holds $\Gamma(n) = (n-1)!$ provided $n \in \mathbb{N}$. Notice on the second line of the formula above that we grouped terms concerning the same value of our random variable (values heads or tails)\,--\,the value of $P(\mathcal{D})$ doesn't depend on the ordering of samples in the dataset and the final line tells us that $P(\mathcal{D})$ can be computed purely based on occurrence counts rather than by going through the dataset sample by sample. This observation will apply also in context of Bayesian networks.
+
+The general formula for binomial distribution over values $\lbrace heads, tails \rbrace$ one can sense from the concrete example, that has just been presented, can be generalized for a multinomial distribution over some variable $X$ with values $\lbrace x_1, \dots, x_m \rbrace$ with a Dirichlet prior $\alpha_1, \dots, \alpha_m$~\cite[p.~798]{pgm}:
+\begin{equation}\label{eq:bayesian_score_multinomial}
+    P(\mathcal{D})
+      = \frac{\Gamma(\alpha)}{\Gamma(\alpha + N)}
+        \prod_{i=1}^m
+        \frac{\Gamma(\alpha_i + N_i)}{\Gamma(\alpha_i)}
+\end{equation}
+where $\alpha = \alpha_1 + \dotsm + \alpha_m$, $N = | \mathcal{D}|$ and $N_i$ is the number of occurrences of $x_i$ in $\mathcal{D}$. Further, for a Bayesian network, in which each sub-CPD\footnote{By a \uv{sub-CPD} of $P(X \mid Parents(x))$ a mean a distribution over variable $X$ for a concrete assignment $\vars{pa}$ of variables $Parents(X)$. From its nature it is a valid probability distribution (sums to one, always non-negative).} $P(\Theta_{X \mid \vars{pa}} \mid \mathcal{G})$ is a Dirichlet distribution with hyperparameters $\lbrace \alpha_{x \mid \vars{pa}} \mid x \in Val(X)\rbrace$, the term $P(\mathcal{D} \mid \mathcal{G})$ can be written in a~convenient factorized form as~\cite[p.~801]{pgm}:
+\begin{equation}\label{eq:bayesian_score_for_bn}
+    P(\mathcal{D} \mid \mathcal{G})
+      = \prod_{X_i \in Nodes}
+             \Biggl[
+                \prod_{\vars{pa} \in Val(Parents(X))}
+                   \Bigl(
+                      \frac{\Gamma(\alpha_{X_i \mid \vars{pa}})}{\Gamma(\alpha_{X_i \mid \vars{pa}} + N_{\vars{pa}})}
+                      \prod_{x \in Val(X_i)} \frac{\Gamma(\alpha_{x \mid \vars{pa}} + N_{x, \vars{pa}})}{\Gamma(\alpha_{x \mid \vars{pa}})}
+                   \Bigr)
+             \Biggr]
+\end{equation}
+where $Val(\vars{X})$ is the set of all instantiations $\vars{x}$ of variables $\vars{X}$, $\alpha_{X \mid \vars{pa}} = \sum_{x \in Val(X)} \alpha_{x \mid \vars{pa}}$, $N_{x,\vars{pa}}$ is number of samples for which $X = x \land Parents(X) = \vars{pa}$ and similarly for $N_\vars{pa}$.
+
+Although the formal derivation of~\eqref{eq:bayesian_score_for_bn} is omitted, I will attempt to provide an explanation of how the formula could be derived. Intuitively, we would begin with the chain rule~\eqref{eq:bayesian_score_chain_rule} multiplying probability of each sample given the previous ones. A sample is an instantiation $x_1, \dots, x_k$ of all variables in the BN and, by the definition of a BN, we would obtain probability of some concrete sample by multiplying $P(x_i \mid parents(X_i))$ in all nodes of the network. At this point let me stress out that the CPD in some node $X_i$ contains $n$ probability distributions $P(X_i \mid parents(X_i))$, one for every possible assignment $parents(X_i)$ of variables $Parents(X_i)$. As I already argued by the coin flipping example, when computing $P(\mathcal{D} \mid \mathcal{G})$ we can either go though the dataset sample by sample (as in the chain rule) or we can use a summary based on total occurrence counts of all possible instantiations of all variables which leads to a formula with gamma functions; equation~\eqref{eq:bayesian_score_for_bn} uses the latter approach. Translated to a~BN, for a concrete sample, each node $X_i$ selects a concrete probability distribution $P(X_i \mid parents(X_i))$ based on concrete assignment to $Parents(X_i)$ in this particular sample. So, for the concrete sample we get a collection of multinomial distributions $P(X_i \mid parents(X_i))$ and we already how to compute $P(\mathcal{D})$ for a~single multinomial distribution, namely by equation~\eqref{eq:bayesian_score_multinomial}. Rest of the process is to iterate over all nodes $X_i \in Nodes$ and over possible assignments $\vars{pa} \in Val(Parents(X_i))$.
+
+In the equation~\eqref{eq:bayesian_score_for_bn} for Bayesian score of a BN we can notice the way it factorizes over the network structure\,--\,over respective nodes $X_i$ and, more importantly, over assignments $\vars{pa} \in Val(Parents(X))$. What does that mean? For one, this very feature is where network structure is reflected in the Bayesian score. For two, if you think about $P(\mathcal{D} \mid \mathcal{G})$ as being $\prod_{X_i} \prod_{\vars{pa}} P(X_i \mid \vars{pa})$ then it can be shown that if $X_i$ and its parents are somehow non-trivially dependent then the Bayesian score of such structure is higher when compared to a structure which is the same except for missing some edge between $Parents(X_i)$ and $X_i$.
+
 
 \medskip
 
-The structure prior $P(\mathcal{G})$ in the equation~\eqref{eq:bayesian_score_general} allows us to penalize certain structures but its effect is rather minor, especially in asymptotic analysis~\cite[p.~804]{pgm}, because this term doesn't change with the number of samples. Most often we use a uniform prior or a prior that exponentially penalizes complexity of the structure which is useful for sparse datasets.
+In practice, we take a logarithm of~\eqref{eq:bayesian_score_for_bn} because computation of $log \, \Gamma(x)$ can be numerically computed more efficiently than $\Gamma(x)$~\cite[p.~801]{pgm}.
 
-\medskip
 
-To be able to use Bayesian scores we also need to define prior distribution over parameters $P(\Theta \mid \mathcal{G})$. The key problem is to represent the prior in some space-efficient form because the naive approach would be to define a prior for every possible structure $\mathcal{G}$. A~simple approach is to use a fixed Dirichlet distribution $(\alpha',\dots,\alpha')$ which is, unfortunately, from its nature inconsistent in the sense that the equivalent sample size $\alpha$ depends on the number of parents of a node. Another approach is to encode the prior distribution $P'$ by a BN and to infer the terms $\alpha_{x \mid \vars{p}} = \alpha \cdot P'(x, \vars{p})$ as they are needed. The latter option is called the \term{BDe prior}~\cite[p.~806]{pgm} and its main advantage is that we can use a single network to infer prior distribution for any structure $\mathcal{G}$.
+\subsubsection{Specifying structure and parameter priors}
+To be able to use Bayesian scores we also need to define prior distribution over structures $P(\mathcal{G})$ and over parameters $P(\Theta \mid \mathcal{G})$. As has already been said, prior over structures doesn't depend on the size of our dataset, so it plays rather minor role. Nonetheless, it can make a difference for a particularly small dataset. The suggestion of literature~\cite[p.~804]{pgm} is to use a prior penalizing the network complexity in the general form $P(\mathcal{G}) \propto c^{Dim(\mathcal{G})}$ where $c \in (0, 1)$, or a completely uniform prior (corresponding to $c = 1$).
+
+\smallskip
+When speaking about prior distribution over parameters $\Theta$ given concrete structure $\mathcal{G}$ (and thereby speaking about determining hyperparameters for a concrete structure) the key problem is to represent the prior in some space-efficient form because the naive approach would be to define a prior for every possible structure $\mathcal{G}$. A~simple approach is to use a~Dirichlet distribution with uniform prior, so called \term{K2 prior}. Unfortunately, K2 prior is from its nature inconsistent in the sense that the equivalent sample size $\alpha$ depends on the number of parents of a node~\cite[p.~806]{pgm}. As an example, consider a binary variable $X$ and equivalent sample size $\alpha=2$. If $X$ has no parents, then the we have effectively seen two pseudosamples for $X$. But if $X$ had a single binary parent $Y$, the uniform prior would say we have effectively seen four pseudosamples for $X$, two for $Y = y_0$ and two for $Y = y_1$.
+
+Another approach is to encode the prior distribution $P'$ by a BN and to infer the terms $\alpha_{x \mid \vars{p}} = \alpha \cdot P'(x, \vars{p})$ as they are needed. The latter option is called the \term{BDe prior}~\cite[p.~806]{pgm} and its main advantage is that we can use a single network to encode a general prior distribution over parameters for any structure $\mathcal{G}$. Also, it is doesn't suffer from the inconsistency as K2 prior does. On the other hand, BDe prior relies on inference.
 
 
 
@@ -1233,19 +1244,20 @@ Specific task that needs to be addressed when presenting a BN in graphical user 
 	\item For a given DAG assign nodes to layers. Lets denote $l(n)$ label of the layer the node $n$ is assigned to. Initially, for nodes without any parents $l(n)=0$, for the other nodes $l(n) = 1 + max \lbrace l(p) \mid p \in Parents(n)\rbrace$. After the initial layer assignment is complete I move nodes without parents from layer 0 to layer $min \lbrace l(p) \mid p \in Children(n)\rbrace - 1$.
 	\item Break down edges connecting nodes from layers that are not adjacent by inserting a~dummy node on every layer in-between. This way we achieve that any edge is from layer $i$ to layer $i+1$.
 	\item Optimize the permutation of nodes on each layer so that there would be minimum of crossed edges. At this point we take full advantage of the graph structure from previous step. Note that we don't need to work with absolute positioning of nodes to determine the number of crossed edges. As optimization procedure I use simulated annealing with operators \uv{swap two nodes on the same layer} and \uv{remove a node and reinsert on random position within the same layer}.
-    \item Determine the absolute positioning within layers, ie. $x$-coordinate of each node. I~use a grid-like coordinate system with integral scale where $x$-distance of any two nodes within layer has to be at least 2. This way we elegantly achieve for a node with two children that $x$ position of the parent is between $x$ positions of the children while the sum of edge lengths is the smallest possible. Absolute positioning is an optimization task which I address, again, by simulated annealing with single operator \uv{shift a~random node left/right}. The operator shifts also other adjacent nodes as needed to maintain the $x$ distance of any two nodes at the value of at least 2. To allow for larger changes the shift magnitude is randomly selected from normal distribution with parameters $\mu=0, \sigma = 1$ over the set $\lbrace -3, -2, -1, 1, 2, 3\rbrace$. The score being optimized during the absolute positioning step is sum of the following terms: squared length of every edge, number of different edge-lengths for each node and for each layer and squared distance of an isolated node to its closest non-isolated node within the same layer.
+    \item Determine the absolute positioning within layers, ie. $x$-coordinate of each node. I~use a grid-like coordinate system with integral scale where $x$-distance of any two nodes within layer has to be at least 2. This way we elegantly achieve for a node with two children that $x$ position of the parent is between $x$ positions of the children while the sum of edge lengths is the smallest possible. Absolute positioning is an optimization task which I address, again, by simulated annealing with single operator \uv{shift a~random node left/right}. The operator shifts also other adjacent nodes as needed to maintain the $x$ distance of any two nodes at the value of at least 2. To allow for larger changes the shift magnitude is randomly selected from normal distribution with parameters $\mu=0, \sigma = 1$ over the set $\lbrace -3, -2, -1, 1, 2, 3\rbrace$. The score being optimized during the absolute positioning step is sum of the following terms: squared length of every edge, number of different edge-lengths for each node and for each layer and squared size of the largest gap between nodes in each layer.
 \end{itemize}
 
 Parameters of the optimization process are set at such values that the network layout generation doesn't introduce an unpleasant delay (the whole process takes about 1~second). Once the automatic layout is complete, nodes can be manually rearranged by mouse dragging. The application maintains layouts of last ten networks in a LRU cache so that a~particular network looks the same when the user doesn't look at too many other network structures in-between.
 
 
-\todo{
-Požadavky doc. Zbořila:
+
+
+\subsection{Third party packages}
+The GUI application (not the \srccode{bnlib} library itself) relies also on the following third party packages:
 \begin{itemize}
-	\item Interaktivní vzorkování: Buď umět krokovat po jednom vzorku/jedné proměnné, příp. refreshovat průběh samplování a mít možnost zastavit, když bude hotovo.
-	\item Zobrazení sítě: Mělo by umět. Nejdřív rozmístění dle sebe (heuristika, GA, etc.) a potom umožnit přetahováním doupravit pozicování. Při najetí myší na uzel zobrazit CPT.
+	\item \srccode{ini4j-0.52} package for reading and writing configuration \srccode{.ini} files (released under Apache License v2.0).
+	\item Collection of classes for vertical rendering of \srccode{JTable} column headers from the website \url{http://tips4java.wordpress.com/} (no license restrictions). These classes are placed in the \srccode{bna/view/darrylbu} package.
 \end{itemize}
-}
 
 
 
@@ -1273,7 +1285,7 @@ This chapter will present collection of selected applications suitable for Bayes
 \section{Learning of a known model}
 In this chapter I will perform a series of benchmarks of the parameter and structure learning methods presented in this thesis. We will use a collection of well known networks and attempt to relearn them based on artificial datasets sampled from these networks. The goal is to get a feel for optimal learning parameters for networks of various sizes as well as for the quality of obtained results depending of the size of our dataset. These findings will be referred to provide justification for conclusions stated in the subsequent sections in this chapter.
 
-We will examine two classes of problems which are (a)~learn parameters for a known network structure, (b)~learn both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}. They are also on the enclosed CD in \srccode{networks/} directory.}:
+We will examine two classes of problems, concretely learning parameters for a known network structure and learning both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}. They are also on the enclosed CD in \srccode{networks/} directory.}:
 \begin{itemize}
 	\item \uv{Cancer} network (5 variables, 4 edges, 10 CPD entries)
 	\item \uv{Asia} network (8 variables, 8 edges, 18 CPD entries)
@@ -1283,9 +1295,9 @@ We will examine two classes of problems which are (a)~learn parameters for a kno
 
 
 \subsection{Learning parameters}
-The first step will be to inspect how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a~dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior is considered).
+The first step will be to inspect how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a~dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior distribution is considered).
 
-As a metric of how closely the original and the learnt networks match (respectively probability distributions they induce) I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
+To measure how closely the original and the learnt networks match (respectively probability distributions they induce) I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
 \begin{equation*}
 D_{KL}(P \parallel Q) = \sum_{x_1,\dots,x_m} P(x_1,\dots,x_m) \log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}
 \end{equation*}
@@ -1293,11 +1305,11 @@ which can be in context of Bayesian networks rewritten to the following form ($P
 \begin{equation*}
 D_{KL}(P \parallel Q) = \sum_{X \in Nodes} \sum_{\vars{pa} \in Val(Par(X))} P(\vars{pa}) \sum_{x_i \in Val(X)} \log \frac{P(x_i \mid \vars{pa})}{Q(x_i \mid \vars{pa})}
 \end{equation*}
-As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than exhaustively inspecting probabilities of all atomic events $x_1, \dots, x_m$ which would take $O(2^m)$ time. However, probability for parents assignment $P(\vars{pa})$ needs to be inferred. According to the requirements of this thesis I use a stochastic inference method, namely weighted sampling, with such number of samples that leads to reasonably accurate results in the KL-divergence analysis\footnote{I use $10^8$ samples to approximate the probability distribution $P(Parents(X))$ when computing the KL-divergence. This number has been chosen because the KL-divergence graphs for $10^7$, $10^8$ and $10^9$ samples have been empirically proved to converge (for the ICU alarm network with 37 variables).}.
+As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than exhaustively inspecting probabilities of all atomic events $x_1, \dots, x_m$ which would take $O(2^m)$ time. However, probability for parents assignment $P(\vars{pa})$ needs to be inferred. In accordance with the requirements of this thesis I use a stochastic inference method, namely weighted sampling, with such number of samples that leads to reasonably accurate results in the KL-divergence analysis\footnote{I use $10^8$ samples to approximate the probability distribution $P(Parents(X))$ when computing the KL-divergence. This number has been chosen because the KL-divergence graphs have been empirically proved to converge (for the ICU alarm network with 37 variables) when approximating probability distributions $P(Parents(X))$ from $10^7$, $10^8$ and $10^9$ samples.}.
 
-Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \neq D_{KL}(Q \parallel P)$ but it is commonly used for evaluation of how closely two probability distributions match because the true metrics of probability distributions don't decompose over the network structure and therefore are impractical for larger networks.
+Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \neq D_{KL}(Q \parallel P)$ but it is commonly used for evaluation of how closely two probability distributions match because the true metrics for probability distributions don't decompose over structure of a~Bayesian network and therefore are impractical, for larger networks even unfeasible.
 
-From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with uniform prior is not penalized (in fact, doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify and also, we don't really have any solid prior knowledge of the target domains.
+From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with equivalent sample size $\alpha > 0$ is not penalized (in fact, in my experiments doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify.
 
 Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in case of \uv{asia} network, we can see rapid drops in the relative entropy. Cause of such a drop is a newly added sample that to erases a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section.
 
@@ -1331,22 +1343,120 @@ Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of paramet
 
 Also, according to the tests performed, MLE might seem to be steadily outperformed. Of course, if we had an excessive amount of training data, which is usually not the case in practice, then MLE would actually be more suitable than Bayesian estimation because the pseudosamples representing prior distribution would be a hard-to-overcome source of inaccuracy. Nonetheless, if a concrete application demands estimation of network parameters which are as close to the \uv{real ones} as possible, similar analysis as I just performed is a~sensible thing to do\,--\,pick a network of similar complexity, plot the learning curves for this network and determine what is the best parameter estimation method for dataset of given size.
 
-\todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
+%\todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
 
 
 \subsection{Learning structure}
-Evaluation of structure learning proved to be a little problematic. We cannot use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as they are based on complete enumeration of atomic events. Also, there is the problem that typically more than one network structure can capture the probability distribution induced by the \uv{true} network. Strictly speaking, a network structure can capture desired distribution $P$ if the network structure doesn't imply any independency that isn't implied by the \uv{true} network.
+Evaluation of structure learning proved to be a little problematic. We cannot use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as they are based on exhaustive enumeration of atomic events. Instead, I rely on manual inspection of the best-scoring network structures found over multiple runs of the learning algorithm. This approach is perfectly legal as I want to demonstrate usage of Bayesian networks in the field of data-mining which is largely human-assisted. As I will explain shortly, there are usually more structures sharing the same highest score. As we don't know the \uv{true} structure, we need to inspect all best-scoring structures. To ease the evaluation by hand I also maintain statistics for each pair of variables $U, V$ how often the final learnt structure contains the edge $U \rightarrow V$. This statistics is presented by a table in GUI.
 
+One potential problem I have already mentioned is that typically more than one network structure can capture the exact probability distribution induced by the \uv{true} network. Strictly speaking, a network structure can capture desired distribution $P$ if this network structure doesn't imply any independency that isn't implied by the \uv{true} network that induces $P$. This notion is called \term{I-equivalent} structures (as in independency equivalent)~\cite[p.~76]{pgm}. As an example, consider three simple networks $A \rightarrow B \rightarrow C$, $A \leftarrow B \rightarrow C$ and $A \leftarrow B \leftarrow C$. In these three networks holds one and only one conditional independency $A \perp C \mid B$ and no unconditional independency, therefore these three networks are I-equivalent. As a result, these networks are capable of representing the same set of probability distributions and also have the same BIC score~\cite{pgm}. Practically speaking, these three network structures are equally good as a result of structure learning because there is really no causal relationship between them. Further in this section I will refer to such configurations as \term{chains} $X_1 - \dots - X_n$ which will generally be variables $X_1, \dots, X_n$ connected in a linear fashion in specified order with no V-structure and with no incoming edges to any of the variables. I also introduce graphical notation for chains in Figure~\ref{fig:structure_learning_chain}. Another set of I-equivalent structures that sometimes arises I call \term{central variable} meaning there is a \uv{central} variable $X$ and a set of variables $Y_1,\dots,Y_n$ directly connected to $X$. At most one $Y$ variable is direct parent of $X$ while all the other $Y$ variables are direct children of $X$. All such structures are also I-equivalent. Please see graphical notation for central variable in Figure~\ref{fig:structure_learning_central_variable}.
+
+\begin{figure}[ht]
+    \includegraphics[scale=0.4]{fig/structure-learning-chain}
+    \caption{A general chain $X_1 - X_2 - \dots - X_n$ of variables $X_1, \dots, X_n$ is a set of network structures where the variables are connected in a linear fashion in specified order and there is no V-structure. Left side of this figure demonstrates the full set of $n$ structures for the same chain and on the right side of this figure there is an efficient graphical notation for the whole set of chains (bounded structure without directed edges).}
+    \label{fig:structure_learning_chain}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics[scale=0.4]{fig/structure-learning-central-variable}
+    \caption{Central variable structure $X,Y_1,\dots,Y_n$ is a set of I-equivalent structures where the $X$ variable is central while at most one $Y_i$ variable is parent of $X$ and all the other $Y_i$ variables are children of $X$. There also may not be an incoming edge to any of the variables $X$ or $Y_i$ as that would potentially introduce a V-structure in some of the networks.
+Unbounded structures are the full set of $n+1$ central variable structures and on the right side of this figure there is an efficient graphical notation for the whole set of central variable structures (bounded structure without directed edges).}
+    \label{fig:structure_learning_central_variable}
+\end{figure}
+
+Before we proceed to the experiments with learning structure of various network please note that the outcome of the experiments relies on the concrete dataset we sample before learning. So, for two datasets of equal size we quite frequently obtain different sets of best-scoring structures, especially when the number of samples is small. \todo{Save the \uv{right} datasets to a directory to ship on CD with the final thesis.}
+
+~\\ % TODO prasarna
+\subsubsection{Experiments with Cancer network}
+The Cancer network with five variables is the simplest network I consider in my experiments. With a dataset of 300 samples the structure learning with BIC score discovers only a~chain $Xray - Cancer - Dyspnoea$, respectively its three I-equivalent variants, the variables $Smoker$ and $Pollution$ are isolated (see Figure~\ref{fig:structure-learning-cancer-300}).
+
+With a dataset of 1000 samples the structure learning algorithm discovers only dependency among four variables which form a substructure where three variables are directly connected to the fourth variable and avoid to form a V-structure as that would introduce a conditional dependency (see Figure~\ref{fig:structure-learning-cancer-1000}). The fifth variable, $Pollution$, is isolated in the found structures as $P(Cancer \mid Pollution)$ differs only by the value $0.03$ for different assignments of $Pollution$ and the potential edge $Pollution \rightarrow Cancer$ is in BIC score more penalized by the increase of structure complexity than it is favored for its contribution to mutual information sum.
+
+For a dataset with 5000 samples we finally obtain a connected graph, only there is similar situation as we had with 1000 samples\,--\,$Cancer$ variable is in the middle and connected with all the other variables while avoiding to form a V-structure (see Figure~\ref{fig:structure-learning-cancer-5000}). It seems that V-structures need to be strongly implied by the dataset, otherwise the learnt structure won't contain them.
+
+Finally, with a dataset of 15000 samples the learning process yields the exact original structure of cancer network and no others (see Figure~\ref{fig:structure-learning-cancer-15000}). The original structure is unique as it contains a V-structure in $Cancer$ variable which spoils any possibility for there being a chain of variables that could be somehow rearranged.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[scale=0.4]{fig/structure-learning-cancer-300}
+        \caption{Dataset of 300 samples, 3 I-equivalent structures.}
+        \label{fig:structure-learning-cancer-300}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[scale=0.4]{fig/structure-learning-cancer-1000}
+        \caption{Dataset of 1000 samples, 4 I-equivalent structures.}
+        \label{fig:structure-learning-cancer-1000}
+    \end{subfigure}
+        
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[scale=0.4]{fig/structure-learning-cancer-5000}
+        \caption{Dataset of 5000 samples, 5 I-equivalent structures.}
+        \label{fig:structure-learning-cancer-5000}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[scale=0.4]{fig/structure-learning-cancer-15000}
+        \caption{Dataset of 15000 samples, single structure (exactly the original cancer network).}
+        \label{fig:structure-learning-cancer-15000}
+    \end{subfigure}
+    \caption{Best-scoring I-equivalent network structures found for the cancer network with datasets of various sizes.}
+    \label{fig:structure-learning-cancer}
+\end{figure}
+
+
+\subsubsection{Experiments with Asia network}
+The Asia network contains 8 variables and a single V-structure $either \rightarrow dysp \leftarrow bronc$. The CPD for $dysp$ variable suggest strong dependency on both its parents\,--\,the distribution $P(dysp \mid either, bronc)$ changes up to $0.7$ for different assignments of $either$ and up to $0.6$ for different assignments of $bronc$. Therefore for as little as 100 samples the found networks contain the V-structure at $dysp$ variable. Furthermore, $dysp$ has always the same set of parent variables but that can be accounted to the strong dependency in the original network.
+
+With a dataset of 1000 samples we almost get I-equivalent structures of the original network (see Figure~\ref{fig:structure-learning-asia-1000}), only the variable $asia$ is isolated thanks to a weak dependency $asia - tub$. There are three I-equivalent structures because variables $smoke - bronc - lung$ form a chain, structure of the other variables is the same as in the original network. 
+
+For a dataset of 15000 samples we obtain the complete structure of the asia network, respectively six I-equivalent variants of the original network (see Figure~\ref{fig:structure-learning-asia-15000}) thanks to the two chains $lung - smoke - bronc$ and $asia - tub$.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \includegraphics[scale=0.4]{fig/structure-learning-asia-1000}
+        \caption{Dataset of 1000 samples, 3 I-equivalent structures.}
+        \label{fig:structure-learning-asia-1000}
+    \end{subfigure}
+    \qquad
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[scale=0.4]{fig/structure-learning-asia-15000}
+        \caption{Dataset of 15000 samples, 6 structures I-equivalent with the original network.}
+        \label{fig:structure-learning-asia-15000}
+    \end{subfigure}
+    \caption{Best-scoring I-equivalent network structures found for the asia network with datasets of various sizes.}
+    \label{fig:structure-learning-asia}
+\end{figure}
+
+
+\subsubsection{Experiments with Child network}
+The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children).
+
+With a dataset of 500 samples there are two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is almost surprisingly strongly consistent with the original network, considering how little samples we have. The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network (unlike a chain or a central variable structure). When not considering edge directions the learnt network is missing only 2 out of 25 connections present in the original network and from the remaining 23 edges only one is reversed. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. Although I~believe this to be a great success, we must take into account that this network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
+
+With a dataset of 2000 samples we get a connected graph in which only one edge $Sick - Age$ is missing and two or three other edges are reversed. Although the set of reversed edges is different for the found best-scoring structures, their number remains effectively the same, suggesting that if we were to use structure learning for causal discovery, the resulting best-scoring structures are equal in terms of how accurately they resemble the \uv{true} network, assuming they are not I-equivalent to the \uv{true} network.
+
+Dataset of 10000 samples gets us as close to the original network as only two reversed edges without any other structural mistakes.
+
+
+
+\subsubsection{Experiments with ICU Alarm network}
+ICU alarm network is with its 37 variables the largest network I experiment with in this section. There are many two-node chains (eg. $PMB - PAP$, $APL - TPR$ or $MVS - VMCH$) meaning there are quite a few structures I-equivalent with the original network. On the other hand, there are many V-structures and the assumption is that V-structures are relative stable.
+
+\todo{xxx}
+
+
+
+\subsubsection{Optimal parameters for structure learning}
 I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count.
 
-\todo{for Child works well it seems, count number of times each edge was ok}
-
-\begin{itemize}
-	\item Cancer network with 5 variables. There is a weak dependence of Polution--Cancer, so we need to have a larger dataset (1k samples is not enough) to completely recover the original structure using BIC score.
-	\item Asia network with 8 variables, single non-deterministic variable.
-	\item Child network with 20 variables, no deterministic variable.
-	\item ICU alarm network with 37 variables, one deterministic variable.
-\end{itemize}
 
 
 
