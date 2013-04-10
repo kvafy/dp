@@ -804,7 +804,7 @@ In the equation~\eqref{eq:bayesian_score_for_bn} for Bayesian score of a BN we c
 
 \medskip
 
-In practice, we take a logarithm of~\eqref{eq:bayesian_score_for_bn} because computation of $log \, \Gamma(x)$ can be numerically computed more efficiently than $\Gamma(x)$~\cite[p.~801]{pgm}.
+In practice, we take a logarithm of~\eqref{eq:bayesian_score_for_bn} because computation of $log \, \Gamma(x)$ is numerically manageable whereas $\Gamma(x)$ of a big number may be infinity in double precision arithmetics (similar to $n!$ for a big value $n$)~\cite[p.~801]{pgm}.
 
 
 \subsubsection{Specifying structure and parameter priors}
@@ -855,7 +855,7 @@ general graphs
 \subsection{Method for finding all possible alterations of a network}
 During structure learning, at some point we always need to determine the set of all possible alterations of a concrete network, ie. which edges may be added, removed or reversed. Method of determining this set should be time-efficient as well as mathematically plausible. With these criteria in mind I have devised the following approach.
 
-The main problem we have to face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ will denote the transitive closure of the relation $r$. Lets now inspect the three possible alteration cases\,--\,edge removal, addition and reversal. In further text, we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
+The main problem we have to face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ denotes transitive closure of the relation $r$. Lets now inspect the three possible cases of structure alteration\,--\,edge removal, addition and reversal. In the following text we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
 
 
 \subsubsection{Removing an edge}
@@ -871,21 +871,11 @@ Formally, edge $(X,Y)$ may be added iff $\neg(Y r^+ X) \land \neg(X r Y)$.
 
 
 \subsubsection{Reversing an edge}
-To grasp the problem of edge reversion we make use of a topological ordering of the given network. Let the ordering be denoted $\prec$. Then we can write for all nodes of the network $A_1 \prec \dots \prec A_a \prec X \prec M_1 \prec \dots \prec M_m \prec Y \prec B_1 \prec \dots \prec B_b$ which can be, for the sake of clarity, written using sets of variables as $\vars{A} \prec X \prec \vars{M} \prec Y \prec \vars{B}$; of course, any of the sets $\vars{A}$, $\vars{M}$, $\vars{B}$ may be empty.
+To tackle the problem of edge reversion we make use of a topological ordering of the given network, denoted $\prec$. An existing edge $(X,Y)$ may be reversed iff there is no other directed path from $X$ to $Y$ other than directly using the edge $(X,Y)$. Suppose there were a~directed path $X = U_0 U_1 \dots U_{n-1} U_n = Y$ where $n \geq 2$, then because of edges $(U_{i-1}, U_i)$ would have to hold $\forall i \in \lbrace 1,\dots, n-1 \rbrace: (X \prec U_i \prec Y) \land (X \, r^+ \, U_i \, r^+ \, Y)$. So, we just need to inspect nodes $U_i$ in the topological ordering such that $X \prec U_i \prec Y$ and check if they all fail to satisfy $X \, r^+ \, U_i \, r^+ \, Y$. Even better, we may narrow down the search to just $U_i \in Children(X)$ because then $X \, r^+ U_i$ is satisfied trivially and we just need to check whether $U_i \, r^+ \, Y$. But then, of course, we have to store the information about position in topological ordering within datastructure of each node.
 
-Lets think about what would happen if the edge $(X,Y)$ was reversed? First, we would have to change the relative order of $X$ and $Y$ in the $\prec$ ordering to obtain a new ordering $\prec'$ for the new network. Suppose we get the ordering $\prec'$ by just swapping positions of $X$ and $Y$ in the original ordering $\prec$. Now the question is what conditions have to be met for $\vars{A} \prec' Y \prec' \vars{M} \prec' X \prec' \vars{B}$ to be a valid topological ordering of the new network? In other words, under which conditions is the new network acyclic (a~graph has a topological ordering iff it is a DAG)?
-For one, we can see that if we don't consider variables $\vars{M}$, the relation $\vars{A} \prec' Y \prec' X \prec' \vars{B}$ is a valid topological ordering for nodes $\vars{A} \cup \vars{B} \cup \lbrace X,Y \rbrace$ in the new network:
+Formally, edge $(X,Y)$ may be reversed iff $(X \, r \, Y) \land \bigl(\not \exists U: X \prec U \prec Y \land X \, r^+ \, U \, r^+Y \bigr)$, where $\prec$ is topological ordering of the original network.
 
-\begin{adjustwidth}{1cm}{0cm}
-That is because variables $\vars{A}$ precede both $X$ and also $Y$ in the original $\prec$ relation (ie. $\vars{A} \prec X \land \vars{A} \prec Y$) and since no edge among variables $\vars{A} \cup \lbrace X \rbrace$ nor among $\vars{A} \cup \lbrace Y \rbrace$ has changed, relative order remains the same, ie. $\vars{A} \prec' X$ and $\vars{A} \prec' Y$, which along with $Y \prec' X$ implies $\vars{A} \prec' Y \prec' X$. Similarly, variables $\vars{B}$ come after both $X$ and also after $Y$ in the original relation $\prec$ and by analogous rationale holds $Y \prec' X \prec' \vars{B}$. Therefore $\vars{A} \prec' Y \prec' X \prec' \vars{B}$.
-	
-Another way to look at it is to ask whether the edge reversal can introduce a~cycle consisting of a subset of variables $\vars{A} \cup \vars{B} \cup \lbrace X,Y \rbrace$. The fact $\vars{A} \prec X \land \vars{A} \prec Y$ implicates there is no edge from $\lbrace X, Y \rbrace$ to any variable from $\vars{A}$. Also, reversion of the edge $(X,Y)$ doesn't involve any variable from $\vars{A}$, so there is still no edge from $\lbrace X,Y \rbrace$ to $\vars{A}$ in the new network. Therefore after reversal of the edge $(X,Y)$ there cannot be a cycle involving a variable from $\vars{A}$\,--\,reversed edge or not, we still can't get from $\lbrace X,Y \rbrace$ to anything from $\vars{A}$. Similar argumentation is applicable for $\vars{B}$ (there is never any edge from $\vars{B}$ to $\lbrace X,Y \rbrace$), so no variable from $\vars{B}$ can participate in a potential cycle introduced by reversal of the edge $(X,Y)$.
-\end{adjustwidth}
-Our attention now goes to the set of variables $\vars{M}$ which are between $X$ and $Y$ in the topological ordering $\prec$ because these variables determine whether reversing $(X,Y)$ introduces a cycle. I state that the edge $(X,Y)$ can be reversed iff $\not \exists M \in \vars{M}: Xr^+Mr^+Y$. It is not difficult to see that existence of such $M$ would cause a cycle as there would be directed paths $X \rightarrow^+ M$, $M \rightarrow^+ Y$ and the edge $(Y,X)$ would complete the cycle. Critical is the following observation: The node $M$, whose existence is at question, has to be reachable by forward edges from $X$ and at the same time by backward edges from $Y$; otherwise $M$ could be moved in the $\prec$ relation directly before $X$ or directly after $Y$ while $\prec$ still being an actual topological ordering. So if all $M$s could be this way \uv{factored out} from the $\vars{M}$ set to finally get to $\vars{M} = \emptyset$, the edge reversal cannot introduce a cycle.
-
-Formally, edge $(X,Y)$ may be reversed iff $(\not \exists M \in \vars{M}: Xr^+Mr^+Y) \land (X r Y)$, where $\vars{M}$ is maximal set of variables such that $\forall M \in \vars{M}: X \prec M \prec Y$ for some topological ordering $\prec$ of the original network.
-
-\bigskip
+\medskip
 In the text above I have proposed a method for efficient determination of all possible alterations of a Bayesian network using transitive closure $r^+$ of adjacency relation $r$ (computable by Warshall's algorithm) and topological ordering $\prec$ (computable by a DFS-based algorithm~\cite{cormen_introduction_to_algorithms}).
 
 
@@ -1253,9 +1243,10 @@ Parameters of the optimization process are set at such values that the network l
 
 
 \subsection{Third party packages}
-The GUI application (not the \srccode{bnlib} library itself) relies also on the following third party packages:
+The implementation relies on the following third party products:
 \begin{itemize}
-	\item \srccode{ini4j-0.52} package for reading and writing configuration \srccode{.ini} files (released under Apache License v2.0).
+    \item Library \term{Apache Commons Math v3.3.2} for implementation of gamma function $\Gamma(x)$ and $log \, \Gamma(x)$ (released under Apache License v2.0).
+	\item Library \term{Ini4j v0.52} for reading and writing configuration \srccode{.ini} files (released under Apache License v2.0).
 	\item Collection of classes for vertical rendering of \srccode{JTable} column headers from the website \url{http://tips4java.wordpress.com/} (no license restrictions). These classes are placed in the \srccode{bna/view/darrylbu} package.
 \end{itemize}
 
