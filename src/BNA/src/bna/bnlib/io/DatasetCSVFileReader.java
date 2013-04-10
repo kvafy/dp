@@ -15,7 +15,7 @@ import java.util.List;
 
 
 /**
- * Class for reading dataset from a CSV file.
+ * Implementation of dataset file reader for CSV files.
  */
 public class DatasetCSVFileReader extends DatasetFileReader {
     private String separator;

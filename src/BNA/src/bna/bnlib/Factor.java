@@ -30,6 +30,14 @@ public class Factor implements Iterable<int[]> {
             throw new BayesianNetworkRuntimeException("Invalid values length wrt scope.");
     }
     
+    public Factor(Variable[] scope, double valueOfEachEntry) {
+        this.scope = Arrays.copyOf(scope, scope.length);
+        this.values = new double[Toolkit.cardinality(scope)];
+        if(valueOfEachEntry != 0)
+            Arrays.fill(this.values, valueOfEachEntry);
+        this.mapper = new AssignmentIndexMapper(scope);
+    }
+    
     public double getProbability(int index) {
         return this.values[index];
     }

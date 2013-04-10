@@ -15,7 +15,7 @@ import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
-import org.ini4j.*;
+import org.ini4j.Ini;
 
 
 /**
@@ -48,7 +48,7 @@ public class MainWindow extends javax.swing.JFrame {
         this.menuItemSaveNetwork.setEnabled(hasNetwork);
         this.menuItemQuery.setEnabled(hasNetwork);
         // menu "Dataset" and its items
-        this.menuItemSaveDataset.setEnabled(hasDataset);
+        this.menuItemExportDataset.setEnabled(hasDataset);
         this.menuItemSampleNewDataset.setEnabled(hasNetwork);
         // menu "Learning" and its items
         this.menuLearning.setEnabled(hasDataset);
@@ -143,8 +143,8 @@ public class MainWindow extends javax.swing.JFrame {
         menuItemSaveNetwork = new javax.swing.JMenuItem();
         menuItemQuery = new javax.swing.JMenuItem();
         menuDataset = new javax.swing.JMenu();
-        menuItemLoadDataset = new javax.swing.JMenuItem();
-        menuItemSaveDataset = new javax.swing.JMenuItem();
+        menuItemImportDataset = new javax.swing.JMenuItem();
+        menuItemExportDataset = new javax.swing.JMenuItem();
         menuItemSampleNewDataset = new javax.swing.JMenuItem();
         menuLearning = new javax.swing.JMenu();
         menuItemLearnParameters = new javax.swing.JMenuItem();
@@ -156,6 +156,9 @@ public class MainWindow extends javax.swing.JFrame {
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
         addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
@@ -210,21 +213,21 @@ public class MainWindow extends javax.swing.JFrame {
 
         menuDataset.setText("Dataset");
 
-        menuItemLoadDataset.setText("Load from file");
-        menuItemLoadDataset.addActionListener(new java.awt.event.ActionListener() {
+        menuItemImportDataset.setText("Import CSV");
+        menuItemImportDataset.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                menuItemLoadDatasetActionPerformed(evt);
+                menuItemImportDatasetActionPerformed(evt);
             }
         });
-        menuDataset.add(menuItemLoadDataset);
+        menuDataset.add(menuItemImportDataset);
 
-        menuItemSaveDataset.setText("Save to file");
-        menuItemSaveDataset.addActionListener(new java.awt.event.ActionListener() {
+        menuItemExportDataset.setText("Export CSV");
+        menuItemExportDataset.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                menuItemSaveDatasetActionPerformed(evt);
+                menuItemExportDatasetActionPerformed(evt);
             }
         });
-        menuDataset.add(menuItemSaveDataset);
+        menuDataset.add(menuItemExportDataset);
 
         menuItemSampleNewDataset.setText("Produce by sampling");
         menuItemSampleNewDataset.addActionListener(new java.awt.event.ActionListener() {
@@ -274,7 +277,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 392, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 400, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -317,16 +320,19 @@ public class MainWindow extends javax.swing.JFrame {
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemQueryActionPerformed
 
-    private void menuItemLoadDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLoadDatasetActionPerformed
-        DialogLoadDataset dialog = new DialogLoadDataset(this, true);
+    private void menuItemImportDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemImportDatasetActionPerformed
+        DialogDatasetIO dialog = new DialogDatasetIO(this, true, DialogDatasetIO.ACTION_LOAD);
         dialog.setVisible(true);
         if(dialog.confirmed)
             ((DatasetViewTable)this.datasetTable).setDataset(dialog.dataset);
-    }//GEN-LAST:event_menuItemLoadDatasetActionPerformed
+    }//GEN-LAST:event_menuItemImportDatasetActionPerformed
 
-    private void menuItemSaveDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSaveDatasetActionPerformed
-        
-    }//GEN-LAST:event_menuItemSaveDatasetActionPerformed
+    private void menuItemExportDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemExportDatasetActionPerformed
+        DialogDatasetIO dialog = new DialogDatasetIO(this, true, DialogDatasetIO.ACTION_SAVE);
+        // install the dataset to be saved
+        dialog.dataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        dialog.setVisible(true);
+    }//GEN-LAST:event_menuItemExportDatasetActionPerformed
 
     private void menuItemSampleNewDatasetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSampleNewDatasetActionPerformed
         BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
@@ -366,6 +372,10 @@ public class MainWindow extends javax.swing.JFrame {
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         this.saveConfiguration();
     }//GEN-LAST:event_formWindowClosed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        this.saveConfiguration();
+    }//GEN-LAST:event_formWindowClosing
 
     /**
      * @param args the command line arguments
@@ -415,13 +425,13 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuHelp;
     private javax.swing.JMenuItem menuItemExit;
+    private javax.swing.JMenuItem menuItemExportDataset;
+    private javax.swing.JMenuItem menuItemImportDataset;
     private javax.swing.JMenuItem menuItemLearnParameters;
     private javax.swing.JMenuItem menuItemLearnStructure;
-    private javax.swing.JMenuItem menuItemLoadDataset;
     private javax.swing.JMenuItem menuItemLoadNetwork;
     private javax.swing.JMenuItem menuItemQuery;
     private javax.swing.JMenuItem menuItemSampleNewDataset;
-    private javax.swing.JMenuItem menuItemSaveDataset;
     private javax.swing.JMenuItem menuItemSaveNetwork;
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;

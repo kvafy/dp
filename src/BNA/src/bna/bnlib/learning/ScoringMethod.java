@@ -10,6 +10,10 @@ import bna.bnlib.BayesianNetwork;
 
 /**
  * A general class for structure scoring methods (there might be subclasses for BIC, Bayesian etc.).
+ * The scoring method works with a notion of "current network" in order to use
+ * an efficient caching scheme. Therefore the optimization algorithm needs
+ * to notify the scoring method about the new network structure for the next
+ * step of local search so that right cache entries can be invalidated.
  */
 public abstract class ScoringMethod {
     /** Compute overall score of the network structure. */

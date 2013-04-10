@@ -11,17 +11,20 @@ import java.util.Arrays;
 
 
 /**
- * Provides caching of mutual information queries over given dataset.
+ * Provides caching of factor queries and of mutual information queries.
+ * There are two separate caches for factors and for mutual information.
  * Please not that if the underlying dataset is modified, the cached values
  * are no longer valid.
  */
 public class CachedDataset implements DatasetInterface {
     private Dataset dataset;
+    private LRUCache<SetOfVariables, Factor> factorCache;
     private LRUCache<TwoSetsOfVariables, Double> mutualInformationCache;
     
     
     public CachedDataset(Dataset dataset, int cacheCapacity) {
         this.dataset = dataset;
+        this.factorCache = new LRUCache<SetOfVariables, Factor>(cacheCapacity);
         this.mutualInformationCache = new LRUCache<TwoSetsOfVariables, Double>(cacheCapacity);
     }
 
@@ -42,7 +45,13 @@ public class CachedDataset implements DatasetInterface {
 
     @Override
     public Factor computeFactor(Variable[] scope) {
-        return this.dataset.computeFactor(scope);
+        SetOfVariables set = new SetOfVariables(scope);
+        Factor factor = this.factorCache.get(set);
+        if(factor == null) {
+            factor = this.dataset.computeFactor(scope);
+            this.factorCache.put(set, factor);
+        }
+        return factor;
     }
 
     @Override
@@ -56,6 +65,27 @@ public class CachedDataset implements DatasetInterface {
         return infValue;
     }
     
+    class SetOfVariables {
+        Variable[] set;
+        public SetOfVariables(Variable[] vars) {
+            this.set = vars;
+        }
+        
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 37 * hash + Arrays.deepHashCode(this.set);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(!(o instanceof SetOfVariables))
+                return false;
+            SetOfVariables mo = (SetOfVariables)o;
+            return Arrays.equals(this.set, mo.set);
+        }
+    }
     
     /** We cache values of mutual information for 2-tuples of variable sets ({X}, Parents(X)). */
     class TwoSetsOfVariables {

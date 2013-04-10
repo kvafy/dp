@@ -76,8 +76,8 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             }
             else
                 this.setPreferredSize(null); // automatic to fit in parent component
-            this.repaint();
             MainWindow.getInstance().notifyActiveNetworkChange();
+            this.repaint();
         }
     }
     

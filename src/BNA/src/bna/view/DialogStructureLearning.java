@@ -6,9 +6,11 @@ package bna.view;
 
 import bna.bnlib.BNLibException;
 import bna.bnlib.BayesianNetwork;
+import bna.bnlib.Node;
 import bna.bnlib.Variable;
 import bna.bnlib.learning.*;
 import bna.bnlib.misc.Toolkit;
+import java.awt.Component;
 import java.util.Arrays;
 import java.util.Enumeration;
 import javax.swing.JOptionPane;
@@ -25,7 +27,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private BayesianNetwork bnOriginal; // null if there was no original network
     private Dataset dataset;
     LearningController learningController = null;
-    private BayesianNetwork[] listBestScoringStructuresContent = null;
+    private BayesianNetwork[] comboBoxNetworksSelectionContent = null;
     
 
     /**
@@ -71,6 +73,15 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             column.setHeaderRenderer(headerRenderer);
             firstFrequencyColumn = false;
         }
+        
+        // resize the first column to accomodate for variable names
+        int firstColumnWidth = 0;
+        for(int row = 0 ; row < this.tableEdgeFrequency.getRowCount() ; row++) {
+            TableCellRenderer renderer = this.tableEdgeFrequency.getCellRenderer(row, 0);
+            Component comp = this.tableEdgeFrequency.prepareRenderer(renderer, row, 0);
+            firstColumnWidth = Math.max (comp.getPreferredSize().width, firstColumnWidth);
+        }
+        this.tableEdgeFrequency.getColumnModel().getColumn(0).setPreferredWidth(firstColumnWidth);
     }
     
     private void initializeNetworksSelectionCombobox() {
@@ -79,11 +90,11 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         final String[] bnStrings;
         if(hasOriginalNetwork) {
             bnStrings = new String[] {"Original network"};
-            this.listBestScoringStructuresContent = new BayesianNetwork[] {this.bnOriginal};
+            this.comboBoxNetworksSelectionContent = new BayesianNetwork[] {this.bnOriginal};
         }
         else {
             bnStrings = new String[0];
-            this.listBestScoringStructuresContent = new BayesianNetwork[0];
+            this.comboBoxNetworksSelectionContent = new BayesianNetwork[0];
         }
         this.comboBoxNetworksSelection.setModel(new javax.swing.DefaultComboBoxModel(bnStrings));
     }
@@ -165,6 +176,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.textFieldMaxParents.setEnabled(false);
         this.buttonLearn.setEnabled(false);
         this.buttonStop.setEnabled(true);
+        this.comboBoxNetworksSelection.setEnabled(false);
         this.updateFrequencyMatrix(null);
         this.setBestScoringNetworks(null, null);
     }
@@ -184,6 +196,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.textFieldMaxParents.setEnabled(true);
         this.buttonLearn.setEnabled(true);
         this.buttonStop.setEnabled(false);
+        this.comboBoxNetworksSelection.setEnabled(true);
         if(success)
             this.labelStatus.setText("finished succesfully");
         else
@@ -205,10 +218,10 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         String[] bnStrings = new String[bns.length];
         for(int i = 0 ; i < bnStrings.length ; i++)
             bnStrings[i] = String.format("Network no %d", i + 1);
-        this.listBestScoringStructuresContent = Arrays.copyOf(bns, bns.length);
+        this.comboBoxNetworksSelectionContent = Arrays.copyOf(bns, bns.length);
         if(this.bnOriginal != null) {
             bnStrings = Toolkit.union(new String[]{"Original network"}, bnStrings);
-            this.listBestScoringStructuresContent = Toolkit.union(new BayesianNetwork[]{this.bnOriginal}, this.listBestScoringStructuresContent);
+            this.comboBoxNetworksSelectionContent = Toolkit.union(new BayesianNetwork[]{this.bnOriginal}, this.comboBoxNetworksSelectionContent);
         }
         
         this.comboBoxNetworksSelection.setModel(new javax.swing.DefaultComboBoxModel(bnStrings));
@@ -296,6 +309,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         comboBoxNetworksSelection = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         labelStatus = new javax.swing.JLabel();
+        buttonAnalyze = new javax.swing.JButton();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -464,6 +478,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
 
         labelStatus.setText("not started yet");
 
+        buttonAnalyze.setText("Analyze");
+        buttonAnalyze.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonAnalyzeActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -492,6 +513,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                         .addComponent(jLabel8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(29, 29, 29)
+                        .addComponent(buttonAnalyze, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
         jPanel3Layout.setVerticalGroup(
@@ -508,11 +531,12 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
-                    .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(buttonAnalyze))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -562,12 +586,70 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         if(bnIndex == -1)
             activeNetwork = null;
         else
-            activeNetwork = this.listBestScoringStructuresContent[bnIndex];
+            activeNetwork = this.comboBoxNetworksSelectionContent[bnIndex];
         MainWindow.getInstance().setActiveNetwork(activeNetwork);
     }//GEN-LAST:event_comboBoxNetworksSelectionActionPerformed
 
+    private void buttonAnalyzeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAnalyzeActionPerformed
+        if(this.comboBoxNetworksSelectionContent.length <= 1) {
+            System.out.println("tududu tum (need at least two networks)");
+            return;
+        }
+        BayesianNetwork bnOrig = this.comboBoxNetworksSelectionContent[0],
+                        bnLearnt = this.comboBoxNetworksSelectionContent[this.comboBoxNetworksSelection.getSelectedIndex()];
+        // what variables are not connected in the learnt network (directions don't matter)
+        System.out.println("Broken connections (undirected):");
+        int brokenConnections = 0;
+        int totalEdges = 0;
+        for(Node nodeOrig : bnOrig.getNodes()) {
+            totalEdges += nodeOrig.getChildrenCount();
+            Node nodeLearnt = bnLearnt.getNode(nodeOrig.getVariable());
+            Variable[] nodeLearntNeighbours = Toolkit.union(nodeLearnt.getParentVariables(), nodeLearnt.getChildVariables());
+            for(Variable childOrig : nodeOrig.getChildVariables()) {
+                if(!Toolkit.arrayContains(nodeLearntNeighbours, childOrig)) {
+                    System.out.printf(" - missing %s - %s\n", nodeOrig.getVariable().getName(), childOrig.getName());
+                    brokenConnections++;
+                }
+            }
+        }
+        System.out.printf(" - missing %d out of %d\n\n", brokenConnections, totalEdges);
+        
+        // what edges (directed) are not present in the learnt structure
+        System.out.println("Broken edges (directed):");
+        int brokenDirectedEdges = 0;
+        for(Node nodeOrig : bnOrig.getNodes()) {
+            Node nodeLearnt = bnLearnt.getNode(nodeOrig.getVariable());
+            Variable[] nodeLearntChildren = nodeLearnt.getChildVariables();
+            for(Variable childOrig : nodeOrig.getChildVariables()) {
+                if(!Toolkit.arrayContains(nodeLearntChildren, childOrig)) {
+                    System.out.printf(" - missing %s - %s\n", nodeOrig.getVariable().getName(), childOrig.getName());
+                    brokenDirectedEdges++;
+                }
+            }
+        }
+        System.out.printf(" - missing %d out of %d\n\n", brokenDirectedEdges, totalEdges);
+        
+        // what variables are connected in the learnt network (directions don't matter) but shouldn't be
+        System.out.println("Redundant connections (undirected):");
+        int redundantConnections = 0;
+        for(Node nodeLearnt : bnLearnt.getNodes()) {
+            Node nodeOrig = bnOrig.getNode(nodeLearnt.getVariable());
+            Variable[] nodeOrigNeighbours = Toolkit.union(nodeOrig.getParentVariables(), nodeOrig.getChildVariables());
+            for(Variable childLearnt : nodeLearnt.getChildVariables()) {
+                if(!Toolkit.arrayContains(nodeOrigNeighbours, childLearnt)) {
+                    System.out.printf(" - shouldn't have %s - %s\n", nodeLearnt.getVariable().getName(), childLearnt.getName());
+                    redundantConnections++;
+                }
+            }
+        }
+        System.out.printf(" - total %d\n\n", redundantConnections);
+        
+        System.out.println("\n\n");
+    }//GEN-LAST:event_buttonAnalyzeActionPerformed
+
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton buttonAnalyze;
     private javax.swing.JButton buttonLearn;
     private javax.swing.JButton buttonStop;
     private javax.swing.JComboBox comboBoxMethod;
@@ -643,14 +725,18 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 for(int run = 0 ; run < runCount && !learningController.getStopFlag(); run++) {
                     notifyLearningProgess(run, statistics);
                     BayesianNetwork bnInitial = bnEmpty.copyEmptyStructure();
-                    // !! BICScoringMethod has to be created for each run separately due to caching policy
-                    ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
-                    StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, tabulistAbssize, randomRestartStepcount);
+                    // !! ScoringMethod has to be created for each run separately due to caching policy
+                    ScoringMethod scoringMethod;
+                    if(selectedScoringMethodIndex == 0)
+                        scoringMethod = new BICScoringMethod(cachedDataset);
+                    else
+                        scoringMethod = new BayesianScoringMethod(cachedDataset, 5);
+                    StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(scoringMethod, tabulistAbssize, randomRestartStepcount);
                     BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, learningController, constraints);
                     if(learningController.getStopFlag() == true)
                         break;
-                    double resultBIC =  bicScoringMethod.absoluteScore(resultBN);
-                    statistics.registerLearntNetwork(resultBN, resultBIC);
+                    double resultScore =  scoringMethod.absoluteScore(resultBN);
+                    statistics.registerLearntNetwork(resultBN, resultScore);
                 }
                 notifyLearningProgess(runCount, statistics);
                 notifyLearningFinished(!learningController.getStopFlag());
@@ -667,8 +753,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         }
     }
     
+    
     class AllowedConnectionsTable extends JTable {
-        
         /** Establish the table model. */
         private void initModel() {
             Variable[] variables = dataset.getVariables();
@@ -707,6 +793,15 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 column.setHeaderRenderer(headerRenderer);
                 firstConstraintColumn = false;
             }
+            
+            // resize the first column to accomodate for variable names
+            int firstColumnWidth = 0;
+            for(int row = 0 ; row < this.getRowCount() ; row++) {
+                TableCellRenderer renderer = this.getCellRenderer(row, 0);
+                Component comp = this.prepareRenderer(renderer, row, 0);
+                firstColumnWidth = Math.max (comp.getPreferredSize().width, firstColumnWidth);
+            }
+            this.getColumnModel().getColumn(0).setPreferredWidth(firstColumnWidth);
         }
         
         @Override

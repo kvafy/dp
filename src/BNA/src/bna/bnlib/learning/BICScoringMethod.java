@@ -146,7 +146,7 @@ public class BICScoringMethod extends ScoringMethod {
      * Compute the mutual information between node and its parents from the dataset.
      * Cache is not used at all.
      */
-    private Double getMutualInformationFromDataset(Node n) {
+    private double getMutualInformationFromDataset(Node n) {
         if(n.getParentCount() == 0) // TODO really works like this?
             return 0.0;
         Variable[] nSet = {n.getVariable()};

@@ -525,9 +525,12 @@ public class NetworkLayoutGenerator {
         double edgeLenghtsSum2 = 0;        // sum of squared lenghts of all edges
         double edgeTypesCountPerNode = 0;  // how many different edge lengths are there from a node? sum over all nodes
         double edgeTypesCountPerLayer = 0; // how many different edge lengths are there from a layer? sum over all layers
+        double maxGap2WithinLayerSum = 0;  // for each layer squared size of the biggest x-gap between nodes
         for(LNode[] layer : placement) {
             HashSet<Double> edgeTypesPerLayer = new HashSet<Double>();
-            for(LNode lnode : layer) {
+            double maxGap2 = 0;
+            for(int i = 0 ; i < layer.length ; i++) {
+                LNode lnode = layer[i];
                 HashSet<Double> edgeTypesPerNode = new HashSet<Double>();
                 for(LNode child : lnode.children) {
                     double edgeLength2 = Math.pow(lnode.gridX - child.gridX, 2) + Math.pow(lnode.gridY - child.gridY, 2);
@@ -536,36 +539,17 @@ public class NetworkLayoutGenerator {
                     edgeTypesPerNode.add(edgeLength2);
                 }
                 edgeTypesCountPerNode += Toolkit.countPseudouniqueNumbers(edgeTypesPerNode);
-            }
-            edgeTypesCountPerLayer += Toolkit.countPseudouniqueNumbers(edgeTypesPerLayer);
-        }
-        // keep the nodes without any connections (parents or children) close to the rest
-        boolean nonChildlessNodeExists = false;
-        for(LNode lnode : placement[0]) {
-            if(lnode.children.length != 0) {
-                nonChildlessNodeExists = true;
-                break;
-            }
-        }
-        double distanceSum2OfChildlessNodes = 0;
-        for(LNode lnode : placement[0]) { // orphans will always be in the top layer
-            if(lnode.children.length == 0) {
-                double distance2ToClosestNode = Double.MAX_VALUE;
-                for(LNode neighbour : placement[0]) {
-                    if(neighbour == lnode)
-                        continue;
-                    if(neighbour.children.length == 0 && nonChildlessNodeExists)
-                        // avoid cluster of childless nodes far far away from the rest of the network
-                        continue;
-                    distance2ToClosestNode = Math.min(distance2ToClosestNode,
-                                                      Math.pow(lnode.gridX - neighbour.gridX, 2.0));
+                if(i + 1 < layer.length) {
+                    double gap2 = Math.pow(layer[i].gridX - layer[i + 1].gridX, 2);
+                    maxGap2 = Math.max(maxGap2, gap2);
                 }
-                distanceSum2OfChildlessNodes += distance2ToClosestNode;
             }
+            maxGap2WithinLayerSum += maxGap2;
+            edgeTypesCountPerLayer += Toolkit.countPseudouniqueNumbers(edgeTypesPerLayer);
         }
         
         // the final fitness function
-        return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer + distanceSum2OfChildlessNodes);
+        return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer + maxGap2WithinLayerSum);
     }
     
     

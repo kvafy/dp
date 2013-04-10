@@ -6,9 +6,10 @@ package bna.bnlib.learning;
 
 import bna.bnlib.*;
 import bna.bnlib.io.DatasetCSVFileReader;
+import bna.bnlib.io.DatasetCSVFileWriter;
 import bna.bnlib.io.DatasetFileReader;
+import bna.bnlib.io.DatasetFileWriter;
 import bna.bnlib.misc.Toolkit;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -41,6 +42,15 @@ public class Dataset implements DatasetInterface {
     public static Dataset loadCSVFile(String csvFileName, String separator) throws BNLibIOException {
         DatasetFileReader reader = new DatasetCSVFileReader(csvFileName, separator);
         return reader.load();
+    }
+    
+    /**
+     * Saves this dataset to the given CSV file.
+     * @throws BNLibIOException When an IO error occurs.
+     */
+    public void saveCSVFile(String csvFileName, String separator) throws BNLibIOException {
+        DatasetFileWriter csvWriter = new DatasetCSVFileWriter(csvFileName, separator);
+        csvWriter.save(this);
     }
     
     @Override

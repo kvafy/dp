@@ -61,6 +61,31 @@ public class DialogSampleDataset extends javax.swing.JDialog {
         return true;
     }
     
+    private void performSampling() {
+        if(this.verifyInputs()) {
+            final long sampleCount = Long.valueOf(this.textFieldSampleCount.getText());
+            final DatasetCreationSampler datasetSampler = new DatasetCreationSampler(this.bn);
+            this.samplingController = new SamplingController(sampleCount);
+            
+            Thread samplerThread = new Thread() {
+                public void run() {
+                    buttonSample.setEnabled(false);
+                    datasetSampler.sample(samplingController);
+                    if(samplingController.getStopFlag() == false) {
+                        // the sampling ran till the successful end
+                        dataset = datasetSampler.getDataset();
+                        confirmed = true;
+                        saveConfiguration();
+                        dispose();
+                    }
+                }
+            };
+            
+            samplerThread.setDaemon(true);
+            samplerThread.start();
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -79,6 +104,12 @@ public class DialogSampleDataset extends javax.swing.JDialog {
         setTitle("Replace dataset by sampling");
 
         jLabel1.setText("Number of samples");
+
+        textFieldSampleCount.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                textFieldSampleCountKeyPressed(evt);
+            }
+        });
 
         buttonSample.setText("Sample");
         buttonSample.addActionListener(new java.awt.event.ActionListener() {
@@ -129,28 +160,7 @@ public class DialogSampleDataset extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void buttonSampleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSampleActionPerformed
-        if(this.verifyInputs()) {
-            final long sampleCount = Long.valueOf(this.textFieldSampleCount.getText());
-            final DatasetCreationSampler datasetSampler = new DatasetCreationSampler(this.bn);
-            this.samplingController = new SamplingController(sampleCount);
-            
-            Thread samplerThread = new Thread() {
-                public void run() {
-                    buttonSample.setEnabled(false);
-                    datasetSampler.sample(samplingController);
-                    if(samplingController.getStopFlag() == false) {
-                        // the sampling ran till the successful end
-                        dataset = datasetSampler.getDataset();
-                        confirmed = true;
-                        saveConfiguration();
-                        dispose();
-                    }
-                }
-            };
-            
-            samplerThread.setDaemon(true);
-            samplerThread.start();
-        }
+        this.performSampling();
     }//GEN-LAST:event_buttonSampleActionPerformed
 
     private void buttonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelActionPerformed
@@ -159,6 +169,11 @@ public class DialogSampleDataset extends javax.swing.JDialog {
         confirmed = false;
         this.dispose();
     }//GEN-LAST:event_buttonCancelActionPerformed
+
+    private void textFieldSampleCountKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_textFieldSampleCountKeyPressed
+        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER)
+            this.performSampling();
+    }//GEN-LAST:event_textFieldSampleCountKeyPressed
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonCancel;
