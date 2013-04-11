@@ -153,11 +153,9 @@ Chapter 5 discusses selected applications suitable for parameter and structure l
 
 The final chapter summarizes the overall achieved results of this term project and discusses further planned work.
 
-\todo{Zbořil's notes on the term project
-\begin{itemize}
-	\item give some more examples for d-separation, or inspect the cases in a little more detail [done]
-	\item provide examples/proofs for parameter and structure learning formulas\,--\,how do we get to this? (nahrává na směč oponentovi)
-\end{itemize} }
+\todo{Appendix A provides an overview of the mathematical notation used.}
+\todo{Appendix B describes content of the CD enclosed with this thesis.}
+
 
 
 
@@ -682,14 +680,14 @@ In context of Bayesian networks, the technique most frequently used is simple hi
 \subsection{Likelihood score}
 The likelihood score has information-theoretic foundations and basically quantifies how well a given network structure matches our dataset. We assume that for a given structure $\mathcal{G}$ the parameters $\Theta$ are learnt using the maximum likelihood estimation, so the likelihood score really evaluates the hypothesis $(\mathcal{G}, \Theta)$.
 
-Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi_1, \dots, \xi_m \rbrace$. Again, learning corresponds with maximizing probability of sampling exactly the data $\mathcal{D}$ from the learnt network, only now we search for optimal BN structure rather than parameters. Concretely, we will focus on maximizing the likelihood function $P(\mathcal{D} \mid \Theta, \mathcal{G})$ which is basically probability of obtaining exactly the samples contained in dataset $\mathcal{D}$ from the network $(\mathcal{G},\Theta)$, ie. one can write $P(\mathcal{D} \mid \Theta, \mathcal{G}) = P(\xi_1 \mid \Theta, \mathcal{G}) \dotsm P(\xi_m \mid \Theta, \mathcal{G})$. Furthermore, we will use \term{log-likelihood function} which is just a logarithm of the likelihood function. This is a useful trick because logarithm transforms a product into a sum which will allow us to compute score of a network based purely on computations over individual nodes (the likelihood score decomposes over a network).
+Let's suppose we have a dataset $\mathcal{D} = \lbrace \xi^{(1)}, \dots, \xi^{(m)} \rbrace$. Again, learning corresponds with maximizing probability of sampling exactly the data $\mathcal{D}$ from the learnt network, only now we search for optimal BN structure rather than parameters. Concretely, we will focus on maximizing the likelihood function $P(\mathcal{D} \mid \Theta, \mathcal{G})$ which is basically probability of obtaining exactly the samples contained in dataset $\mathcal{D}$ from the network $(\mathcal{G},\Theta)$, ie. one can write $P(\mathcal{D} \mid \Theta, \mathcal{G}) = P(\xi^{(1)} \mid \Theta, \mathcal{G}) \dotsm P(\xi^{(m)} \mid \Theta, \mathcal{G})$. Furthermore, we will use \term{log-likelihood function} which is just a logarithm of the likelihood function. This is a useful trick because logarithm transforms a product into a sum which will allow us to compute score of a network based purely on computations over individual nodes (the likelihood score decomposes over a network).
 
 To understand how the likelihood score changes for two networks that differ only by presence of a~single edge, we will examine network $\mathcal{G}_1$ with two independent variables $X$ and $Y$ and network $\mathcal{G}_2$ with structure $X \rightarrow Y$. From the previous text we know likelihood scores of these networks (logarithms of likelihood functions) can be computed as follows:
 \begin{eqnarray*}
     score_L(\mathcal{G}_1 : \mathcal{D}) & = & \sum_{i=1}^{|\mathcal{D}|} \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)})\Bigr)\\
     score_L(\mathcal{G}_2 : \mathcal{D}) & = & \sum_{i=1}^{|\mathcal{D}|} \Bigl(\log \hat P(x^{(i)}) + \log \hat P(y^{(i)} \mid x^{(i)})\Bigr)
 \end{eqnarray*}
-where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of dataset $\mathcal{D}$ in network with structure $\mathcal{G}_1$, $x^{(i)}$ is value of variable $X$ in sample $\xi_i$ and $\hat P$ denotes so called \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle (eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$) and therefore $\hat{P}(\cdot)$ also corresponds to the CPD entries (we have said that parameters $\Theta$ of a network with given structure are assumed to be computed using maximum likelihood estimation).
+where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of dataset $\mathcal{D}$ in network with structure $\mathcal{G}_1$, $x^{(i)}$ is value of variable $X$ in sample $\xi^{(i)}$ and $\hat P$ denotes so called \term{empirical distribution}. Empirical distribution is computed from the dataset $\mathcal{D}$ according to the maximum likelihood principle (eg. $\hat P(x_i) = N_{x_i} / N$ or $\hat P(x_i \mid y_j) = N_{x_i,y_j} / N_{y_j}$) and therefore $\hat{P}(\cdot)$ also corresponds to the CPD entries (we have said that parameters $\Theta$ of a network with given structure are assumed to be computed using maximum likelihood estimation).
 
 Now let's examine the difference between having an edge between variables $X$ and $Y$ or not, how does the likelihood score change? We obtain the following result (derivation inspired by~\cite[p.~791]{pgm}):
 \begin{eqnarray*}
@@ -702,7 +700,7 @@ Now let's examine the difference between having an edge between variables $X$ an
        =   N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
      & = & N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
-First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi_1,\dots,\xi_m$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as many times as before.
+First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi^{(1)},\dots,\xi^{(m)}$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as many times as before.
 On the third line the counts $N_{x,y}$ and $N_y$ are expresses using size of the dataset $N$ and empirical probabilities of respective instantiations $x,y$ and $y$.
 After that, on the fourth line, we can extend the second summation from just over $Y$ to over $X,Y$.
 The last step, the fifth line, is merging the two sums and logarithms and applying Bayes' rule on the $\hat P(y \mid x)$ term. Finally, we introduce special notation for the final expression.
@@ -776,7 +774,7 @@ Before we get to the general expression for $P(\mathcal{D} \mid \mathcal{G})$ in
      & = & \frac{\Gamma(\alpha)}{\Gamma(\alpha + 5)} \cdot \frac{\Gamma(\alpha_H + 3)}{\Gamma(\alpha_H)} \cdot \frac{\Gamma(\alpha_T + 2)}{\Gamma(\alpha_T)}
 \end{eqnarray*}
 As states the equation~\eqref{eq:bayesian_score_chain_rule}, probability of $\xi^{(i)}$ is computed based on samples $\xi^{(j)}$ with index $j < i$ and on the pseudosamples from the prior distribution. The computation is fairly straightforward\,--\,suppose $\xi^{(i)} = H$, then the corresponding probability is given as the number of samples and pseudosamples of heads we have seen before $\xi^{(i)}$ divided by the total number of samples and pseudosamples before $\xi^{(i)}$.
-For the first training example $\xi_1$, respectively for $P(\xi_1)$, we have only pseudosamples, so $P(\xi_1) = \alpha_H / \alpha$. For $\xi^{(2)}$ we have already seen one occurrence of heads and also one real sample, so $P(\xi_2) = (\alpha_H + 1) / (\alpha + 1)$. In case of $\xi^{(3)}$ we have not seen any tails yet but there already have been two real samples, hence $P(\xi_3) = \alpha_T / (\alpha + 2)$ a so on. Rest of the work is just to rewrite the expression using \term{gamma function} which is a continuous generalization of factorial for which holds $\Gamma(n) = (n-1)!$ provided $n \in \mathbb{N}$. Notice on the second line of the formula above that we grouped terms concerning the same value of our random variable (values heads or tails)\,--\,the value of $P(\mathcal{D})$ doesn't depend on the ordering of samples in the dataset and the final line tells us that $P(\mathcal{D})$ can be computed purely based on occurrence counts rather than by going through the dataset sample by sample. This observation will apply also in context of Bayesian networks.
+For the first training example $\xi^{(1)}$, respectively for $P(\xi^{(1)})$, we have only pseudosamples, so $P(\xi^{(1)}) = \alpha_H / \alpha$. For $\xi^{(2)}$ we have already seen one occurrence of heads and also one real sample, so $P(\xi^{(2)}) = (\alpha_H + 1) / (\alpha + 1)$. In case of $\xi^{(3)}$ we have not seen any tails yet but there already have been two real samples, hence $P(\xi^{(3)}) = \alpha_T / (\alpha + 2)$ a so on. Rest of the work is just to rewrite the expression using \term{gamma function} which is a continuous generalization of factorial for which holds $\Gamma(n) = (n-1)!$ provided $n \in \mathbb{N}$. Notice on the second line of the formula above that we grouped terms concerning the same value of our random variable (values heads or tails)\,--\,the value of $P(\mathcal{D})$ doesn't depend on the ordering of samples in the dataset and the final line tells us that $P(\mathcal{D})$ can be computed purely based on occurrence counts rather than by going through the dataset sample by sample. This observation will apply also in context of Bayesian networks.
 
 The general formula for binomial distribution over values $\lbrace heads, tails \rbrace$ one can sense from the concrete example, that has just been presented, can be generalized for a multinomial distribution over some variable $X$ with values $\lbrace x_1, \dots, x_m \rbrace$ with a Dirichlet prior $\alpha_1, \dots, \alpha_m$~\cite[p.~798]{pgm}:
 \begin{equation}\label{eq:bayesian_score_multinomial}
@@ -1523,8 +1521,6 @@ What I did in the practical part:
 
 
 
-
-
 % Pouzita literatura
   % ----------------------------------------------
 \ifczech
@@ -1537,6 +1533,6 @@ What I did in the practical part:
   \bibliography{literatura} % viz. literatura.bib
   \end{flushleft}
   \appendix
-  
+   
   \input{prilohy} % viz. prilohy.tex
 \end{document}
