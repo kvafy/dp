@@ -759,7 +759,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                     notifyLearningProgess(run, statistics);
                     BayesianNetwork bnInitial = bnEmpty.copyEmptyStructure();
                     // !! ScoringMethod has to be created for each run separately due to caching policy
-                    ScoringMethod scoringMethod;
+                    DecomposableScoringMethod scoringMethod;
                     if(selectedScoringMethodIndex == 0)
                         scoringMethod = new BICScoringMethod(cachedDataset);
                     else

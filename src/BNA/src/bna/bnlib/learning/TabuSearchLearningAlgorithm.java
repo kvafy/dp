@@ -4,8 +4,8 @@
 
 package bna.bnlib.learning;
 
-import bna.bnlib.misc.Toolkit;
 import bna.bnlib.*;
+import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
@@ -20,7 +20,7 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
     private int randomRestartSteps;
     
 
-    public TabuSearchLearningAlgorithm(ScoringMethod method, int tabulistSize, int randomRestartSteps) {
+    public TabuSearchLearningAlgorithm(DecomposableScoringMethod method, int tabulistSize, int randomRestartSteps) {
         super(method);
         this.tabuListSize = tabulistSize;
         this.randomRestartSteps = randomRestartSteps;

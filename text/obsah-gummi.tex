@@ -1201,22 +1201,69 @@ Also, we cannot save time by storing references to dynamically allocated objects
 
 
 \section{Structure learning}
-\todo{Could use Warshall algorithm to determine which edges can be added/deleted/reversed without the need to try such modification and consequently check for acyclicity}
+To perform structure learning in the form of optimization of a scoring function we need a~state-space search algorithm, a dataset and implementation of a scoring function. All these components are implemented separately as will be explained in the following text.
 
-\subsubsection{Caching for structure learning using BIC score}
-For structure learning based on local state-space search using the BIC score I use twofold caching\,--\,for delta scores of possible alterations and for mutual information estimates. Caching is important because in order to evaluate the BIC score of a network structure we have to make a pass through the entire dataset which may be very large. Furthermore, for two networks differing only by a single alteration, most of the possible alterations will yield the same delta score or the delta score will be at least partly computable using mutual information values that have been already determined in the previous step of local search.
+\subsection{Learning algorithm}
+A general state-spate search algorithm, that explores the space of feasible network structures, is represented by the abstract class \srccode{StructureLearningAlgorithm}. There is single concrete implementation, namely the \srccode{TabuSearchLearningAlgorithm} class implementing tabu-search with random restarts. The learning itself is controlled via an instance of \srccode{LearningController} which specifies the number of steps of the local search and also can be used to stop the learning process instantly by invoking \srccode{setStopFlag()} method which is useful with a GUI. The learning algorithm also receives restrictions of feasible structures as an instance of \srccode{StructuralConstraints}; the structural restrictions are represented by a~boolean matrix in which we may selectively disallow any directed edge.
 
-The caches need to be maintained at minimum size to remain effective and the trick is to keep only those values, that will be needed and dropping those that won't. For the cache of mutual information estimates usefulness of its entries depends on the course the local state-space search takes and as this is impossible to predict, LRU strategy (least recently used) is applied. \todo{Explain estimate of minimum size for cache plus some breathing space.} In context of caching of delta scores for network alterations the situation is a bit different\,--\,basically we keep delta score for every network alteration that is currently feasible and when the state-space search procedure accepts a network change, we drop delta scores that are affected by this change. To achieve the correct dropping behavior we need to understand how the delta score is computed for the three possible network alterations\,--\,edge addition, removal and reversal (for reference see the BIC score definition~\eqref{eq:bic_score}):
+
+
+\subsection{Scoring functions}
+A scoring function is the essential ingredient of structure learning. A general scoring method is represented by the abstract \srccode{ScoringMethod} class, if the score is decomposable there is a specialized abstract subclass \srccode{DecomposableScoringMethod} whose direct descendants are \srccode{BICScoringMethod} and \srccode{BayesianScoringMethod}. Any non-abstract subclass of the \srccode{DecomposableScoringMethod} class has to define three methods: \srccode{computeFamilyScore(...)}, \srccode{absoluteScore(...)} and \srccode{computeIncreaseOfComplexityPenalty(...)}. The method \srccode{absoluteScore(...)} computes the total score of a structure without employing any caching. Purpose of the two other methods is clear from the following text.
+
+To make structure learning bearable in terms of time requirements we need to employ clever caching that takes advantage of score decomposability. This thesis considers two scoring functions\,--\,BIC score and Bayesian score:
+\begin{eqnarray*}
+    score_{BIC}(\mathcal{G} : \mathcal{D})
+    & = & \sum_{X_i \in Nodes} \!\!\!\!\!\! N \cdot I_{\hat P}(X_i;Parents(X_i))
+    %- N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
+    - \frac{\log N}{2} Dim[\mathcal{G}]\\
+    score_B(\mathcal{G} : \mathcal{D})
+    & = &
+      \sum_{X_i \in Nodes}
+             \Biggl[
+                \sum_{\vars{pa}}
+                   \Biggl(
+                      log \frac{\Gamma(\alpha_{X_i \mid \vars{pa}})}{\Gamma(\alpha_{X_i \mid \vars{pa}} + N_{\vars{pa}})}
+                      + \sum_{x} log \frac{\Gamma(\alpha_{x \mid \vars{pa}} + N_{x, \vars{pa}})}{\Gamma(\alpha_{x \mid \vars{pa}})}
+                   \Biggr)
+             \Biggr]
+      + log P(\mathcal{G})
+\end{eqnarray*}
+Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some structural complexity penalty term. Lets rewrite the scores in a unified format (suggested in~\cite{pgm}):
+\begin{eqnarray*}
+    score(\mathcal{G} : \mathcal{D})
+    & = & \sum_{X_i \in Nodes} \!\!\!\!\!\! FamScore(X_i, Parents(X_i))
+    + Penalty(\mathcal{G})
+\end{eqnarray*}
+As we can see, the family score $FamScore(\cdot)$ of a node depends on its parents, ie. on network structure. Also, family score is in both our scoring functions computed by a pass through the dataset, therefore the change of family scores is the value that should be cached for a network alteration. The penalty term regarding network complexity is easy to compute.
+
+Caching exploits the property that most of the possible structural alterations remain the same in consecutive steps of local search, we only need to employ careful bookkeeping. For one, we need to cache the change of family scores for each network alteration that is feasible in the current state of local state-space search; for two, when a structural change is accepted we need to drop those cached entries that are invalidated by the structural change. This way the cache of delta family scores can be maintained at minimum size and remain effective.
+To achieve the correct dropping behavior we need to understand how the delta family score is computed for the three possible network alterations\,--\,edge addition, removal and reversal (for reference see the definition of BIC or Bayesian score above):
 \begin{itemize}
-	\item For addition or removal of edge $(X,Y)$ the delta score is the increase of mutual information $I_{\hat P}(Y,Parents(Y))$ minus the increase of the dimension term $\log(N) Dim[G] / 2$. So, whenever the action accepted in the current step of local search changes the set $Parents(Y)$, all cached values for actions add or remove $(X,Y)$ have to be dropped.\medskip \\
-	Note: Some action may be legal, though not picked as the best one, in several consecutive steps of local search, meanwhile the mutual information change for this action may still be the same, provided the sets $Parents(\cdot)$ it uses don't change, but the dimension term change will vary as the network evolves and its dimensionality changes. Therefore we cache only the increase of the mutual information since the dimension term change is easily computable without the need to access the dataset.
-	\item For reversal of edge $(X,Y)$ the delta score is the increase of the two-term sum $I_{\hat P}(X,Parents(X)) + I_{\hat P}(Y,Parents(Y))$ minus the increase of the dimension term. In this case, whenever the action currently taken changes either of the sets $Parents(X)$ or $Parents(Y)$, all cached values for action reverse $(X,Y)$ have to be dropped.
+	\item For addition or removal of edge $(X,Y)$ the delta family score is the increase of $FamScore(Y,Parents(Y))$ because set of parents is unchanged for all nodes except for $Y$. So, whenever the action accepted in the current step of local search changes the set $Parents(Y)$ all cached delta family scores for actions add or remove $(X,Y)$ (for any $X$) have to be removed from cache because those cached values are no longer valid and need to be recomputed.
+	\item For reversal of edge $(X,Y)$ the delta family score is the increase of two terms: $FamScore(X,Parents(X))$ and $FamScore(Y,Parents(Y))$ because the two variables' sets of parents are affected. In this case, whenever the alteration action currently taken changes either of the sets $Parents(X)$ or $Parents(Y)$, all cached delta family score values for action reverse $(X,Y)$ have to be dropped.
 \end{itemize}
 
-Size of the alterations cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why lets consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be broken. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any immediate BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the remaining possible edges implied by the topological ordering can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
+Size of the delta family score cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why lets consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be violated. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any concrete BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the complementary edges allowed by the topological ordering but not currently present can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
+
+
+\subsection{Dataset}
+The \srccode{Dataset} class has been already introduced in context of sampling. For structure learning is important that the \srccode{Dataset} class provides methods for computing the mutual information $I_{\hat P}(X; Parents(X))$ and for counting number of occurrences of an event $\vars{x}$, ie. determining some value $N_\vars{x}$. Furthermore, to accelerate the learning process it is very useful to cache the least recent queries over a dataset because a pass through the entire dataset may be a very costly operation. Also, from the nature of local search, which examines all possible network alterations and picks the best one, majority of the possible alterations will be the same in consecutive steps of local search, therefore majority of the dataset queries will be the same. Usefulness of the cached entries depends on the course the local state-space search takes and as this is impossible to predict, LRU strategy (least recently used) is applied.
+
+For a network with $n$ variables and for BIC or Bayesian score the minimal cache size needed to accommodate for all possible dataset queries during a single step of local state-space search is $n + n(n-1)$. Derivation of this expression will be provided shortly. Practical experiments have showed that the cache of dataset queries needs to be at least twice the minimal size even with the caching of delta-family-score which effectively prevents a great deal of dataset queries from happening, even if these queries were cached.
+
+The functionality of caching dataset queries is implemented in the \srccode{CachedDataset} class by caching proxy design pattern.
 
 \medskip
-Caching of mutual information changes for network alterations is implemented right in the \srccode{BICScoringMethod} class as its logic is specific to the BIC score. Cache of mutual information queries over a \srccode{Dataset} instance is implemented using caching proxy design pattern in \srccode{CachedDataset} class.
+The last thing is to derive the upper bound of possible dataset queries during a single step of local search. As with the upper bound for size of delta family score cache, suppose we can make up to $n(n-1)/2$ additions and removals total and up to $n(n-1)/2$ edge reversals. Now lets analyze how the delta family scores are affected by edge addition, removal and reversal (for reference see the definition of BIC or Bayesian score above):
+\begin{itemize}
+	\item For addition or removal of edge $(X,Y)$ the delta family score is the increase or decrease in the family score of $Y$, ie. $FamScore(Y,Pa(Y)^{+}) - FamScore(Y,Pa(Y))$ in case of edge addition or $FamScore(Y,Pa(Y)^{-}) - FamScore(Y,Pa(Y))$ in case of edge removal. $Pa(\cdot)$ is a shorthand for $Parents(X)$.
+	\item For reversal of edge $(X,Y)$ both families of $X$ and $Y$ are affected by this structural change, so the delta family score is effectively given as $FamScore(X,Pa(X)^+) + FamScore(Y,Pa(Y)^-) - FamScore(X,Pa(X)) - FamScore(Y,Pa(Y))$.
+\end{itemize}
+Now we need to recognize how many different family scores we may need to evaluate in a single step of local search, hence how many dataset queries we may need to perform.
+Clearly, we need $FamScore(X,Pa(X))$ for every node $X$, which means $n$ dataset queries.
+The need for the same value $FamScore(X,Pa(X)^-)$ is shared between edge removal and reversal actions and, both the number of edge removals and edge reversals is upper bounded by $n(n-1)/2$.
+The value of $FamScore(X,Pa(X)^+)$ may be needed by edge addition or by edge reversal. Lets observe that only one of the actions add/reverse, which would result in extending $Pa(X)$ to $Pa(X)^+$, at a time might be possible. Upper bound of the sum of possible edge additions and reversals is the same as for the sum of edge additions and removals, $n(n-1)/2$. Thereby we obtain the total upper bound of dataset queries in a single step of local search as $n + 2n(n-1)/2 = n + n(n-1)$.
 
 
 
@@ -1364,6 +1411,7 @@ Structures without a bounding box represent the whole set of $n+1$ central varia
 \end{figure}
 
 Before we proceed to the experiments with structure learning please note that outcome of the experiments relies on the concrete dataset we sample before learning. So, for two datasets of equal size we quite frequently obtain different sets of best-scoring structures, especially when the number of samples is small (hundreds or thousands of samples depending on the network).
+
 
 \subsubsection{Experiments with Cancer network}
 The Cancer network with five variables is the simplest network I consider in my experiments. With a dataset of 300 samples the structure learning with BIC score discovers only a~chain $Xray - Cancer - Dyspnoea$, respectively its three I-equivalent variants, the variables $Smoker$ and $Pollution$ are isolated (see Figure~\ref{fig:structure-learning-cancer-300}).

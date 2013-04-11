@@ -512,7 +512,7 @@ public class BNA {
             // learn using likelihood score
             timeStart = System.currentTimeMillis();
             System.out.println("Learning structure by BIC score...");
-            ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+            DecomposableScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
             StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
             BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller, constraints);
             timeEnd = System.currentTimeMillis();
@@ -567,7 +567,7 @@ public class BNA {
             StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
             constraints.setMaxParentCount(MAX_PARENT_COUNT);
             BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
-            ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+            DecomposableScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
             StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
             BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, controller, constraints);
             double resultBIC =  bicScoringMethod.absoluteScore(resultBN);

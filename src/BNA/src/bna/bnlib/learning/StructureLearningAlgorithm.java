@@ -12,9 +12,9 @@ import bna.bnlib.BayesianNetwork;
  * learning controller and learns the new network.
  */
 public abstract class StructureLearningAlgorithm {
-    protected ScoringMethod scoringMethod;
+    protected DecomposableScoringMethod scoringMethod;
     
-    public StructureLearningAlgorithm(ScoringMethod method) {
+    public StructureLearningAlgorithm(DecomposableScoringMethod method) {
         this.scoringMethod = method;
     }
     
