@@ -44,6 +44,7 @@ public class DialogQuerySampling extends javax.swing.JDialog {
             this.comboBoxMethod.setSelectedIndex(methodIndex);
         }
         catch(NumberFormatException nfe) {}
+        catch(IllegalArgumentException ex) {} // invalid index
         // checkboxes
         String onlineFlagStr = mw.getConfiguration("QuerySampling", "online_results");
         try {
@@ -51,7 +52,6 @@ public class DialogQuerySampling extends javax.swing.JDialog {
             this.checkBoxOnline.setSelected(onlineFlag != 0);
         }
         catch(NumberFormatException nfe) {}
-        
     }
     
     private void saveConfiguration() {

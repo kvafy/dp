@@ -21,10 +21,14 @@ public class Toolkit {
     /** Maximal difference of two double values that are considered equal. */
     public static final double DOUBLE_EPS = 1e-4;
     
+    /** Are two real numbers considered equal (with given tolerance)? */
+    public static boolean doubleEquals(double a, double b, double eps) {
+        return Math.abs(a - b) <= eps;
+    }
     
-    /** Are two real numbers considered equal (with some tolerance)? */
+    /** Are two real numbers considered equal (with default tolerance)? */
     public static boolean doubleEquals(double a, double b) {
-        return Math.abs(a - b) <= Toolkit.DOUBLE_EPS;
+        return Toolkit.doubleEquals(a, b, Toolkit.DOUBLE_EPS);
     }
     
     /**

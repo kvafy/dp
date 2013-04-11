@@ -102,6 +102,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private void loadConfiguration() {
         MainWindow mw = MainWindow.getInstance();
         // text fields
+        this.textFieldAlpha.setText(mw.getConfiguration("LearningStructure", "alpha"));
         this.textFieldRunCount.setText(mw.getConfiguration("LearningStructure", "run_count"));
         this.textFieldIterationCount.setText(mw.getConfiguration("LearningStructure", "iteration_count"));
         this.textFieldRandomRestartStepcount.setText(mw.getConfiguration("LearningStructure", "rnd_restart_step_count"));
@@ -114,11 +115,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             this.comboBoxMethod.setSelectedIndex(scoringMethodIndex);
         }
         catch(NumberFormatException nfe) {}
+        catch(IllegalArgumentException ex) {} // invalid index
     }
     
     private void saveConfiguration() {
         MainWindow mw = MainWindow.getInstance();
         // text fields
+        mw.setConfiguration("LearningStructure", "alpha", this.textFieldAlpha.getText());
         mw.setConfiguration("LearningStructure", "run_count", this.textFieldRunCount.getText());
         mw.setConfiguration("LearningStructure", "iteration_count", this.textFieldIterationCount.getText());
         mw.setConfiguration("LearningStructure", "rnd_restart_step_count", this.textFieldRandomRestartStepcount.getText());
@@ -137,13 +140,16 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             return false;
         }
         try {
+            double alpha = (selectedScoringMethod == 1) ? Double.valueOf(this.textFieldAlpha.getText()) : 1;
             int runCount = Integer.valueOf(this.textFieldRunCount.getText());
             long iterationCount = Long.valueOf(this.textFieldIterationCount.getText());
             int randomRestartStepcount = Integer.valueOf(this.textFieldRandomRestartStepcount.getText());
             double tabulistRelsize = Double.valueOf(this.textFieldTabulistRelsize.getText());
             int maxParents = Integer.valueOf(this.textFieldMaxParents.getText());
             String errorMsg = null;
-            if(runCount <= 0)
+            if(selectedScoringMethod == 1 && alpha <= 0)
+                errorMsg = "Equivalent sample size (alpha) needs to be positive.";
+            else if(runCount <= 0)
                 errorMsg = "Run count has to be a positive integer.";
             else if(iterationCount <= 0)
                 errorMsg = "Iteration count has to be a integer.";
@@ -159,7 +165,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             }
         }
         catch(NumberFormatException ex) {
-            String msg = "Numeric parameters are invalid.";
+            String msg = "Numeric parameters are invalid strings.";
             JOptionPane.showMessageDialog(this, msg, "Invalid parameters", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -299,6 +305,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         jScrollPane3 = new javax.swing.JScrollPane();
         tableAllowedConnections = new AllowedConnectionsTable();
         textFieldMaxParents = new javax.swing.JTextField();
+        jLabel13 = new javax.swing.JLabel();
+        textFieldAlpha = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         labelBestScoreSoFar = new javax.swing.JLabel();
@@ -337,6 +345,11 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         jLabel2.setText("Number of runs");
 
         comboBoxMethod.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "BIC score", "Bayesian score" }));
+        comboBoxMethod.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                comboBoxMethodItemStateChanged(evt);
+            }
+        });
 
         jLabel4.setText("Number of iterations");
 
@@ -370,6 +383,10 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         jScrollPane3.setViewportView(tableAllowedConnections);
         ((AllowedConnectionsTable)tableAllowedConnections).initModel();
 
+        jLabel13.setText("Alpha");
+
+        textFieldAlpha.setEnabled(false);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -380,11 +397,18 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addGap(28, 28, 28)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(textFieldRunCount, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel2)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel3)
+                                            .addComponent(jLabel13))
+                                        .addGap(28, 28, 28)
+                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                                .addComponent(textFieldAlpha, javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(textFieldRunCount, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)))))
                                 .addGap(18, 18, 18)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel5)
@@ -398,7 +422,6 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                                         .addComponent(textFieldIterationCount, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel1))))
-                            .addComponent(jLabel2)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel10)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -427,14 +450,16 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(textFieldRunCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5)
-                    .addComponent(textFieldRandomRestartStepcount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(textFieldRandomRestartStepcount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel13)
+                    .addComponent(textFieldAlpha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
-                    .addComponent(textFieldTabulistRelsize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(textFieldTabulistRelsize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(textFieldRunCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(11, 11, 11)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel10)
@@ -647,6 +672,11 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         System.out.println("\n\n");
     }//GEN-LAST:event_buttonAnalyzeActionPerformed
 
+    private void comboBoxMethodItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_comboBoxMethodItemStateChanged
+        boolean bayesianScoringMethod = this.comboBoxMethod.getSelectedIndex() == 1;
+        this.textFieldAlpha.setEnabled(bayesianScoringMethod);
+    }//GEN-LAST:event_comboBoxMethodItemStateChanged
+
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonAnalyze;
@@ -658,6 +688,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -676,6 +707,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private javax.swing.JLabel labelStatus;
     private javax.swing.JTable tableAllowedConnections;
     private javax.swing.JTable tableEdgeFrequency;
+    private javax.swing.JTextField textFieldAlpha;
     private javax.swing.JTextField textFieldIterationCount;
     private javax.swing.JTextField textFieldMaxParents;
     private javax.swing.JTextField textFieldRandomRestartStepcount;
@@ -700,6 +732,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 final int VARIABLE_COUNT = VARIABLES.length;
                 // learning parameters
                 int selectedScoringMethodIndex = comboBoxMethod.getSelectedIndex();
+                double equivalentSampleSize = (selectedScoringMethodIndex == 1) ? Double.valueOf(textFieldAlpha.getText()) : 1;
                 int runCount = Integer.valueOf(textFieldRunCount.getText());
                 long iterationCount = Long.valueOf(textFieldIterationCount.getText());
                 int randomRestartStepcount = Integer.valueOf(textFieldRandomRestartStepcount.getText());
@@ -730,7 +763,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                     if(selectedScoringMethodIndex == 0)
                         scoringMethod = new BICScoringMethod(cachedDataset);
                     else
-                        scoringMethod = new BayesianScoringMethod(cachedDataset, 5);
+                        scoringMethod = new BayesianScoringMethod(cachedDataset, equivalentSampleSize);
                     StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(scoringMethod, tabulistAbssize, randomRestartStepcount);
                     BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, learningController, constraints);
                     if(learningController.getStopFlag() == true)

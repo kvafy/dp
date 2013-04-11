@@ -49,7 +49,7 @@ public class StructureLearningStatistics {
     private void addLearntNetworkStructure(BayesianNetwork bnLearnt, double score) {
         for(int i = 0 ; i < this.bnLearntHitparade.size() ; i++) {
             LearningRecord iRecord = this.bnLearntHitparade.get(i);
-            if(Toolkit.doubleEquals(score, iRecord.score)) {
+            if(Toolkit.doubleEquals(score, iRecord.score, 1e-2)) { // high tolerance because of Bayesian score
                 if(!iRecord.containsStructure(bnLearnt)) // want to keep only unique structures
                     iRecord.networks.add(bnLearnt);
                 return;

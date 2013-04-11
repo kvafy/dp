@@ -41,6 +41,7 @@ public class DialogParametersLearning extends javax.swing.JDialog {
                 this.comboBoxMethod.setSelectedIndex(Integer.valueOf(methodIndexStr));
             }
             catch(NumberFormatException nfe) {}
+            catch(IllegalArgumentException ex) {} // invalid index
         }
         // equivalent sample size
         String alphaStr = mw.getConfiguration("LearningParameters", "alpha");

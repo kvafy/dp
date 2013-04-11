@@ -14,7 +14,7 @@ import java.util.Set;
 
 
 /**
- * Class implementing the Bayesian score with K2 prior.
+ * Class implementing the Bayesian score with a uniform discrete BDe prior.
  */
 public class BayesianScoringMethod extends ScoringMethod {
     private DatasetInterface dataset;
@@ -29,10 +29,11 @@ public class BayesianScoringMethod extends ScoringMethod {
     @Override
     public double absoluteScore(BayesianNetwork bn) {
         // the log P(D | G) part
+        // (notation is consistent with the formulas presented in thesis)
         double log_P_D_given_G = 0;
         for(Node Xi : bn.getNodes()) {
             if(Xi.getParentCount() == 0) {
-                Factor prior_Xi = this.getParameterPriorK2(Xi);
+                Factor prior_Xi = this.getParameterPriorBDEUniform(Xi);
                 Factor N_Xi = this.dataset.computeFactor(Xi.getScope());
                 double alpha_Xi = 0;
                 double N = 0;
@@ -46,10 +47,10 @@ public class BayesianScoringMethod extends ScoringMethod {
                 log_P_D_given_G += Gamma.logGamma(alpha_Xi) - Gamma.logGamma(alpha_Xi + N);
             }
             else {
-                Factor prior_Xi_Pa = this.getParameterPriorK2(Xi);
+                Factor prior_Xi_Pa = this.getParameterPriorBDEUniform(Xi);
                 Factor N_Xi_Pa = this.dataset.computeFactor(Xi.getScope());
                 int[] assignment_x_pa = new int[Xi.getScope().length];
-                for(int[] assignment_pa : new Factor(Xi.getParentVariables(), 0)) { // create a factor of parents just to iterate over it
+                for(int[] assignment_pa : new Factor(Xi.getParentVariables(), Double.NaN)) { // create a factor of parents just to iterate over it
                     System.arraycopy(assignment_pa, 0, assignment_x_pa, 1, assignment_pa.length);
                     double alpha_Xi_pa = 0;
                     double N_pa = 0;
@@ -68,7 +69,7 @@ public class BayesianScoringMethod extends ScoringMethod {
         // the dimension part
         final double C = 0.9;
         double dim = bn.getEdgeCount();
-        double logStructureScore = dim * Math.log(C); // log(C ^ dim)
+        double logStructureScore = dim * Math.log(C); // log(C ** dim)
         return log_P_D_given_G + logStructureScore;
     }
     
@@ -88,11 +89,11 @@ public class BayesianScoringMethod extends ScoringMethod {
     public void notifyNetworkAlteration(AlterationAction actionTaken) {
     }
     
-    private Factor getParameterPriorK2(Node n) {
+    private Factor getParameterPriorBDEUniform(Node n) {
         Variable[] scope = n.getScope();
-        int noAssignmentsOfX = scope[0].getCardinality();
-        return new Factor(scope, this.alpha / noAssignmentsOfX);
-        //int noAssignmentsOfParents = Toolkit.cardinality(scope) / scope[0].getCardinality();
-        //return new Factor(scope, this.alpha / noAssignmentsOfParents);
+        // BDe prior as if the prior network were discrete (without any edge)
+        // and all the variables had a uniform distribution
+        // => ensures the same Bayesian score of I-equivalent structures
+        return new Factor(scope, this.alpha / Toolkit.cardinality(scope));
     }
 }
