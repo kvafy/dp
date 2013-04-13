@@ -1412,15 +1412,17 @@ Structures without a bounding box represent the whole set of $n+1$ central varia
 
 Before we proceed to the experiments with structure learning please note that outcome of the experiments relies on the concrete dataset we sample before learning. So, for two datasets of equal size we quite frequently obtain different sets of best-scoring structures, especially when the number of samples is small (hundreds or thousands of samples depending on the network).
 
+\todo{Results of the following experiments have been obtained primarily using the BIC score. The Bayesian score leads often to the same best-scoring structures and differences are explicitly pointed out. \todo{The exact datasets used are available on the enclosed CD}.}
+
 
 \subsubsection{Experiments with Cancer network}
 The Cancer network with five variables is the simplest network I consider in my experiments. With a dataset of 300 samples the structure learning with BIC score discovers only a~chain $Xray - Cancer - Dyspnoea$, respectively its three I-equivalent variants, the variables $Smoker$ and $Pollution$ are isolated (see Figure~\ref{fig:structure-learning-cancer-300}).
 
-With a dataset of 1000 samples the structure learning algorithm discovers only dependency among four variables in form of a central variable structure (see Figure~\ref{fig:structure-learning-cancer-1000}). The choice of central variable to be $Cancer$ is consistent with the original network. The variable $Smoker$ is isolated in the found structures as $P(Cancer \mid Smoker)$ differs only by the value $0.02$ for different assignments of $Smoker$ and the potential edge $Smoker \rightarrow Cancer$ is in the score more penalized by the increase of structure complexity than it is favored for its contribution to mutual information sum.
+With a dataset of 1\,000 samples the structure learning algorithm discovers only dependency among four variables in form of a central variable structure (see Figure~\ref{fig:structure-learning-cancer-1000}). The choice of central variable to be $Cancer$ is consistent with the original network. The variable $Smoker$ is isolated in the found structures as $P(Cancer \mid Smoker)$ differs only by the value $0.02$ for different assignments of $Smoker$ and the potential edge $Smoker \rightarrow Cancer$ is in the score more penalized by the increase of structure complexity than it is favored for its contribution to mutual information sum.
 
-For a dataset with 5000 samples we finally obtain a connected graph, only there is similar situation as we had with 1000 samples\,--\,we obtain a central variable structure with $Cancer$ being the central variable (see Figure~\ref{fig:structure-learning-cancer-5000}). The results of this and of the previous test suggest that V-structures need to be strongly implied by the dataset, otherwise the learning algorithm will avoid introducing a V-structure.
+For a dataset with 5\,000 samples and the BIC score we finally obtain a connected graph, only there is similar situation as we had with 1000 samples\,--\,we obtain a central variable structure with $Cancer$ being the central variable (see Figure~\ref{fig:structure-learning-cancer-5000}). The results of this and of the previous test suggest that V-structures need to be strongly implied by the dataset, otherwise the learning algorithm will avoid introducing a V-structure. With Bayesian score the $Pollution$ variable remains isolated with this dataset.
 
-Finally, with a dataset of 20000 samples the learning process yields the exact original structure of cancer network and no others (see Figure~\ref{fig:structure-learning-cancer-20000}). The original structure is unique as it contains a V-structure in $Cancer$ variable which spoils any possibility for there being a chain of variables that could be somehow rearranged.
+Finally, with a dataset of 20\,000 samples the learning process with the BIC score yields the exact original structure of cancer network and no others (see Figure~\ref{fig:structure-learning-cancer-20000}). The original structure is unique as it contains a V-structure in $Cancer$ variable which spoils any possibility for there being a chain of variables that could be somehow rearranged. With the Bayesian score and $\alpha=0.1$ we still obtain the central variable structure as in Figure~\ref{fig:structure-learning-cancer-5000} even with a~dataset this size. The exact original structure is found with a dataset of 30\,000 samples. With $\alpha = 1$ or $\alpha=10$ the exact structure is found also with 20\,000 samples.
 
 \begin{figure}[ht]
     \centering
@@ -1434,34 +1436,36 @@ Finally, with a dataset of 20000 samples the learning process yields the exact o
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
         \includegraphics[scale=0.4]{fig/structure-learning-cancer-1000}
-        \caption{Dataset of 1000 samples, 4 I-equivalent structures.}
+        \caption{Dataset of 1\,000 samples, 4 I-equivalent structures.}
         \label{fig:structure-learning-cancer-1000}
     \end{subfigure}
         
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
         \includegraphics[scale=0.4]{fig/structure-learning-cancer-5000}
-        \caption{Dataset of 5000 samples, 5 I-equivalent structures.}
+        \caption{Dataset of 5\,000 samples, 5 I-equivalent structures.}
         \label{fig:structure-learning-cancer-5000}
     \end{subfigure}
     \quad
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
         \includegraphics[scale=0.4]{fig/structure-learning-cancer-20000}
-        \caption{Dataset of 20000 samples, single structure (exactly the original cancer network).}
+        \caption{Dataset of 20\,000 samples, single structure (exactly the original cancer network).}
         \label{fig:structure-learning-cancer-20000}
     \end{subfigure}
-    \caption{Best-scoring I-equivalent network structures found for the cancer network with datasets of various sizes.}
+    \caption{Best-scoring I-equivalent network structures found for the cancer network with datasets of various sizes using the BIC score.}
     \label{fig:structure-learning-cancer}
 \end{figure}
 
+Parameters of the experiments: 200 runs, 200 iterations per run, 15 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=0.1 - 10$.
+
 
 \subsubsection{Experiments with Asia network}
-The Asia network contains 8 variables and a single V-structure $either \rightarrow dysp \leftarrow bronc$. The CPD for $dysp$ variable suggest strong dependency on both its parents\,--\,the distribution $P(dysp \mid either, bronc)$ changes by up to $0.7$ for different assignments of $either$ and by up to $0.6$ for different assignments of $bronc$. Therefore for as little as 100 samples the found networks contain the V-structure at $dysp$ variable. Furthermore, $dysp$ has always the same set of parent variables but that can be accounted to the strong dependency in the original network.
+The Asia network contains 8 variables and a single V-structure $Either \rightarrow Dysp \leftarrow Bronc$. The CPD for $Dysp$ variable suggest strong dependency on both its parents\,--\,the distribution $P(Dysp \mid Either, Bronc)$ changes by up to $0.7$ for different assignments of $Either$ and by up to $0.6$ for different assignments of $Bronc$. Therefore for as little as 100 samples the found networks contain the V-structure at $Dysp$ variable. Furthermore, $Dysp$ has always the same set of parent variables but that can be accounted to the strong dependency in the original network.
 
-With a dataset of 1000 samples we almost get I-equivalent structures of the original network (see Figure~\ref{fig:structure-learning-asia-1000}), only the variable $asia$ is isolated thanks to a weak dependency $asia - tub$. There are three I-equivalent structures because variables $smoke - bronc - lung$ form a chain, structure of the other variables is the same as in the original network. 
+With a dataset of 1000 samples we almost get I-equivalent structures of the original network (see Figure~\ref{fig:structure-learning-asia-1000}), only the variable $Asia$ is isolated thanks to a weak dependency $Asia - Tub$. There are three I-equivalent structures because variables $Smoke - Bronc - Lung$ form a chain, structure of the other variables is the same as in the original network. 
 
-For a dataset of 15000 samples we obtain the complete structure of the asia network, respectively six I-equivalent variants of the original network (see Figure~\ref{fig:structure-learning-asia-15000}) thanks to the two chains $lung - smoke - bronc$ and $asia - tub$.
+For a dataset of 15000 samples we obtain the complete structure of the asia network, respectively six I-equivalent variants of the original network (see Figure~\ref{fig:structure-learning-asia-15000}) thanks to the two chains $Lung - Smoke - Bronc$ and $Asia - Tub$.
 
 \begin{figure}[ht]
     \centering
@@ -1477,27 +1481,116 @@ For a dataset of 15000 samples we obtain the complete structure of the asia netw
         \caption{Dataset of 15000 samples, 6 structures I-equivalent with the original network.}
         \label{fig:structure-learning-asia-15000}
     \end{subfigure}
-    \caption{Best-scoring I-equivalent network structures found for the asia network with datasets of various sizes.}
+    \caption{Best-scoring I-equivalent network structures found for the asia network with datasets of various sizes (same results for the BIC score and the Bayesian score).}
     \label{fig:structure-learning-asia}
 \end{figure}
+
+Parameters of the experiments: 200 runs, 200 iterations per run, 15 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=1$.
+
 
 
 \subsubsection{Experiments with Child network}
 The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children).
 
-With a dataset of 500 samples there are two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is almost surprisingly strongly consistent with the original network, considering how little samples we have. The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network (unlike a chain or a central variable structure). When not considering edge directions the learnt network is missing only 2 out of 25 connections present in the original network and from the remaining 23 edges only one is reversed. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. Although I~believe this to be a great success, we must take into account that this network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
+With a dataset of 500 samples and the BIC score there are two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is almost surprisingly strongly consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to two may be reversed due to a chain structure $Disease - LVH - LVHreport$ causing at least three I-equivalent variants of the learnt network. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. I~believe this to be a great success but we must take into account that this network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
 
-With a dataset of 2000 samples we get a connected graph in which only one edge $Sick - Age$ is missing and two or three other edges are reversed. Although the set of reversed edges is different for the found best-scoring structures, their number remains effectively the same, suggesting that if we were to use structure learning for causal discovery, the resulting best-scoring structures are equal in terms of how accurately they resemble the \uv{true} network, assuming they are not I-equivalent to the \uv{true} network.
+With the Bayesian score and 500 samples the best result is similar to those of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}), the only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$.
 
-Dataset of 10000 samples gets us as close to the original network as only two reversed edges without any other structural mistakes.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-2.3cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-500-bic}
+        \caption{Using the BIC score.}
+        \label{fig:structure-learning-child-500-bic}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-0.5cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-500-bayes-2_5}
+        \caption{Using the Bayesian score with $\alpha = 2.5$.}
+        \label{fig:structure-learning-child-500-bayes-2_5}
+    \end{subfigure}
+    \caption{Best-scoring network structure found for the child network with a dataset of 500 samples.
+    \\Legend: Red dotted edges are missing, red edges are reversed.}
+\end{figure}
+
+With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and two other edges are reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are three chain structures involving the $Disease$ variable and additional three edges (painted in gray color) may be reversed if it doesn't introduce a V-structure in the $Disease$ variable (depends on the concrete variant of the three chain structures involving $Disease$).
+
+With the Bayesian score (best results achieved with $\alpha=1.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-1_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and three edges are reversed. There is a single redundant connection $Disease - LVHreport$ which doesn't seem to be a big mistake because variables $LVH$ and $LVHreport$ are both descendants of $Disease$ and there are no other connections from these two nodes, so the error is local and doesn't affect any other node.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-2.3cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bic}
+        \caption{Using the BIC score.}
+        \label{fig:structure-learning-child-2000-bic}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-0.7cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bayes-1_5}
+        \caption{Using the Bayesian score with $\alpha = 1.5$.}
+        \label{fig:structure-learning-child-2000-bayes-1_5}
+    \end{subfigure}
+    \caption{Best-scoring network structure found for the child network with a dataset of 2\,000 samples.
+    \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in $Disease$ wrt. concrete variant of the three chain structures in the $Disease$ variable}
+\end{figure}
+
+Dataset of 5\,000 samples and the BIC score get us as close to the original network as no missing connections, three reversed edges and one redundant edge. The mistake is again local involving a closed structure of four nodes $Disease$, $DuctFlow$, $HypDistrib$ and $CardiacMixing$ (see Figure~\ref{fig:structure-learning-child-5000-bic}). 
+
+The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning-child-5000-bayes-x_x}) in this particular test did significantly better than the BIC did. They both agree on the reversed edge $Disease - BithAsphyxia$ and other than that with Bayesian score there is only one reversed edge and no redundant edge.
+
+\ignore{Bayes performance: $(\alpha=1, x, x, x)$, $(\alpha=1.5, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=2.5, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=3.5, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-2.3cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-5000-bic}
+        \caption{Using the BIC score.}
+        \label{fig:structure-learning-child-5000-bic}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-0.1cm}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-5000-bayes-3_0}
+        \caption{Using the Bayesian score with $\alpha = 3$.}
+        \label{fig:structure-learning-child-5000-bayes-3_0}
+    \end{subfigure}
+    \caption{Best-scoring network structure found for the child network with a dataset of 5\,000 samples.
+    \\Legend: Red dotted edges are missing, red edges are reversed, blue edges are redundant.}
+\end{figure}
+
+
+\medskip
+Parameters of the experiments: 200 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=1.5-3$.
 
 
 
-\subsubsection{Experiments with ICU Alarm network}
-ICU alarm network is with its 37 variables the largest network I experiment with in this section. There are many two-node chains (eg. $PMB - PAP$, $APL - TPR$ or $MVS - VMCH$) meaning there are quite a few structures I-equivalent with the original network. On the other hand, there are many V-structures and the assumption is that V-structures are relative stable.
-
+\ignore{
+%\subsubsection{Experiments with ICU Alarm network}
+%ICU alarm network is with its 37 variables the largest network I experiment with in this section. There are many two-node chains (eg. $PMB - PAP$, $APL - TPR$ or $MVS - VMCH$) meaning there are quite a few structures I-equivalent with the original network. On the other hand, there are many V-structures and the assumption is that V-structures are relative stable.
+%1\,000 samples: BIC (8, 5, 3), Bayesian $(\alpha=0.1, 2, 9, 5)$, $(\alpha=1, 2, 6, 5)$, $(\alpha=2, 2, 10, 7)$, $(\alpha=3, 2, 7, 9)$, $(\alpha=4, 2, 11, 13)$, $(\alpha=5, 3, 19, 20)$
+%5\,000 samples: BIC (x, x, x), Bayesian $(\alpha=0.1, x, x, x)$, $(\alpha=1, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$
+%20\,000 samples: BIC (x, x, x), Bayesian $(\alpha=0.1, x, x, x)$, $(\alpha=1, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$
 \todo{xxx}
 
+
+Parameters of the experiments: 300 runs, 1\,000 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 6 parents, $\alpha=0.1-5$.
+}
+
+
+\subsubsection{Conclusion of the the experiments}
+Based on the experiments regarding structure we can make some general observations:
+\begin{itemize}
+    \item There are often more than one best-scoring structures due to I-equivalence and, with training, chain structures and central variable structures are actually easy to spot. Other than these two types of structures we sometimes observe swapping two variables $B,C$ in a cascade of the form $A-B-C$ while preserving edge $A \rightarrow B$ and introducing an edge $A \rightarrow C$. The experiments suggest that the mistakes are just local and don't involve other variables.
+    \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data.
+    \item Bayesian score is more conservative, BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although in some cases with a tuned value of $\alpha$ results with the Bayesian score may be even the same as those of the BIC score.
+    \item Best value of $\alpha$ for the Bayesian score usually, although not always, is that for which the Bayesian score of the best-scoring structure is the highest. This provides us with a powerful rule of thumb on how to pick $\alpha$ when learning a network structure whose original structure is unknown to us.
+\end{itemize}
+
+\todo{
+V-structures are stable (vs. child 10\,000 samples Bayesian score), need to be strongly implied by the data
+}
 
 
 \subsubsection{Optimal parameters for structure learning}
@@ -1512,9 +1605,20 @@ We are given a dataset\footnote{The dataset \emph{Communities and crime} is avai
 
 Similar task has been previously inspected as a school project for the \uv{Knowledge Discovery in Databases (2012/2013)} class at BUT FIT by me and Petr Beňas. We learned that transforming each continuous value to membership degrees to three fuzzy sets (low, medium, high) preserves variance of the data which might be useful because the data could be discretized and the learning process would be relatively simple. Knowledge discovery techniques used in the project did not include any probabilistic model.
 
+
+\subsection{Data preprocessing}
+Discretization by three equidepth bins (0.33-quantile, 0.66-quantile)
+
+
+\subsection{Experiments}
 BIC score
 \begin{itemize}
-	\item for the full dataset there is no isolated variable
+    \item for the full dataset there is no isolated variable
+\end{itemize}
+
+Bayesian score
+\begin{itemize}
+    \item for the full dataset there is no isolated variable
 \end{itemize}
 
 
