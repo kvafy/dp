@@ -227,8 +227,15 @@ public class DialogDatasetIO extends javax.swing.JDialog {
 
     private void textFieldFilenameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_textFieldFilenameMouseClicked
         JFileChooser chooser = new JFileChooser(this.datasetDirectory);
-        chooser.setDialogTitle("Pick a csv dataset file...");
-        chooser.showOpenDialog(this);
+        if(this.action == DialogDatasetIO.ACTION_LOAD) {
+            chooser.setDialogTitle("Pick a csv file to load");
+            chooser.showOpenDialog(this);
+        }
+        else {
+             chooser.setDialogTitle("Pick a destination csv file");
+             chooser.showSaveDialog(this);
+        }
+        
         if(chooser.getSelectedFile() != null) {
             this.textFieldFilename.setText(chooser.getSelectedFile().toString());
             this.datasetDirectory = chooser.getSelectedFile().getParent();

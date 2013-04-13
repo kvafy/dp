@@ -175,11 +175,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     
     private void notifyLearningStarted() {
         this.comboBoxMethod.setEnabled(false);
+        this.textFieldAlpha.setEnabled(false);
         this.textFieldRunCount.setEnabled(false);
         this.textFieldIterationCount.setEnabled(false);
         this.textFieldRandomRestartStepcount.setEnabled(false);
         this.textFieldTabulistRelsize.setEnabled(false);
         this.textFieldMaxParents.setEnabled(false);
+        this.tableAllowedConnections.setEnabled(false);
         this.buttonLearn.setEnabled(false);
         this.buttonStop.setEnabled(true);
         this.comboBoxNetworksSelection.setEnabled(false);
@@ -194,12 +196,15 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     }
     
     private void notifyLearningFinished(boolean success) {
+        boolean bayesianScoringMethodSelected = this.comboBoxMethod.getSelectedIndex() == 1;
         this.comboBoxMethod.setEnabled(true);
+        this.textFieldAlpha.setEnabled(bayesianScoringMethodSelected);
         this.textFieldRunCount.setEnabled(true);
         this.textFieldIterationCount.setEnabled(true);
         this.textFieldRandomRestartStepcount.setEnabled(true);
         this.textFieldTabulistRelsize.setEnabled(true);
         this.textFieldMaxParents.setEnabled(true);
+        this.tableAllowedConnections.setEnabled(true);
         this.buttonLearn.setEnabled(true);
         this.buttonStop.setEnabled(false);
         this.comboBoxNetworksSelection.setEnabled(true);
@@ -285,8 +290,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel2 = new javax.swing.JPanel();
+        tabbedPane = new javax.swing.JTabbedPane();
+        panelLearning = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         textFieldRunCount = new javax.swing.JTextField();
@@ -307,7 +312,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         textFieldMaxParents = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
         textFieldAlpha = new javax.swing.JTextField();
-        jPanel3 = new javax.swing.JPanel();
+        panelResults = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         labelBestScoreSoFar = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -331,14 +336,14 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Answer a probabilistic query");
+        setTitle("Structure learning");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
             }
         });
 
-        jPanel2.setBorder(null);
+        panelLearning.setBorder(null);
 
         jLabel3.setText("Scoring method");
 
@@ -387,47 +392,47 @@ public class DialogStructureLearning extends javax.swing.JDialog {
 
         textFieldAlpha.setEnabled(false);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout panelLearningLayout = new javax.swing.GroupLayout(panelLearning);
+        panelLearning.setLayout(panelLearningLayout);
+        panelLearningLayout.setHorizontalGroup(
+            panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelLearningLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelLearningLayout.createSequentialGroup()
+                        .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panelLearningLayout.createSequentialGroup()
+                                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(panelLearningLayout.createSequentialGroup()
+                                        .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel3)
                                             .addComponent(jLabel13))
                                         .addGap(28, 28, 28)
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                            .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                                 .addComponent(textFieldAlpha, javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addComponent(textFieldRunCount, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)))))
                                 .addGap(18, 18, 18)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel5)
                                     .addComponent(jLabel4)
                                     .addComponent(jLabel6))
                                 .addGap(18, 18, 18)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(textFieldTabulistRelsize, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(textFieldRandomRestartStepcount, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addGroup(panelLearningLayout.createSequentialGroup()
                                         .addComponent(textFieldIterationCount, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel1))))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(panelLearningLayout.createSequentialGroup()
                                 .addComponent(jLabel10)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(textFieldMaxParents, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jLabel11)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(panelLearningLayout.createSequentialGroup()
                                 .addComponent(buttonLearn, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(buttonStop, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -436,32 +441,32 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jPanel2Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonLearn, buttonStop});
+        panelLearningLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {buttonLearn, buttonStop});
 
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        panelLearningLayout.setVerticalGroup(
+            panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelLearningLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel4)
                     .addComponent(textFieldIterationCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
                     .addComponent(textFieldRandomRestartStepcount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel13)
                     .addComponent(textFieldAlpha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(textFieldTabulistRelsize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2)
                     .addComponent(textFieldRunCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(11, 11, 11)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel10)
                     .addComponent(textFieldMaxParents, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -469,15 +474,15 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelLearningLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(buttonLearn)
                     .addComponent(buttonStop))
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Learning", jPanel2);
+        tabbedPane.addTab("Learning", panelLearning);
 
-        jPanel3.setBorder(null);
+        panelResults.setBorder(null);
 
         jLabel7.setText("Best score so far:");
 
@@ -510,31 +515,31 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        javax.swing.GroupLayout panelResultsLayout = new javax.swing.GroupLayout(panelResults);
+        panelResults.setLayout(panelResultsLayout);
+        panelResultsLayout.setHorizontalGroup(
+            panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelResultsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelResultsLayout.createSequentialGroup()
                         .addComponent(jScrollPane2)
                         .addContainerGap())
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
+                    .addGroup(panelResultsLayout.createSequentialGroup()
+                        .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(panelResultsLayout.createSequentialGroup()
                                 .addComponent(jLabel7)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(labelBestScoreSoFar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
+                            .addGroup(panelResultsLayout.createSequentialGroup()
                                 .addComponent(jLabel9)
                                 .addGap(0, 24, Short.MAX_VALUE))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
+                            .addGroup(panelResultsLayout.createSequentialGroup()
                                 .addComponent(jLabel12)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(labelStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addGap(0, 12, 12))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
+                    .addGroup(panelResultsLayout.createSequentialGroup()
                         .addComponent(jLabel8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -542,19 +547,19 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                         .addComponent(buttonAnalyze, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        panelResultsLayout.setVerticalGroup(
+            panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelResultsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
                     .addComponent(labelStatus))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(labelBestScoreSoFar))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(buttonAnalyze))
@@ -565,7 +570,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Results", jPanel3);
+        tabbedPane.addTab("Results", panelResults);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -573,14 +578,14 @@ public class DialogStructureLearning extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(tabbedPane)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(tabbedPane)
                 .addContainerGap())
         );
 
@@ -593,6 +598,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         StructureLearningThread thread = new StructureLearningThread((java.awt.Frame)this.getParent());
         thread.start();
         this.saveConfiguration();
+        this.tabbedPane.setSelectedComponent(this.panelResults);
     }//GEN-LAST:event_buttonLearnActionPerformed
 
     private void buttonStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStopActionPerformed
@@ -698,13 +704,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel labelBestScoreSoFar;
     private javax.swing.JLabel labelStatus;
+    private javax.swing.JPanel panelLearning;
+    private javax.swing.JPanel panelResults;
+    private javax.swing.JTabbedPane tabbedPane;
     private javax.swing.JTable tableAllowedConnections;
     private javax.swing.JTable tableEdgeFrequency;
     private javax.swing.JTextField textFieldAlpha;
@@ -753,17 +759,16 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 fillStructuralConstraints(constraints);
                 learningController = new LearningController(iterationCount);
                 BayesianNetwork bnEmpty = new BayesianNetwork(VARIABLES);
+                DecomposableScoringMethod scoringMethod;
+                if(selectedScoringMethodIndex == 0)
+                    scoringMethod = new BICScoringMethod(cachedDataset);
+                else
+                    scoringMethod = new BayesianScoringMethod(cachedDataset, equivalentSampleSize);
                 StructureLearningStatistics statistics = new StructureLearningStatistics(VARIABLES);
 
                 for(int run = 0 ; run < runCount && !learningController.getStopFlag(); run++) {
                     notifyLearningProgess(run, statistics);
                     BayesianNetwork bnInitial = bnEmpty.copyEmptyStructure();
-                    // !! ScoringMethod has to be created for each run separately due to caching policy
-                    DecomposableScoringMethod scoringMethod;
-                    if(selectedScoringMethodIndex == 0)
-                        scoringMethod = new BICScoringMethod(cachedDataset);
-                    else
-                        scoringMethod = new BayesianScoringMethod(cachedDataset, equivalentSampleSize);
                     StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(scoringMethod, tabulistAbssize, randomRestartStepcount);
                     BayesianNetwork resultBN = learningAlgorithm.learn(bnInitial, learningController, constraints);
                     if(learningController.getStopFlag() == true)
@@ -773,11 +778,6 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 }
                 notifyLearningProgess(runCount, statistics);
                 notifyLearningFinished(!learningController.getStopFlag());
-                //statistics.report();
-                /*
-                System.out.println("\nMost probable network:");
-                ScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
-                System.out.println(statistics.getMostProbableNetwork(bicScoringMethod).dumpStructure());*/
             }
             catch(BNLibException ex) {
                 notifyLearningFinished(false);
