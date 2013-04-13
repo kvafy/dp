@@ -20,13 +20,13 @@ import java.util.Set;
  * for the next step of local search so that right cache entries can be
  * invalidated and the cache doesn't grow too large.
  * <p>
- * This class implements the logic of caching delta scores and proper invalidation
- * of delta score based on the currently accepted network alteration.
- * The subclass defines the following mehtods:
+ * This class implements the logic of caching delta family scores and proper
+ * invalidation of delta family score based on the currently accepted network
+ * alteration.
+ * A subclass needs to define the following methods:
  * <ul>
- *  <li> absoluteScore(...)
  *  <li> computeFamilyScore(...)
- *  <li> computeIncreaseOfComplexityPenalty(...)
+ *  <li> computeComplexityPenalty(...)
  * </ul>
  */
 public abstract class DecomposableScoringMethod extends ScoringMethod {
@@ -40,6 +40,17 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
     
     public DecomposableScoringMethod(DatasetInterface dataset) {
         this.dataset = dataset;
+    }
+    
+    @Override
+    public double absoluteScore(BayesianNetwork bn) {
+        // the likelihood-score part
+        double likelihoodScore = 0;
+        for(Node node : bn.getNodes())
+            likelihoodScore += this.computeFamilyScore(node);
+        // the dimension part
+        double structurePenalization = this.computeComplexityPenalty(bn);
+        return likelihoodScore + structurePenalization;
     }
     
     public final double deltaScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
@@ -92,10 +103,14 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
         return scoreNew - scoreOld;
     }
     
-    protected abstract double computeFamilyScore(Node x);
-    
-    /** Compute increase of the term that imposes penalty by structure complexity. */
-    protected abstract double computeIncreaseOfComplexityPenalty(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException;
+    /** In the BIC formula, how does the dimension term change? */
+    private double computeIncreaseOfComplexityPenalty(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
+        double penaltyOld = this.computeComplexityPenalty(bn);
+        action.apply(bn);
+        double penaltyNew = this.computeComplexityPenalty(bn);
+        action.undo(bn);
+        return penaltyNew - penaltyOld;
+    }
     
     /**
      * Cached values of delta family score for some AlterationAction have to be invalidated.
@@ -139,4 +154,11 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
                 throw new BayesianNetworkRuntimeException("Unknown action type.");
         }
     }
+    
+    
+    // methods implemented by children (BIC of Bayesian score)
+    
+    protected abstract double computeFamilyScore(Node x);
+    
+    protected abstract double computeComplexityPenalty(BayesianNetwork bn);
 }

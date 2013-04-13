@@ -17,7 +17,7 @@ public class BICScoringMethod extends DecomposableScoringMethod {
         super(dataset);
     }
     
-    @Override
+    /*@Override
     public double absoluteScore(BayesianNetwork bn) {
         // the likelihood-score part
         double likelihoodScore = 0;
@@ -26,7 +26,7 @@ public class BICScoringMethod extends DecomposableScoringMethod {
         // the dimension part
         double structurePenalization = this.computeComplexityPenalty(bn);
         return likelihoodScore + structurePenalization;
-    }
+    }*/
     
     @Override
     /**
@@ -34,7 +34,7 @@ public class BICScoringMethod extends DecomposableScoringMethod {
      * Cache is not used at all.
      */
     protected double computeFamilyScore(Node n) {
-        double N = this.dataset.getSize();
+        int N = this.dataset.getSize();
         if(n.getParentCount() == 0) // TODO really works like this?
             return 0.0;
         Variable[] nSet = {n.getVariable()};
@@ -43,16 +43,7 @@ public class BICScoringMethod extends DecomposableScoringMethod {
     }
     
     @Override
-    /** In the BIC formula, how does the dimension term change? */
-    protected double computeIncreaseOfComplexityPenalty(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
-        double penaltyOld = this.computeComplexityPenalty(bn);
-        action.apply(bn);
-        double penaltyNew = this.computeComplexityPenalty(bn);
-        action.undo(bn);
-        return penaltyNew - penaltyOld;
-    }
-    
-    private double computeComplexityPenalty(BayesianNetwork bn) {
+    protected double computeComplexityPenalty(BayesianNetwork bn) {
         double N = this.dataset.getSize();
         double dim = bn.getNetworkDimension();
         return -Math.log(N) / 2 * dim;

@@ -22,7 +22,7 @@ public class BayesianScoringMethod extends DecomposableScoringMethod {
         this.alpha = alpha;
     }
     
-    @Override
+    /*@Override
     public double absoluteScore(BayesianNetwork bn) {
         // the log P(D | G) part
         // (notation is consistent with the formulas presented in thesis)
@@ -36,7 +36,7 @@ public class BayesianScoringMethod extends DecomposableScoringMethod {
     
     private double computeLogXi_given_D_G(Node Xi) {
         return this.computeFamilyScore(Xi);
-    }
+    }*/
     
     @Override
     protected double computeFamilyScore(Node Xi) {
@@ -79,21 +79,17 @@ public class BayesianScoringMethod extends DecomposableScoringMethod {
         return log_P_X_given_G;
     }
     
-    @Override
-    protected double computeIncreaseOfComplexityPenalty(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
-        double dimCurrent = this.computeLog_P_G(bn);
-        action.apply(bn);
-        double dimNew = this.computeLog_P_G(bn);
-        action.undo(bn);
-        return dimNew - dimCurrent;
-    }
-    
     private Factor getParameterPriorBDEUniform(Node n) {
         Variable[] scope = n.getScope();
         // BDe prior as if the prior network were discrete (without any edge)
         // and all the variables had a uniform distribution
         // => ensures the same Bayesian score of I-equivalent structures
         return new Factor(scope, this.alpha / Toolkit.cardinality(scope));
+    }
+    
+    @Override
+    protected double computeComplexityPenalty(BayesianNetwork bn) {
+        return this.computeLog_P_G(bn);
     }
     
     private double computeLog_P_G(BayesianNetwork bn) {

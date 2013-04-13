@@ -30,9 +30,11 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
     public BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller, StructuralConstraints constraints) { 
         // currently inspected network
         BayesianNetwork bnCurrent = bnInitial.copyStructureWithEmptyCPDs(); // so that the initial network won't be affected
+        double bnCurrentScore = this.scoringMethod.absoluteScore(bnCurrent);
         // to keep the best scoring network
         BayesianNetwork bnBest = bnCurrent;
-        double bnBestScore = this.scoringMethod.absoluteScore(bnCurrent);
+        double bnBestScore = bnCurrentScore;
+        
         
         try {
             long iteration = 0;
@@ -47,12 +49,12 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                     randomStepsToGo--;
                 }
                 if(selectedAteration != null) {
-                    //System.out.println(String.format("[iteration %d] applying alteration %s", iteration, selectedAteration.toString()));
+                    double deltaScore = this.scoringMethod.deltaScore(bnCurrent, selectedAteration);
+                    bnCurrentScore += deltaScore;
                     selectedAteration.apply(bnCurrent);
                     this.insertIntoTabuList(selectedAteration.getUndoAction());
                     this.scoringMethod.notifyNetworkAlteration(selectedAteration);
                     // keep track of the overall best structure seen so far
-                    double bnCurrentScore = this.scoringMethod.absoluteScore(bnCurrent);
                     if(bnBestScore < bnCurrentScore) {
                         bnBestScore = bnCurrentScore;
                         bnBest = bnCurrent.copyStructureWithEmptyCPDs(); // the parameters have not been learnt yet
@@ -64,7 +66,7 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                     }
                 }
                 else {
-                    System.out.println(String.format("[iteration %d] no alteration possible! => making precautions", iteration));
+                    System.err.println(String.format("[iteration %d] no alteration possible! => making precautions", iteration));
                     this.reduceTabuList(0.5);
                 }
                 iteration++;
