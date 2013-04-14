@@ -100,7 +100,7 @@ public class DialogParametersLearning extends javax.swing.JDialog {
         buttonCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Answer a probabilistic query");
+        setTitle("Learn parameters for the current network");
 
         jLabel2.setText("Equivalent sample size");
 

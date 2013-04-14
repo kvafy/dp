@@ -17,9 +17,9 @@ public class Variable {
     private String name;
     private String[] values;    // list of possible values
     
-    public Variable(String name, String[] values) throws BayesianNetworkException {
+    public Variable(String name, String[] values) throws BNLibIllegalArgumentException {
         if(!Toolkit.unique(values))
-            throw new BayesianNetworkException("Variable must have unique values.");
+            throw new BNLibIllegalArgumentException("Variable must have unique values.");
         this.name = name;
         this.values = Arrays.copyOf(values, values.length);
     }

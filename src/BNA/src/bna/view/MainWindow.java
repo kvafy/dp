@@ -47,6 +47,8 @@ public class MainWindow extends javax.swing.JFrame {
         // menu "Network" and its items
         this.menuItemSaveNetwork.setEnabled(hasNetwork);
         this.menuItemQuery.setEnabled(hasNetwork);
+        this.menuItemNetworkStatistics.setEnabled(hasNetwork);
+        this.menuItemTestPredictionAccuracy.setEnabled(hasNetwork && hasDataset);
         // menu "Dataset" and its items
         this.menuItemExportDataset.setEnabled(hasDataset);
         this.menuItemSampleNewDataset.setEnabled(hasNetwork);
@@ -142,6 +144,8 @@ public class MainWindow extends javax.swing.JFrame {
         menuItemLoadNetwork = new javax.swing.JMenuItem();
         menuItemSaveNetwork = new javax.swing.JMenuItem();
         menuItemQuery = new javax.swing.JMenuItem();
+        menuItemNetworkStatistics = new javax.swing.JMenuItem();
+        menuItemTestPredictionAccuracy = new javax.swing.JMenuItem();
         menuDataset = new javax.swing.JMenu();
         menuItemImportDataset = new javax.swing.JMenuItem();
         menuItemExportDataset = new javax.swing.JMenuItem();
@@ -208,6 +212,22 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
         menuNetwork.add(menuItemQuery);
+
+        menuItemNetworkStatistics.setText("Statistics");
+        menuItemNetworkStatistics.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemNetworkStatisticsActionPerformed(evt);
+            }
+        });
+        menuNetwork.add(menuItemNetworkStatistics);
+
+        menuItemTestPredictionAccuracy.setText("Test prediction accuracy");
+        menuItemTestPredictionAccuracy.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemTestPredictionAccuracyActionPerformed(evt);
+            }
+        });
+        menuNetwork.add(menuItemTestPredictionAccuracy);
 
         jMenuBar1.add(menuNetwork);
 
@@ -277,7 +297,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 400, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 404, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -338,7 +358,7 @@ public class MainWindow extends javax.swing.JFrame {
         BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
         if(bn == null || !bn.hasValidCPDs()) {
             String msg = "Current network has invalid CPDs and therefore cannot be sampled.\n"
-                       + "You probably learnt just network structure but not parameters.";
+                       + "You probably learnt just network structure but not the parameters.";
             JOptionPane.showMessageDialog(this,msg, "Cannot sample network", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -376,6 +396,30 @@ public class MainWindow extends javax.swing.JFrame {
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         this.saveConfiguration();
     }//GEN-LAST:event_formWindowClosing
+
+    private void menuItemNetworkStatisticsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemNetworkStatisticsActionPerformed
+        BayesianNetwork bnCurrent = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        DialogNetworkStatistics dialog = new DialogNetworkStatistics(this, false, bnCurrent);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_menuItemNetworkStatisticsActionPerformed
+
+    private void menuItemTestPredictionAccuracyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemTestPredictionAccuracyActionPerformed
+        BayesianNetwork bnCurrent = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        if(!bnCurrent.hasValidCPDs()) {
+            String msg = "Current network has invalid CPDs and therefore cannot be used for classification.\n"
+                       + "You probably learnt just network structure but not the parameters.";
+            JOptionPane.showMessageDialog(this,msg, "Cannot use network for classification", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if(!this.networkAndDatasetAreCompatible()) {
+            String msg = "Current network and current dataset must contain exactly the same variables.";
+            JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        DialogPredictionTest dialog = new DialogPredictionTest(this, true, bnCurrent, dataset);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_menuItemTestPredictionAccuracyActionPerformed
 
     /**
      * @param args the command line arguments
@@ -430,9 +474,11 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem menuItemLearnParameters;
     private javax.swing.JMenuItem menuItemLearnStructure;
     private javax.swing.JMenuItem menuItemLoadNetwork;
+    private javax.swing.JMenuItem menuItemNetworkStatistics;
     private javax.swing.JMenuItem menuItemQuery;
     private javax.swing.JMenuItem menuItemSampleNewDataset;
     private javax.swing.JMenuItem menuItemSaveNetwork;
+    private javax.swing.JMenuItem menuItemTestPredictionAccuracy;
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;
     private javax.swing.JScrollPane paneNetworkView;

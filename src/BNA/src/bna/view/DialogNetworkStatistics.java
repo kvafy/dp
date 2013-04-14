@@ -1,71 +1,42 @@
 // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
 // Author:  David Chaloupka (xchalo09)
-// Created: 2013/03/16
+// Created: 2013/04/14
 
 package bna.view;
 
-import bna.bnlib.BNLibIllegalQueryException;
 import bna.bnlib.BayesianNetwork;
-import bna.bnlib.Factor;
-import bna.bnlib.sampling.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.JOptionPane;
+import bna.bnlib.BayesianNetworkStatistics;
 
 
 /**
- * Dialog that takes a BN and allows to sample it with various options.
+ * Dialog that takes a BN and displays statistical information.
  */
-public class DialogQuerySampling extends javax.swing.JDialog {
+public class DialogNetworkStatistics extends javax.swing.JDialog {
     private BayesianNetwork bn;
     
 
     /**
      * Creates new form DialogSampling
      */
-    public DialogQuerySampling(java.awt.Frame parent, boolean modal, BayesianNetwork bn) {
+    public DialogNetworkStatistics(java.awt.Frame parent, boolean modal, BayesianNetwork bn) {
         super(parent, modal);
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(parent);
         this.bn = bn;
+        this.fillStatisticalValues();
     }
     
-    private void loadConfiguration() {
-        MainWindow mw = MainWindow.getInstance();
-        // text fields
-        this.textFieldQuery.setText(mw.getConfiguration("QuerySampling", "query_str"));
-        this.textFieldSampleCount.setText(mw.getConfiguration("QuerySampling", "sample_count"));
-        this.textFieldTheadCount.setText(mw.getConfiguration("QuerySampling", "thread_count"));
-        // comboboxes
-        String methodIndexStr = mw.getConfiguration("QuerySampling", "method_index");
-        try {
-            int methodIndex = Integer.valueOf(methodIndexStr);
-            this.comboBoxMethod.setSelectedIndex(methodIndex);
-        }
-        catch(NumberFormatException nfe) {}
-        catch(IllegalArgumentException ex) {} // invalid index
-        // checkboxes
-        String onlineFlagStr = mw.getConfiguration("QuerySampling", "online_results");
-        try {
-            int onlineFlag = Integer.valueOf(onlineFlagStr);
-            this.checkBoxOnline.setSelected(onlineFlag != 0);
-        }
-        catch(NumberFormatException nfe) {}
-    }
-    
-    private void saveConfiguration() {
-        MainWindow mw = MainWindow.getInstance();
-        // text fields
-        mw.setConfiguration("QuerySampling", "query_str", this.textFieldQuery.getText());
-        mw.setConfiguration("QuerySampling", "sample_count", this.textFieldSampleCount.getText());
-        mw.setConfiguration("QuerySampling", "thread_count", this.textFieldTheadCount.getText());
-        // comboboxes
-        String methodIndexStr = String.valueOf(this.comboBoxMethod.getSelectedIndex());
-        mw.setConfiguration("QuerySampling", "method_index", methodIndexStr);
-        // checkboxes
-        String onlineFlagStr = this.checkBoxOnline.isSelected() ? "1" : "0";
-        mw.setConfiguration("QuerySampling", "online_results", onlineFlagStr);
+    private void fillStatisticalValues() {
+        BayesianNetworkStatistics statistics = this.bn.getStatistics();
+        this.labelNodes.setText(String.format("%d", statistics.nodes));
+        this.labelEdges.setText(String.format("%d", statistics.edges));
+        this.labelInDegree.setText(String.format("%d / %d / %.2f", statistics.inDegreeMin,
+                                                                   statistics.inDegreeMax,
+                                                                   statistics.inDegreeAve));
+        this.labelOutDegree.setText(String.format("%d / %d / %.2f", statistics.outDegreeMin,
+                                                                    statistics.outDegreeMax,
+                                                                    statistics.outDegreeAve));
+        this.labelDegreesOfFreedom.setText(String.format("%d", statistics.degreesOfFreedom));
     }
     
     /**
@@ -79,57 +50,27 @@ public class DialogQuerySampling extends javax.swing.JDialog {
 
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        textFieldSampleCount = new javax.swing.JTextField();
-        textFieldTheadCount = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        comboBoxMethod = new javax.swing.JComboBox();
-        checkBoxOnline = new javax.swing.JCheckBox();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tableFactorView = new bna.view.FactorViewTable();
         jLabel4 = new javax.swing.JLabel();
-        textFieldQuery = new javax.swing.JTextField();
-        buttonStart = new javax.swing.JButton();
-        buttonStop = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        labelEdges = new javax.swing.JLabel();
+        labelInDegree = new javax.swing.JLabel();
+        labelOutDegree = new javax.swing.JLabel();
+        labelDegreesOfFreedom = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        labelNodes = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Answer a probabilistic query");
+        setTitle("Network statistics");
 
-        jLabel1.setText("Number of samples");
+        jLabel1.setText("Out-degree (min/max/ave):");
 
-        jLabel2.setText("Number of threads");
+        jLabel2.setText("In-degree (min/max/ave):");
 
-        jLabel3.setText("Method");
+        jLabel4.setText("Total edges:");
 
-        comboBoxMethod.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Weighted sampling", "MCMC sampling" }));
-        comboBoxMethod.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                comboBoxMethodActionPerformed(evt);
-            }
-        });
+        jLabel5.setText("Degrees of freedom:");
 
-        checkBoxOnline.setText("On-line results");
-        checkBoxOnline.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                checkBoxOnlineStateChanged(evt);
-            }
-        });
-
-        tableFactorView.setModel(FactorViewTable.EMPTY_TABLE_MODEL);
-        tableFactorView.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-        tableFactorView.setEnabled(false);
-        jScrollPane1.setViewportView(tableFactorView);
-
-        jLabel4.setText("Query");
-
-        buttonStart.setText("Sample");
-        buttonStart.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonStartActionPerformed(evt);
-            }
-        });
-
-        buttonStop.setText("Stop");
-        buttonStop.setEnabled(false);
+        jLabel3.setText("Total nodes:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -138,173 +79,68 @@ public class DialogQuerySampling extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(textFieldQuery))
+                        .addComponent(labelEdges, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(checkBoxOnline)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(buttonStart, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(buttonStop, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel1)
-                                        .addComponent(jLabel2)
-                                        .addComponent(jLabel3))
-                                    .addGap(24, 24, 24)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(textFieldTheadCount, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(textFieldSampleCount, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelDegreesOfFreedom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelInDegree, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelOutDegree, javax.swing.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelNodes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(textFieldQuery, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelNodes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(textFieldSampleCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelEdges, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel2)
-                    .addComponent(textFieldTheadCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(labelInDegree, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(comboBoxMethod, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(checkBoxOnline)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(buttonStart)
-                    .addComponent(buttonStop))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelOutDegree, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelDegreesOfFreedom, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void comboBoxMethodActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboBoxMethodActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_comboBoxMethodActionPerformed
-
-    private void buttonStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStartActionPerformed
-        try {
-            // parse input (exceptions are caught)
-            final long sampleCount = Long.valueOf(this.textFieldSampleCount.getText());
-            final int threadCount = Integer.valueOf(this.textFieldTheadCount.getText());
-            if(sampleCount <= 0) {
-                String msg = "Number of samples must be non-negative.";
-                JOptionPane.showMessageDialog(this, msg, "Invalid parameter", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if(threadCount <= 0) {
-                String msg = "Number of threads must be non-negative.";
-                JOptionPane.showMessageDialog(this, msg, "Invalid parameter", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            SampleProducer sampleProducer;
-            int samplingMethodIndex = this.comboBoxMethod.getSelectedIndex();
-            if(samplingMethodIndex == 0)
-                sampleProducer = new WeightedSampleProducer(this.bn, this.textFieldQuery.getText());
-            else if(samplingMethodIndex == 1)
-                sampleProducer = new MCMCSampleProducer(this.bn, this.textFieldQuery.getText());
-            else {
-                String msg = "No sampling method is selected.";
-                JOptionPane.showMessageDialog(this, msg, "Incomplete specification", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            final SamplerInterface sampler;
-            if(this.checkBoxOnline.isSelected()) {
-                sampler = new QuerySamplerObserved(sampleProducer);
-                QuerySamplerObserver observer = new QuerySamplerObserver() {
-                    public void notifySample() {
-                        Factor currentCPD = ((QuerySamplerObserved)sampler).getSamplesCounterNormalized();
-                        ((FactorViewTable)tableFactorView).setFactor(currentCPD);
-                    }
-                };
-                ((QuerySamplerObserved)sampler).registerObserver(observer);
-            }
-            else
-                sampler = new QuerySamplerMultithreaded(sampleProducer, threadCount);
-            
-            Thread worker = new Thread() {
-                @Override
-                public void run() {
-                    final SamplingController samplingController = new SamplingController(sampleCount / threadCount);
-                    // prepare GUI for sampling
-                    buttonStart.setEnabled(false);
-                    checkBoxOnline.setEnabled(false);
-                    buttonStop.setEnabled(true);
-                    ((FactorViewTable)tableFactorView).setFactor(null);
-                    ActionListener stoppingListener = new ActionListener() {
-                        public void actionPerformed(ActionEvent e) {
-                            samplingController.setStopFlag();
-                        }
-                    };
-                    buttonStop.addActionListener(stoppingListener);
-                    // sampling process itself
-                    sampler.sample(samplingController);
-                    // show result if not online sampling
-                    Factor result;
-                    if(!checkBoxOnline.isSelected())
-                        result = ((QuerySamplerMultithreaded)sampler).getSamplesCounterNormalized();
-                    else
-                        result = ((QuerySamplerObserved)sampler).getSamplesCounterNormalized();
-                    ((FactorViewTable)tableFactorView).setFactor(result);
-                    // restore GUI for next sampling
-                    buttonStart.setEnabled(true);
-                    checkBoxOnline.setEnabled(true);
-                    buttonStop.setEnabled(false);
-                    buttonStop.removeActionListener(stoppingListener);
-                }
-            };
-            
-            this.saveConfiguration();
-            worker.start();
-        }
-        catch(NumberFormatException nfex) {
-            String msg = "Input of a field is not a number.";
-            JOptionPane.showMessageDialog(this, msg, "Invalid input data", JOptionPane.ERROR_MESSAGE);
-        }
-        catch(BNLibIllegalQueryException iqex) {
-            JOptionPane.showMessageDialog(this, iqex.getMessage(), "Invalid query", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_buttonStartActionPerformed
-
-    private void checkBoxOnlineStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_checkBoxOnlineStateChanged
-        this.textFieldTheadCount.setEnabled(!this.checkBoxOnline.isSelected());
-    }//GEN-LAST:event_checkBoxOnlineStateChanged
-
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton buttonStart;
-    private javax.swing.JButton buttonStop;
-    private javax.swing.JCheckBox checkBoxOnline;
-    private javax.swing.JComboBox comboBoxMethod;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable tableFactorView;
-    private javax.swing.JTextField textFieldQuery;
-    private javax.swing.JTextField textFieldSampleCount;
-    private javax.swing.JTextField textFieldTheadCount;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel labelDegreesOfFreedom;
+    private javax.swing.JLabel labelEdges;
+    private javax.swing.JLabel labelInDegree;
+    private javax.swing.JLabel labelNodes;
+    private javax.swing.JLabel labelOutDegree;
     // End of variables declaration//GEN-END:variables
 }

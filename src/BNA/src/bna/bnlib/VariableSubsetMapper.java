@@ -12,30 +12,46 @@ import bna.bnlib.misc.Toolkit;
  */
 public class VariableSubsetMapper {
     private Variable[] superset;
-    private int[] mapping; // subset -> index in superset
+    private int[] indexMapping;   // subset -> index in superset
+    private int[][] valueMapping; // supersetIntValue -> subsetIntValue
     
     public VariableSubsetMapper(Variable[] superset, Variable[] subset)  {
         if(!Toolkit.isSubset(superset, subset))
             throw new BayesianNetworkRuntimeException("Not a subset");
         this.superset = superset;
-        // generate the mapping
-        this.mapping = new int[subset.length];
+        // generate the positional mapping
+        this.indexMapping = new int[subset.length];
         for(int i = 0 ; i < subset.length ; i++)
-            this.mapping[i] = Toolkit.indexOf(superset, subset[i]);
+            this.indexMapping[i] = Toolkit.indexOf(superset, subset[i]);
+        // generate value mapping
+        this.valueMapping = new int[subset.length][];
+        for(int i = 0 ; i < subset.length ; i++) {
+            Variable iSubVar = subset[i],
+                     iSupVar = superset[this.indexMapping[i]];
+            String[] iSupValues = iSupVar.getValues();
+            this.valueMapping[i] = new int[iSubVar.getCardinality()];
+            for(int j = 0 ; j < iSubVar.getCardinality() ; j++)
+                this.valueMapping[i][j] = iSubVar.getValueIndex(iSupValues[j]);
+        }
     }
     
     public int[] map(int[] supersetAssignment) {
-        int[] subsetAssignment = new int[mapping.length];
+        int[] subsetAssignment = new int[indexMapping.length];
         return this.map(supersetAssignment, subsetAssignment);
     }
     
     public int[] map(int[] supersetAssignment, int[] subsetAssignment) throws BNLibInvalidInstantiationException {
-        if(subsetAssignment.length != this.mapping.length)
+        if(subsetAssignment.length != this.indexMapping.length)
             throw new BayesianNetworkRuntimeException("Invalid array for target assignment.");
         if(!Toolkit.validateAssignment(this.superset, supersetAssignment))
             throw new BNLibInvalidInstantiationException("Invalid assignment of the superset variables.");
-        for(int i = 0 ; i < this.mapping.length ; i++)
-            subsetAssignment[i] = supersetAssignment[this.mapping[i]];
+        
+        for(int i = 0 ; i < this.indexMapping.length ; i++) {
+            // map positions
+            int supersetValue = supersetAssignment[this.indexMapping[i]];
+            // translate assignment value index
+            subsetAssignment[i] = this.valueMapping[i][supersetValue];
+        }
         return subsetAssignment;
     }
 }

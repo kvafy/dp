@@ -298,6 +298,47 @@ public class BayesianNetwork {
         return this.getDegreesOfFreedomInCPDs();
     }
     
+    /** Provides an overall statistics for this network. */
+    public BayesianNetworkStatistics getStatistics() {
+        BayesianNetworkStatistics statistics = new BayesianNetworkStatistics();
+        boolean hasCPDs = this.hasValidCPDs();
+        int inDegreeSum = 0,
+            outDegreeSum = 0;
+        
+        statistics.nodes = this.getNodeCount();
+        statistics.inDegreeMax = statistics.outDegreeMax = 0;
+        statistics.inDegreeMin = statistics.outDegreeMin = Integer.MAX_VALUE;
+        statistics.degreesOfFreedom = 0;
+        
+        for(Node n : this.nodes) {
+            int inDegree = n.getParentCount(),
+                outDegree = n.getChildrenCount();
+            statistics.edges += outDegree;
+            inDegreeSum += inDegree;
+            outDegreeSum += outDegree;
+            statistics.inDegreeMin = Math.min(statistics.inDegreeMin, inDegree);
+            statistics.inDegreeMax = Math.max(statistics.inDegreeMax, inDegree);
+            statistics.outDegreeMin = Math.min(statistics.outDegreeMin, outDegree);
+            statistics.outDegreeMax = Math.max(statistics.outDegreeMax, outDegree);
+            if(hasCPDs) {
+                int nCard = n.getVariable().getCardinality();
+                int parentsCard = Toolkit.cardinality(n.getParentVariables());
+                statistics.degreesOfFreedom += (nCard - 1) * parentsCard;
+            }
+        }
+        
+        if(statistics.edges > 0) {
+            statistics.inDegreeAve = ((double)inDegreeSum) / statistics.nodes;
+            statistics.outDegreeAve = ((double)outDegreeSum) / statistics.nodes;
+        }
+        else {
+            statistics.inDegreeAve = statistics.outDegreeAve = 0.0;
+            statistics.inDegreeMin = statistics.outDegreeMin = 0; // compensate for Integer.MAX_VALUE
+        }
+        
+        return statistics;
+    }
+    
     
     // Graph operations
     
