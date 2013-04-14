@@ -673,7 +673,7 @@ Other than the score-based approach there is also constraint-based approach whic
 
 
 \subsection{Optimization algorithm}
-In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, reverse direction or delete an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. % TODO tabu search
+In context of Bayesian networks, the technique most frequently used is simple hill climbing~\cite[p.~816]{pgm} which works as follows. We have an initial graph structure with fixed set of variables. The initial structure may be empty, it may be the best-scoring tree/forest or some network capturing our prior knowledge and believes regarding the target domain. Then we repeatedly try all possibilities of adding a new edge, reverse direction or delete an existing edge and we evaluate the new structure using a predefined metric. We accept the change with the best gain and repeat these actions until the solution improves. % TODO tabu search
 
 
 
@@ -1229,7 +1229,7 @@ To make structure learning bearable in terms of time requirements we need to emp
              \Biggr]
       + log P(\mathcal{G})
 \end{eqnarray*}
-Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some structural complexity penalty term. Lets rewrite the scores in a unified format (suggested in~\cite{pgm}):
+Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some structural complexity penalty term. Lets rewrite the scores in a unified format (suggested in~\cite[p.~818]{pgm}):
 \begin{eqnarray*}
     score(\mathcal{G} : \mathcal{D})
     & = & \sum_{X_i \in Nodes} \!\!\!\!\!\! FamScore(X_i, Parents(X_i))
@@ -1387,7 +1387,7 @@ If a concrete application demands estimated network parameters to be as close to
 
 
 \subsection{Learning structure}
-Evaluation of structure learning proved to be a little problematic. We cannot directly use KL-divergence because the network structures aren't identical and other metrics for measuring distance of two probability distributions aren't suitable as they are based on exhaustive enumeration of atomic events and don't decompose over the network structure as KL-divergence does. Instead, I rely on manual inspection of the best-scoring network structures found over multiple runs of the learning algorithm. This approach is perfectly legal as I want to demonstrate usage of Bayesian networks in the field of data-mining which is a largely human-assisted discipline.
+Evaluation of structure learning proved to be a little problematic. We cannot directly use KL-divergence because the network structures aren't identical (although~\cite{heckerman95_learning} suggests a way of computing the KL-divergence) and other metrics for measuring distance of two probability distributions aren't suitable as they are based on exhaustive enumeration of atomic events and don't decompose over the network structure as KL-divergence does. Instead, I rely on manual inspection of the best-scoring network structures found over multiple runs of the learning algorithm. This approach is perfectly legal as I want to demonstrate usage of Bayesian networks in the field of data-mining which is a largely human-assisted discipline.
 
 Because of I-equivalence there usually are multiple network structures sharing the same highest score and being, in a sense, equal. On the contrary, there may be a whole set of I-equivalent networks which differ only by direction of some edges. For such edges there is no clear causality between variables they connect, at least none that could be derived mathematically based on the dataset at hand, however, an expert may be able to decide the causality quite easily. So, not only we cannot tell whether any of the I-equivalent structures is better in terms of causality or in terms of explaining the data at hand, the learning algorithm driven by maximizing a scoring function cannot tell either. As we don't know the \uv{true} network structure, we need to inspect all the best-scoring structures. To ease the manual evaluation of structure learning I also maintain statistics for each pair of variables $U, V$ how often the final learnt structure contains the edge $U \rightarrow V$. This statistics is presented by a table in GUI.
 
@@ -1594,7 +1594,7 @@ V-structures are stable (vs. child 10\,000 samples Bayesian score), need to be s
 
 
 \subsubsection{Optimal parameters for structure learning}
-I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count.
+I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count. \todo{Try for the child network (best score found in 50 iterations or something like that.}
 
 
 
@@ -1605,12 +1605,21 @@ We are given a dataset\footnote{The dataset \emph{Communities and crime} is avai
 
 Similar task has been previously inspected as a school project for the \uv{Knowledge Discovery in Databases (2012/2013)} class at BUT FIT by me and Petr Beňas. We learned that transforming each continuous value to membership degrees to three fuzzy sets (low, medium, high) preserves variance of the data which might be useful because the data could be discretized and the learning process would be relatively simple. Knowledge discovery techniques used in the project did not include any probabilistic model.
 
+\todo{Graphically display family score for edges (color red to purple)}
+
+
+
 
 \subsection{Data preprocessing}
 Discretization by three equidepth bins (0.33-quantile, 0.66-quantile)
 
 
 \subsection{Experiments}
+General notes
+\begin{itemize}
+    \item Methodology: Start with attributes most strongly correlated with crime\,--\,will give us a chance for finding stable structures.
+\end{itemize}
+
 BIC score
 \begin{itemize}
     \item for the full dataset there is no isolated variable
@@ -1625,7 +1634,34 @@ Bayesian score
 \section{Spam filtering (document classification)}
 For a given set of training e-mails, we need to preprocess the data and extract relevant features (keywords, sender domain, font color, numbers and currency symbols etc.) to form a feature vector. Some of the features may be hand-crafted, other might be automatically selected, for example by the highest mutual information between a feature $X_i$ and the class variable~$C$. Then we may learn (1) a Naïve Bayesian model, (2) an extension of the naive model which also allows for a limited degree of dependencies between features. Finally, we can analyze the increase in accuracy (if any) of the more complex and more expressive model.
 
-The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}.
+The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}:
+\begin{itemize}
+    \item Indicators of spam: words (money, free, earn, 100\,\%, only), currency symbols, numbers, run-length of capital letters, send time, resolution of the source IP etc.~\cite{heckerman98_spam}
+    \item can be trained specifically for a user and learn by his/her specific needs
+    \item Heckerman argues that classification accuracy can be greatly improved using also non-textual features (time of sending, source IP address, etc.).
+    \item Best features have the highest mutual information with the spam variable
+    \item Heckerman makes 85:15 split training:test.
+    \item Bayesian approach gives a degree of confidence (good for non-symmetric penalty of misclassification), don't classify as spam when $P(spam \mid \vars{x}) > 0.5 = \tau$ but for some higher $\tau$. Heckerman uses $\tau = 0.999$.
+    \item Heckerman tried modeling more types of spam but the results were worse than those with naive Bayes. Possible reasons are too small dataset (expressive model has more degress of freedom and requires more data to be trained properly; some variables may not be indicative about the concrete type of spam)
+\end{itemize}
+
+Various thresholds are studied after Heckerman in~\cite{androutsopoulos00_spam}:
+\begin{itemize}
+    \item $\tau$ governs tradeoff between precision and accuracy (well duh)
+\end{itemize}
+
+
+My notes:
+\begin{itemize}
+    \item Data representation: vector space model (each dimension represents a word), we need to discretize the data (equi-depth binning)
+    \item Try naive, try naive with dependencies among non-label variables (disallow spam to be a child), totally unrestricted network
+    \item My thought: BNs are ideal because new features can be added and even if an e-mail has some unknowns, inference can be carried out.
+    \item \todo{Find the biggest dataset possible.}
+    \item Use an already pre-processed dataset as the preprocessing textual documents for datamining isn't concern of this thesis.
+\end{itemize}
+
+
+
 
 \begin{comment}
 \todo{
@@ -1651,7 +1687,7 @@ I studied and explained the fundamentals of Bayesian networks, described various
 
 \medskip
 
-In the summer semester I am going to study the selected application cases in depth and provide a program realization. At first, I am going to attempt to reproduce results achieved by other authors and then possibly apply the presented techniques to other problems or to achieve better results than have been presented. If needed, I will also study specific variants of model learning (especially from~\cite{heckerman96} and~\cite{buntine94}) and stochastic inference (especially from~\cite{neal93}). Furthermore, the book~\cite{pgm} provides an extensive list of relevant literature for every topic presented in this thesis. % SP
+In the summer semester I am going to study the selected application cases in depth and provide a program realization. At first, I am going to attempt to reproduce results achieved by other authors and then possibly apply the presented techniques to other problems or to achieve better results than have been presented. If needed, I will also study specific variants of model learning (especially from~\cite{heckerman96_tutorial} and~\cite{buntine94}) and stochastic inference (especially from~\cite{neal93}). Furthermore, the book~\cite{pgm} provides an extensive list of relevant literature for every topic presented in this thesis. % SP
 
 My original contributions:
 \begin{itemize}
