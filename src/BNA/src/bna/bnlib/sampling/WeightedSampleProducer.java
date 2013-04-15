@@ -168,11 +168,12 @@ class WeightedSamplingEvidenceAction extends WeightedSamplingAction {
     @Override
     public void sample(SamplingContext context) {
         // for variable E determine assignment to Parents(E) from sampledVarsValues
+        context.sampledVarsAssignment[this.EIndex] = this.EValue;
         int[] nodeAndParentsAssignment = this.allVarsToEAndParentsMapper.map(context.sampledVarsAssignment);
         // determine weight change coefficient, ie. probability of P(E = e, parents(E))
         double eProb = this.ENode.getProbability(nodeAndParentsAssignment);
         context.sampleWeight *= eProb;
-        context.sampledVarsAssignment[this.EIndex] = this.EValue;
+        //context.sampledVarsAssignment[this.EIndex] = this.EValue;
     }
 }
 
