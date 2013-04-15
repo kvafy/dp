@@ -1349,7 +1349,7 @@ Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \
 
 From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with equivalent sample size $\alpha > 0$ is not penalized (in fact, in my experiments doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify.
 
-Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in case of \uv{asia} network, we can see rapid drops in the relative entropy. Cause of such a drop is a newly added sample that to erases a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section.
+Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in the case of \uv{cancer} and \uv{asia} networks, we can see rapid drops in the relative entropy. Cause of such a drop is a newly added sample that erases a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section.
 
 \begin{center}
 \begin{figure}[h]
@@ -1607,6 +1607,9 @@ Similar task has been previously inspected as a school project for the \uv{Knowl
 
 \todo{Graphically display family score for edges (color red to purple)}
 
+\todo{Maybe remove dummy nodes in graphical representation}
+
+\todo{Discretize with k-means.}
 
 
 
@@ -1631,7 +1634,20 @@ Bayesian score
 \end{itemize}
 
 
-\section{Spam filtering (document classification)}
+\section{Spam filtering}
+Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam as a stand-alone class of malware has many subtypes distinguished by their content and purpose, for example advertisement or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may even pose a threat for a careless or trustful user.
+
+If not stated otherwise, all technical knowledge regarding data-mining in this section has been drawn from a university course based on~\cite{han_datamining}.
+
+\subsection{General document classification}
+The problem of spam detection falls within general document classification with two classes\,--\,spam or ham (term used for a non-spam email). General classification methods work with data representation in the form of feature vectors which may contain polynomial or continuous values, each carrying information regarding presence of a specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of features and finally creating feature representation of documents. Because document preprocessing and feature extraction is not the subject of this thesis I~will rely on a publicly accessible dataset of spam messages that has already been preprocessed and converted to feature representation.
+
+
+\subsection{Experiments}
+A handful of successful publicly available implementations of spam filters (eg. \term{SpamBayes}) are based on a simple Naive Bayes model. Other than that, also the pioneering article~\cite{heckerman98_spam}, which I will often refer, demonstrates impressive performance of this simple model. In context of Bayesian networks arises the question whether the assumption of independency between feature variables given the class variable isn't too strong and whether a properly trained Bayesian network can perform better. Goal of this section is simple\,--\,compare the best achievable performance for a Naive Bayes model and for a more general Bayesian network.
+
+\medskip
+
 For a given set of training e-mails, we need to preprocess the data and extract relevant features (keywords, sender domain, font color, numbers and currency symbols etc.) to form a feature vector. Some of the features may be hand-crafted, other might be automatically selected, for example by the highest mutual information between a feature $X_i$ and the class variable~$C$. Then we may learn (1) a Naïve Bayesian model, (2) an extension of the naive model which also allows for a limited degree of dependencies between features. Finally, we can analyze the increase in accuracy (if any) of the more complex and more expressive model.
 
 The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}:
@@ -1653,13 +1669,73 @@ Various thresholds are studied after Heckerman in~\cite{androutsopoulos00_spam}:
 
 My notes:
 \begin{itemize}
-    \item Data representation: vector space model (each dimension represents a word), we need to discretize the data (equi-depth binning)
+    \item Data representation: vector space model (each dimension represents a word), we need to discretize the data (equi-depth binning  didn't work, used k-means instead with $k=3$)
+    \item split 80:20 train:test (3681:920), stratified sampling (with RapidMiner)
     \item Try naive, try naive with dependencies among non-label variables (disallow spam to be a child), totally unrestricted network
     \item My thought: BNs are ideal because new features can be added and even if an e-mail has some unknowns, inference can be carried out.
     \item \todo{Find the biggest dataset possible.}
     \item Use an already pre-processed dataset as the preprocessing textual documents for datamining isn't concern of this thesis.
+    \item Discretization: wanted equi-depth binning but turned out some attributes are very unevenly distributed, so two bins were often the same. Used k-means clustering ($k=3$) instead.
+    \item Dataset doesn't contain the best features (some of them are isolated variables in a learnt structure suggesting they are not significantly correlated with spam variable nor any other).
+    \item Dataset \uv{Spambase} from UCI Machine Learning Repository \url{http://archive.ics.uci.edu/ml/datasets/Spambase}.
 \end{itemize}
 
+Best performance of Naive Bayes:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.87, 0.82, 0.85)
+    \item Bayesian estimation (\todo{refer to the largest network in part 1\,--\,ICU for clues on how to choose $\alpha$ for 3681 samples and 57 attributes + 1 label}, or find a network with cca 60 nodes (HEPAR~II) and perform the analysis and place here a graph of learning curves) ($\alpha$, accuracy, precision, recall): (0.1, 0.87, 0.82, 0.85), (0.25, 0.87, 0.82, 0.85), (0.5, 0.87, 0.82, 0.84), (1, 0.86, 0.82, 0.84), (2, 0.86, 0.82, 0.83), (5, 0.87, 0.83, 0.83), (10, 0.87, 0.83, 0.83), (20, 0.86, 0.83, 0.82), (30, 0.87, 0.84, 0.82), (40, 0.87, 0.84, 0.81)
+\end{itemize}
+
+
+Best performance of $spam$ parent-only, max 3 parents per node, BIC score:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.873, 0.862, 0.807)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (1, 0.875, 0.863, 0.813), (2, 0.875, 0.860, 0.815), (5, 0.873, 0.862, 0.807), (10, 0.873, 0.864, 0.804), (20, 0.875, 0.869, 0.804), (30, 0.875, 0.869, 0.804), (40, 0.877, 0.874, 0.804), (50, 0.876, 0.878, 0.796), (60, 0.877, 0.879, 0.799)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=1$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.879, 0.875, 0.810)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.882, 0.876, 0.815), (1, 0.883, 0.876, 0.818), (1.5, 0.882, 0.876, 0.815), \todo{(2, 0.882, 0.876, 0.815)}, (3, 0.881, 0.875, 0.813), (5, 0.881, 0.875, 0.813), (10, 0.878, 0.872, 0.810), (20, 0.876, 0.872, 0.804), (30, 0.872, 0.870, 0.793), (40, 0.873, 0.875, 0.791), (50, 0.871, 0.872, 0.788), (60, 0.872, 0.875, 0.788)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=2$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.871, 0.872, 0.788)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.889, 0.870, 0.846), \todo{(1, 0.891, 0.873, 0.848)}, (1.5, 0.890, 0.874, 0.843), (2, 0.891, 0.873, 0.848), (3, 0.887, 0.869, 0.840), (5, 0.889, 0.872, 0.843), (10, 0.884, 0.846, 0.837), (20, 0.890, 0.876, 0.840), (30, 0.888, 0.876, 0.835), (40, 0.889, 0.874, 0.840), (50, 0.886, 0.873, 0.832), (60, 0.883, 0.867, 0.829)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=5$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.870, 0.869, 0.788)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.891, 0.879, 0.840), (1, 0.891, 0.877, 0.843), (1.5, 0.891, 0.877, 0.843), (2, 0.887, 0.875, 0.832), (3, 0.895, 0.882, 0.846), (5, 0.895, 0.882, 0.846), (7.5, 0.889, 0.876, 0.837), (10, 0.890, 0.879, 0.837), (20, 0.881, 0.871, 0.818), (30, 0.884, 0.874, 0.824), (40, 0.887, 0.878, 0.829), (50, 0.883, 0.870, 0.826), (60, 0.886, 0.873, 0.832)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=10$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.875, 0.876, 0.796)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.896, 0.880, 0.851), (1, 0.898, 0.885, 0.851), (1.5, 0.896, 0.878, 0.854), (2, 0.897, 0.883, 0.851), (3, 0.896, 0.883, 0.848), (5, 0.895, 0.884, 0.843), (10, 0.897, 0.887, 0.846), (20, 0.897, 0.887, 0.846), (30, 0.896, 0.885, 0.846), (40, 0.891, 0.879, 0.840), (50, 0.897, 0.890, 0.843), (60, 0.894, 0.886, 0.837)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=20$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.878, 0.886, 0.793)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.886, 0.884, 0.818), (1, 0.887, 0.887, 0.818), (1.5, 0.889, 0.885, 0.826), (2, 0.887, 0.882, 0.824), (3, 0.885, 0.884, 0.815), (5, 0.887, 0.887, 0.818), (10, 0.889, 0.887, 0.824), (20, 0.885, 0.881, 0.818), (30, 0.885, 0.879, 0.821), (40, 0.881, 0.871, 0.818), (50, 0.879, 0.875, 0.810), (60, 0.883, 0.881, 0.813)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=30$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.858, 0.856, 0.796)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.865, 0.855, 0.793), (1, 0.864, 0.854, 0.791), (2, 0.863, 0.854, 0.788), (3, 0.860, 0.848, 0.785), (5, 0.865, 0.861, 0.785), (10, 0.865, 0.855, 0.793), (20, 0.862, 0.851, 0.788), (30, 0.865, 0.861, 0.785), (40, 0.863, 0.858, 0.782), (50, 0.864, 0.856, 0.788), (60, 0.866, 0.864, 0.785), (70, 0.863, 0.856, 0.785)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=x$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0., 0., 0.)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0., 0., 0.), (1, 0., 0., 0.), (1.5, 0., 0., 0.), (2, 0., 0., 0.), (3, 0., 0., 0.), (5, 0., 0., 0.), (10, 0., 0., 0.), (20, 0., 0., 0.), (30, 0., 0., 0.), (40, 0., 0., 0.), (50, 0., 0., 0.), (60, 0., 0., 0.)
+\end{itemize}
+
+Parameters of structure learning: 200 runs, 3\,000 iterations per run, 60 random restart steps, 0.15 relative size of tabu-list.
 
 
 
@@ -1696,7 +1772,7 @@ My original contributions:
 
 What I did in the practical part:
 \begin{itemize}
-    \item I have demonstrated the analysis which should be performed if our goal is to learn network parameters as accurately as possible.
+    \item I have demonstrated the analysis which should be performed if our goal is to learn network parameters as accurately as possible. I also examined relation of the ability to learn the \uv{true} structure and dataset size.
 \end{itemize}
 %=========================================================================
 %begin-of-inserted-footer
