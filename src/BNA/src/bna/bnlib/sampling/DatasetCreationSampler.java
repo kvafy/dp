@@ -6,14 +6,14 @@
 package bna.bnlib.sampling;
 
 import bna.bnlib.*;
-import bna.bnlib.learning.*;
+import bna.bnlib.learning.Dataset;
 
 
 /**
  * Sampler for creating an artificial dataset from given BN and storing it into memory as Dataset instance.
  */
 public class DatasetCreationSampler extends Sampler {
-    private Dataset dataset;
+    private final Dataset dataset;
 
     
     public DatasetCreationSampler(BayesianNetwork bn) {

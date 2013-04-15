@@ -36,6 +36,17 @@ public class DatasetCSVFileWriter extends DatasetFileWriter {
                     writer.write(this.separator);
                 firstRecordOfLine = false;
                 writer.write(var.getName());
+                
+                boolean firstValueOfVariable = true;
+                writer.write('(');
+                for(String value : var.getValues()) {
+                    if(!firstValueOfVariable)
+                        writer.write('|');
+                    firstValueOfVariable = false;
+                    writer.write(value);
+                }
+                writer.write(')');
+                
             }
             writer.write(System.getProperty("line.separator"));
             // data rows

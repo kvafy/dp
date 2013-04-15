@@ -8,13 +8,13 @@ import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Factor;
 import bna.bnlib.Variable;
 import bna.bnlib.learning.Dataset;
-import bna.bnlib.misc.TextualTable;
 import bna.bnlib.misc.Toolkit;
 import bna.bnlib.sampling.QuerySampler;
 import bna.bnlib.sampling.SampleProducer;
 import bna.bnlib.sampling.SamplingController;
 import bna.bnlib.sampling.WeightedSampleProducer;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 
 /**
@@ -65,6 +65,87 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         return true;
     }
     
+    private void notifyTestingStarted() {
+        this.comboBoxTargetAttribute.setEnabled(false);
+        this.buttonTest.setEnabled(false);
+        this.progressBar.setValue(0);
+        this.setConfusionMatrix(null, null);
+    }
+    
+    private void notifyTestingProgress(double progress) {
+        this.progressBar.setValue((int)(100 * progress));
+    }
+    
+    private void notifyTestingFinished(Variable predictedVar, int[][] confusionMatrix) {
+        this.comboBoxTargetAttribute.setEnabled(true);
+        this.buttonTest.setEnabled(true);
+        this.progressBar.setValue(100);
+        this.setConfusionMatrix(predictedVar, confusionMatrix);
+    }
+    
+    private void setConfusionMatrix(Variable predictedVar, int[][] matrix) {
+        if(predictedVar == null || matrix == null) {
+            this.tableConfusionMatrix.setModel(new DefaultTableModel());
+            return;
+        }
+        String[] assignments = predictedVar.getValues();
+        // generate header
+        String[] header = new String[1 + assignments.length + 1];
+        header[0] = "predicted / real";
+        Object[][] data = new Object[assignments.length + 1][1 + assignments.length + 1];
+        for(int i = 0 ; i < assignments.length ; i++)
+            header[i + 1] = assignments[i];
+        header[1 + assignments.length] = "class precision";
+        // fill in confusion counts
+        for(int i = 0 ; i < assignments.length ; i++) {
+            data[i][0] = assignments[i];
+            for(int j = 0 ; j < assignments.length ; j++)
+                data[i][j + 1] = new Integer(matrix[i][j]);
+        }
+        // fill in precision
+        for(int i = 0 ; i < assignments.length ; i++) {
+            int truePositives = 0,
+                falsePositives = 0;
+            for(int j = 0 ; j < assignments.length ; j++) {
+                if(i == j)
+                    truePositives += matrix[i][j];
+                else
+                    falsePositives += matrix[i][j];
+            }
+            double precision = ((double)truePositives) / (truePositives + falsePositives);
+            data[i][1 + assignments.length] = String.format("%.3f", precision);
+        }
+        // fill in recall
+        data[assignments.length][0] = "class recall";
+        for(int i = 0 ; i < assignments.length ; i++) {
+            int truePositives = 0,
+                falseNegatives = 0;
+            for(int j = 0 ; j < assignments.length ; j++) {
+                if(i == j)
+                    truePositives += matrix[j][i];
+                else
+                    falseNegatives += matrix[j][i];
+            }
+            double recall = ((double)truePositives) / (truePositives + falseNegatives);
+            data[assignments.length][i + 1] = String.format("%.3f", recall);
+        }
+        // fill in accuracy
+        int predictOK = 0,
+            predictFail = 0;
+        for(int i = 0 ; i < assignments.length ; i++) {
+            for(int j = 0 ; j < assignments.length ; j++) {
+                if(i == j)
+                    predictOK += matrix[i][j];
+                else
+                    predictFail += matrix[i][j];
+            }
+        }
+        double accuracy = ((double)predictOK) / (predictOK + predictFail);
+        data[assignments.length][1 + assignments.length] = String.format("accuracy = %.3f", accuracy);
+        
+        this.tableConfusionMatrix.setModel(new DefaultTableModel(data, header));
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -80,6 +161,7 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableConfusionMatrix = new javax.swing.JTable();
+        progressBar = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Prediction accuracy test");
@@ -99,19 +181,9 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         variableNames[i] = variables[i].getName();
         comboBoxTargetAttribute.setModel(new javax.swing.DefaultComboBoxModel(variableNames));
 
-        jLabel1.setText("Confusion matrix (real vs predicted)");
+        jLabel1.setText("Confusion matrix");
 
-        tableConfusionMatrix.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
+        tableConfusionMatrix.setModel(new javax.swing.table.DefaultTableModel());
         jScrollPane1.setViewportView(tableConfusionMatrix);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -121,15 +193,18 @@ public class DialogPredictionTest extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(labelPath)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(comboBoxTargetAttribute, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(buttonTest, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel1))
+                            .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(buttonTest, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -142,10 +217,12 @@ public class DialogPredictionTest extends javax.swing.JDialog {
                     .addComponent(comboBoxTargetAttribute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 182, Short.MAX_VALUE)
+                .addGap(8, 8, 8)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
-                .addComponent(buttonTest)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(buttonTest)
+                    .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -156,98 +233,96 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         if(!this.verifyInputs())
             return;
         
-        Variable[] bnVars = this.bn.getVariables();
-        Variable[] datasetVars = this.dataset.getVariables();
-        int targetAttrIndex = this.comboBoxTargetAttribute.getSelectedIndex();
-        Variable targetVar = bnVars[targetAttrIndex];
-        // need to have variable from dataset (values may have other ordering)
-        targetVar = datasetVars[Toolkit.indexOf(datasetVars, targetVar)];
-        int targetVarIndexInDataset = Toolkit.indexOf(datasetVars, targetVar);
+        PredictionTestingThread worker = new PredictionTestingThread(this.bn, this.dataset);
+        worker.setDaemon(true);
+        worker.start();
         
-        int[][] confusionMatrix = new int[targetVar.getCardinality()][targetVar.getCardinality()];
-        
-        for(int[] sample : this.dataset.getDataReadOnly()) {
-            // assemble a query in which everything except targetVariable is evidence, ie. P(Target | E = e)
-            String query = this.getQueryString(targetVar, datasetVars, sample);
-            // make a prediction via sampling
-            Factor predictionFactor = this.getPredictionFactor(query);
-            // evaluate prediction result for this sample
-            int realValue = sample[targetVarIndexInDataset];
-            String predictedValueStr = this.getPredictedValue(targetVar, predictionFactor);
-            int predictedValue = targetVar.getValueIndex(predictedValueStr);
-            confusionMatrix[realValue][predictedValue]++;
-        }
-        TextualTable textConfusionMatrix = this.getTextualConfusionMatrix(targetVar, confusionMatrix);
-        System.out.println(textConfusionMatrix.toString());
         this.saveConfiguration();
     }//GEN-LAST:event_buttonTestActionPerformed
 
-    private String getQueryString(Variable targetVar, Variable[] datasetVars, int[] datasetSample) {
-        StringBuilder query = new StringBuilder();
-        query.append("P(")
-                .append(targetVar.getName())
-                .append(" | ");
-        boolean firstEvidence = true;
-        for(int i = 0 ; i < datasetVars.length ; i++) {
-            if(datasetVars[i].equals(targetVar))
-                continue;
-            if(!firstEvidence)
-                query.append(", ");
-            firstEvidence = false;
-            String datasetVarValue = datasetVars[i].getValues()[datasetSample[i]];
-            query.append(datasetVars[i].getName())
-                    .append(" = ")
-                    .append(datasetVarValue);
+    /** Thread that carries out the prediction testing and notifies GUI. */
+    class PredictionTestingThread extends Thread {
+        private BayesianNetwork bn;
+        private Dataset dataset;
+        
+        
+        public PredictionTestingThread(BayesianNetwork bn, Dataset dataset) {
+            this.bn = bn;
+            this.dataset = dataset;
         }
-        query.append(")");
-        return query.toString();
-    }
-    
-    private Factor getPredictionFactor(String query) {
-        SampleProducer sampleProducer = new WeightedSampleProducer(this.bn, query);
-        QuerySampler sampler = new QuerySampler(sampleProducer);
-        SamplingController samplingController = new SamplingController(DialogPredictionTest.SAMPLES_PER_PREDICTION);
-        sampler.sample(samplingController);
-        return sampler.getSamplesCounter(); // no need to normalize
-    }
-    
-    /** According to prediction policy and to inferred probabilities pick a final predicted value. */
-    private String getPredictedValue(Variable predictedVar, Factor predictionFactor) {
-        int maxProbIndex = 0;
-        double maxProb = predictionFactor.getProbability(maxProbIndex);
-        for(int i = 1 ; i < predictionFactor.getCardinality() ; i++) {
-            double iProb = predictionFactor.getProbability(i);
-            if(iProb > maxProb) {
-                maxProb = iProb;
-                maxProbIndex = i;
+        
+        @Override
+        public void run() {
+            Variable[] bnVars = this.bn.getVariables();
+            Variable[] datasetVars = this.dataset.getVariables();
+            int targetAttrIndex = comboBoxTargetAttribute.getSelectedIndex();
+            Variable targetVar = bnVars[targetAttrIndex];
+            // need to have instance of the target variable from dataset (values may have other ordering)
+            int targetVarIndexInDataset = Toolkit.indexOf(datasetVars, targetVar);
+            targetVar = datasetVars[targetVarIndexInDataset];
+
+            int[][] confusionMatrix = new int[targetVar.getCardinality()][targetVar.getCardinality()];
+
+            notifyTestingStarted();
+            int i = 0;
+            for(int[] sample : this.dataset.getDataReadOnly()) {
+                // assemble a query in which everything except targetVariable is evidence, ie. P(Target | E = e)
+                String query = this.getQueryString(targetVar, datasetVars, sample);
+                // make a prediction via sampling
+                Factor predictionFactor = this.getPredictionFactor(query);
+                // evaluate prediction result for this sample
+                int realValue = sample[targetVarIndexInDataset];
+                String predictedValueStr = this.getPredictedValue(predictionFactor);
+                int predictedValue = targetVar.getValueIndex(predictedValueStr);
+                confusionMatrix[predictedValue][realValue]++;
+                notifyTestingProgress(++i / (double)this.dataset.getSize());
             }
+            
+            notifyTestingFinished(targetVar, confusionMatrix);
         }
-        String maxProbValue = predictionFactor.getScope()[0].getValues()[maxProbIndex];
-        /*System.out.println("Factor:");
-        System.out.println(predictionFactor.toString());
-        System.out.println(" => prediction: " + maxProbValue);
-        System.out.println("");*/
-        //return predictedVar.getValueIndex(maxProbValue);
-        return predictionFactor.getScope()[0].getValues()[maxProbIndex];
-    }
-    
-    private TextualTable getTextualConfusionMatrix(Variable var, int[][] matrix) {
-        int size = var.getCardinality() + 1;
-        // set up the table
-        String[] header = new String[size];
-        header[0] = "";
-        for(int i = 0 ; i < var.getCardinality() ; i++)
-            header[i + 1] = var.getValues()[i];
-        TextualTable table = new TextualTable(header, 2, true);
-        // data rows
-        for(int row = 0 ; row < var.getCardinality() ; row++) {
-            Object[] rowData = new Object[size];
-            rowData[0] = var.getValues()[row];
-            for(int col = 0 ; col < var.getCardinality() ; col++)
-                rowData[col + 1] = new Integer(matrix[row][col]);
-            table.addRow(rowData);
+        
+        private String getQueryString(Variable targetVar, Variable[] datasetVars, int[] datasetSample) {
+            StringBuilder query = new StringBuilder();
+            query.append("P(")
+                    .append(targetVar.getName())
+                    .append(" | ");
+            boolean firstEvidence = true;
+            for(int i = 0 ; i < datasetVars.length ; i++) {
+                if(datasetVars[i].equals(targetVar))
+                    continue;
+                if(!firstEvidence)
+                    query.append(", ");
+                firstEvidence = false;
+                String datasetVarValue = datasetVars[i].getValues()[datasetSample[i]];
+                query.append(datasetVars[i].getName())
+                        .append(" = ")
+                        .append(datasetVarValue);
+            }
+            query.append(")");
+            return query.toString();
         }
-        return table;
+
+        private Factor getPredictionFactor(String query) {
+            SampleProducer sampleProducer = new WeightedSampleProducer(this.bn, query);
+            QuerySampler sampler = new QuerySampler(sampleProducer);
+            SamplingController samplingController = new SamplingController(DialogPredictionTest.SAMPLES_PER_PREDICTION);
+            sampler.sample(samplingController);
+            return sampler.getSamplesCounter(); // no need to normalize
+        }
+
+        /** According to prediction policy and to inferred probabilities pick a final predicted value. */
+        private String getPredictedValue(Factor predictionFactor) {
+            int maxProbIndex = 0;
+            double maxProb = predictionFactor.getProbability(maxProbIndex);
+            for(int i = 1 ; i < predictionFactor.getCardinality() ; i++) {
+                double iProb = predictionFactor.getProbability(i);
+                if(iProb > maxProb) {
+                    maxProb = iProb;
+                    maxProbIndex = i;
+                }
+            }
+            return predictionFactor.getScope()[0].getValues()[maxProbIndex];
+        }
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -256,6 +331,7 @@ public class DialogPredictionTest extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelPath;
+    private javax.swing.JProgressBar progressBar;
     private javax.swing.JTable tableConfusionMatrix;
     // End of variables declaration//GEN-END:variables
 }

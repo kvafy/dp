@@ -2,7 +2,7 @@
 // Author:  David Chaloupka (xchalo09)
 // Created: 2013/02/26
 
-package bna.bnlib.sampling;
+package bna.bnlib.io;
 
 import bna.bnlib.*;
 import java.util.regex.*;
@@ -26,15 +26,12 @@ import java.util.ArrayList;
  * P(RAIN | CLOUDY)
  * P(SPRINKLER)
  */
-class ParsedQuery {
-    BayesianNetwork bn;
-    String query;
+public class ParsedQuery {
+    public BayesianNetwork bn;
+    public String query;
     // the parsed result
-    Variable[] X, Y, E;
-    int[] e;
-    
-    private final String varnameRegex =  "[^,|=()\\s]+",
-                         varvalueRegex = "[^,|=()\\s]+";
+    public Variable[] X, Y, E;
+    public int[] e;
     
     
     public ParsedQuery(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
@@ -44,8 +41,10 @@ class ParsedQuery {
     }
     
     private void parse() throws BNLibIllegalQueryException {
-        String varnameListRegex = String.format("%s(?:\\s*,\\s*%s)*", varnameRegex, varnameRegex);
-        String varnassignmentListRegex = String.format("%s\\s*=\\s*%s(?:\\s*,\\s*%s\\s*=\\s*%s)*", varnameRegex, varvalueRegex, varnameRegex, varvalueRegex);
+        String varnameListRegex = String.format("%s(?:\\s*,\\s*%s)*", IOConfiguration.VARNAME_REGEX,  IOConfiguration.VARNAME_REGEX);
+        String varnassignmentListRegex = String.format("%s\\s*=\\s*%s(?:\\s*,\\s*%s\\s*=\\s*%s)*",
+                                                       IOConfiguration.VARNAME_REGEX,  IOConfiguration.VARVALUE_REGEX,
+                                                       IOConfiguration.VARNAME_REGEX,  IOConfiguration.VARVALUE_REGEX);
         String queryRegex = 
                 "P\\("
                 + "(" + varnameListRegex + ")"      // \1 ~ X variables

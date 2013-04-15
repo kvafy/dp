@@ -24,10 +24,10 @@ public class AssignmentIndexMapper {
             accessVector[i] = accessVector[i - 1] * variables[i - 1].getCardinality();
     }
     
-    public int assignmentToIndex(int[] assignment) throws BNLibInvalidInstantiationException {
+    public int assignmentToIndex(int[] assignment) throws BNLibInvalidInstantiationException, BNLibIllegalArgumentException {
         // validate parameters
         if(assignment == null)
-            throw new BayesianNetworkRuntimeException("Null assignment.");
+            throw new BNLibIllegalArgumentException("Null assignment.");
         if(!Toolkit.validateAssignment(this.vars, assignment))
             throw new BNLibInvalidInstantiationException("Invalid assignment for given list of variables.");
         // index computation

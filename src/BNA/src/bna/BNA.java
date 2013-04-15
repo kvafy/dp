@@ -24,8 +24,8 @@ public class BNA {
         //playing_sampling_string_query();
         //playing_dataset_testing();
         //playing_parameter_learning();
-        //benchmark_parameter_learningMLEVSBayes();
-        benchmark_parameter_learningMLEVSBayesINSPECTION();
+        benchmark_parameter_learningMLEVSBayes();
+        //benchmark_parameter_learningMLEVSBayesINSPECTION();
         //playing_structure_learning();
         //playing_structure_learning_evaluation();
         //playing_network_layout();
@@ -352,12 +352,12 @@ public class BNA {
     private static void benchmark_parameter_learningMLEVSBayes() {
         // take network with independent variables (no connections) and check the mutual information
         final long SAMPLES_MIN = 10,
-                   SAMPLES_MAX = 1000;
+                   SAMPLES_MAX = 5000;
                    //STEP_COUNT = 100;
-        final String NETWORK = "../../networks/cancer.net";
+        final String NETWORK = "../../networks/hepar2.net";
         //final double SAMPLES_EXP_STEP = Math.pow((double)SAMPLES_MAX / SAMPLES_MIN, 1.0 / (STEP_COUNT - 1));
         
-        String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_2.5_error", "bayes_5_error", "bayes_10_error", "bayes_20_error"};
+        String[] headers = {"#no_of_samples", "mle_error", "bayes_1_error", "bayes_5_error", "bayes_10_error", "bayes_20_error", "bayes_30_error", "bayes_40_error"};
         TextualTable table = new TextualTable(headers, 5, false);
         
         BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK);
@@ -390,10 +390,11 @@ public class BNA {
             LinkedList<BayesianNetwork> networks = new LinkedList<BayesianNetwork>();
             networks.addLast(ParameterLearner.learnMLE(bnOriginal, partialDataset));
             networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 1.0));
-            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 2.5));
             networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 5.0));
             networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 10.0));
             networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 20.0));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 30.0));
+            networks.addLast(ParameterLearner.learnBayesianEstimationUniform(bnOriginal, partialDataset, 40.0));
             // produce one line of output
             System.err.printf("computing case for %d samples...\n", samples);
             LinkedList<Object> dataRowList = new LinkedList<Object>();

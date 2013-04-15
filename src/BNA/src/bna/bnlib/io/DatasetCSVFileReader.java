@@ -5,6 +5,8 @@
 package bna.bnlib.io;
 
 import bna.bnlib.BNLibIOException;
+import bna.bnlib.BNLibIllegalVariableSpecificicationException;
+import bna.bnlib.BNLibNonexistentVariableValueException;
 import bna.bnlib.Variable;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -12,6 +14,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 
 /**
@@ -29,25 +33,45 @@ public class DatasetCSVFileReader extends DatasetFileReader {
         this.separator = separator;
     }
     
+    private Variable parseVariableSpecification(String spec) throws BNLibIllegalVariableSpecificicationException {
+        // each record has to be in the form "<var-name>(<var-value1>|...|<var-value-n>)"
+        String patternStr = String.format("(%s)"           // \1 is variable name
+                                        + "\\("
+                                        + "(%s(:?\\|%s)*)" // \2 is list of possible values
+                                        + "\\)",
+                                          IOConfiguration.VARNAME_REGEX,
+                                          IOConfiguration.VARVALUE_REGEX,
+                                          IOConfiguration.VARVALUE_REGEX);
+        Pattern pattern = Pattern.compile(patternStr);
+        Matcher matcher = pattern.matcher(spec);
+        if(!matcher.matches()) {
+            String msg = String.format("\"%s\" is not a valid variable specification (must contain name and list of possible values).", spec);
+            throw new BNLibIllegalVariableSpecificicationException(msg);
+        }
+        String varName = matcher.group(1);
+        String[] varValues = matcher.group(2).split("\\|");
+        return new Variable(varName, varValues);
+    }
+    
     private void parse() throws BNLibIOException {
-        ArrayList<ArrayList<String>> variablesValues = new ArrayList<ArrayList<String>>();
         ArrayList<int[]> dataRows = new ArrayList<int[]>();
 
         BufferedReader in = null;
+        int lineNumber = 1;
         try {
             String line;
             in = new BufferedReader(new FileReader(this.filename));
-            // parse header
+            // parse header (variable names and set of possible values)
             line = in.readLine();
             if(line == null || line.trim().length() == 0)
                 throw new BNLibIOException("The file \"" + this.filename + "\" appears to be empty.");
-            String[] variableNames = line.split(this.separator);
-            int variableCount = variableNames.length;
+            String[] variableSpecifications = line.split(this.separator);
+            int variableCount = variableSpecifications.length;
+            this.variables = new Variable[variableCount];
             for(int i = 0 ; i < variableCount ; i++)
-                variablesValues.add(new ArrayList<String>());
+                this.variables[i] = this.parseVariableSpecification(variableSpecifications[i]);
             
             // parse data rows
-            int lineNumber = 1;
             while(true) {
                 line = in.readLine();
                 lineNumber++;
@@ -57,27 +81,20 @@ public class DatasetCSVFileReader extends DatasetFileReader {
                     continue;
                 String[] lineFields = line.split(this.separator);
                 if(lineFields.length != variableCount) {
-                    String msg = String.format("Unexpected number of records on line %d (expected %d, found %d).",
+                    String msg = String.format("Line %d: Unexpected number of records - expected %d, found %d.",
                                                lineNumber, variableCount, lineFields.length);
                     throw new BNLibIOException(msg);
                 }
                 int[] dataRow = new int[variableCount];
                 for(int i = 0 ; i < variableCount ; i++) {
                     String iVarValue = lineFields[i];
-                    ArrayList<String> iVarKnownValues = variablesValues.get(i);
-                    int indexOfValue = iVarKnownValues.indexOf(iVarValue);
-                    if(indexOfValue == -1) {
-                        iVarKnownValues.add(iVarValue);
-                        indexOfValue = iVarKnownValues.size() - 1;
-                    }
+                    Variable iVar = this.variables[i];
+                    int indexOfValue = iVar.getValueIndex(iVarValue); // throws BNLibNonexistentVariableValueException
                     dataRow[i] = indexOfValue;
                 }
                 dataRows.add(dataRow);
             }
             
-            this.variables = new Variable[variableCount];
-            for(int i = 0 ; i < variableCount ; i++)
-                this.variables[i] = new Variable(variableNames[i], variablesValues.get(i));
             this.data = dataRows;
             this.parsed = true;
         }
@@ -86,6 +103,14 @@ public class DatasetCSVFileReader extends DatasetFileReader {
         }
         catch(IOException ex) {
             throw new BNLibIOException("The following IOException occured: " + ex.getMessage());
+        }
+        catch(BNLibIllegalVariableSpecificicationException ex) {
+            String msg = String.format("Line %d: %s", lineNumber, ex.getMessage());
+            throw new BNLibIOException(msg);
+        }
+        catch(BNLibNonexistentVariableValueException ex) {
+            String msg = String.format("Line %d: %s", lineNumber, ex.getMessage());
+            throw new BNLibIOException(msg);
         }
         finally {
             try {

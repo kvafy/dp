@@ -17,7 +17,9 @@ import java.util.List;
 
 
 /**
- *
+ * HOlds samples for a set of variables.
+ * Provides counting of occurences for a subset of dataset variables and also
+ * computes mutual information.
  */
 public class Dataset implements DatasetInterface {
     private Variable[] variables;
@@ -80,29 +82,13 @@ public class Dataset implements DatasetInterface {
     @Override
     public Factor computeFactor(Variable[] scope) {
         Counter counter = new Counter(scope);
-        Variable[] extendedDatasetVariables = this.extendDatasetVariables(scope);
-        VariableSubsetMapper recordToScopeMapper = new VariableSubsetMapper(extendedDatasetVariables, scope);
+        VariableSubsetMapper recordToScopeMapper = new VariableSubsetMapper(this.variables, scope);
         int[] scopeAssignment = new int[scope.length];
         for(int[] record : this.records) {
             recordToScopeMapper.map(record, scopeAssignment);
             counter.add(scopeAssignment, 1);
         }
         return counter.toFactor();
-    }
-    
-    private Variable[] extendDatasetVariables(Variable[] targetVars) {
-        Variable[] extendedVariables = new Variable[this.variables.length];
-        for(int i = 0 ; i < extendedVariables.length ; i++) {
-            int targetVarIndex = Toolkit.indexOf(targetVars, this.variables[i]);
-            if(targetVarIndex == -1)
-                extendedVariables[i] = this.variables[i];
-            else {
-                Variable targetVar = targetVars[targetVarIndex];
-                String[] extendedValues = Toolkit.union(this.variables[i].getValues(), targetVar.getValues());
-                extendedVariables[i] = new Variable(this.variables[i].getName(), extendedValues);
-            }
-        }
-        return extendedVariables;
     }
     
     /** Compute mutual information between two sets of variables. */

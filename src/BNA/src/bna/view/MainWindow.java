@@ -121,7 +121,18 @@ public class MainWindow extends javax.swing.JFrame {
         Variable[] networkVariables = currentNetwork.getVariables();
         Dataset currentDataset = ((DatasetViewTable)this.datasetTable).getDataset();
         Variable[] datasetVariables = currentDataset.getVariables();
-        return Toolkit.areEqual(networkVariables, datasetVariables);
+        // test whether variables have the same name
+        boolean sameVariableNames = Toolkit.areEqual(networkVariables, datasetVariables);
+        if(!sameVariableNames)
+            return false;
+        // test whether variables have the same set of values
+        for(Variable bnVar : networkVariables) {
+            int index = Toolkit.indexOf(datasetVariables, bnVar);
+            Variable datasetVar = datasetVariables[index];
+            if(!Toolkit.areEqual(bnVar.getValues(), datasetVar.getValues()))
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -297,7 +308,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 404, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 408, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -370,7 +381,8 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void menuItemLearnParametersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnParametersActionPerformed
         if(!this.networkAndDatasetAreCompatible()) {
-            String msg = "Current network and current dataset must contain exactly the same variables.";
+            String msg = "Current network and current dataset must contain exactly the same variables\n"
+                       + "with the same sets of possible assignments.";
             JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -413,7 +425,8 @@ public class MainWindow extends javax.swing.JFrame {
             return;
         }
         if(!this.networkAndDatasetAreCompatible()) {
-            String msg = "Current network and current dataset must contain exactly the same variables.";
+            String msg = "Current network and current dataset must contain exactly the same variables\n"
+                       + "with the same sets of possible assignments.";
             JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
             return;
         }

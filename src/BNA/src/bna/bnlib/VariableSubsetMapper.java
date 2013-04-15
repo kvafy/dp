@@ -17,7 +17,7 @@ public class VariableSubsetMapper {
     
     public VariableSubsetMapper(Variable[] superset, Variable[] subset)  {
         if(!Toolkit.isSubset(superset, subset))
-            throw new BayesianNetworkRuntimeException("Not a subset");
+            throw new BNLibIllegalArgumentException("Second array isn't a subset of the first one.");
         this.superset = superset;
         // generate the positional mapping
         this.indexMapping = new int[subset.length];
@@ -28,6 +28,10 @@ public class VariableSubsetMapper {
         for(int i = 0 ; i < subset.length ; i++) {
             Variable iSubVar = subset[i],
                      iSupVar = superset[this.indexMapping[i]];
+            if(!Toolkit.areEqual(iSubVar.getValues(), iSupVar.getValues())) {
+                String msg = String.format("Variable \"%s\" has different set of values in superset and in subset.", iSubVar.getName());
+                throw new BNLibIllegalArgumentException(msg);
+            }
             String[] iSupValues = iSupVar.getValues();
             this.valueMapping[i] = new int[iSubVar.getCardinality()];
             for(int j = 0 ; j < iSubVar.getCardinality() ; j++)
@@ -40,9 +44,9 @@ public class VariableSubsetMapper {
         return this.map(supersetAssignment, subsetAssignment);
     }
     
-    public int[] map(int[] supersetAssignment, int[] subsetAssignment) throws BNLibInvalidInstantiationException {
+    public int[] map(int[] supersetAssignment, int[] subsetAssignment) throws BNLibInvalidInstantiationException, BNLibIllegalArgumentException {
         if(subsetAssignment.length != this.indexMapping.length)
-            throw new BayesianNetworkRuntimeException("Invalid array for target assignment.");
+            throw new BNLibIllegalArgumentException("Invalid array for target assignment.");
         if(!Toolkit.validateAssignment(this.superset, supersetAssignment))
             throw new BNLibInvalidInstantiationException("Invalid assignment of the superset variables.");
         

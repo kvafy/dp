@@ -11,9 +11,15 @@ import bna.bnlib.Variable;
 import bna.bnlib.learning.*;
 import bna.bnlib.misc.Toolkit;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Enumeration;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -385,6 +391,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
 
         tableAllowedConnections.setModel(new javax.swing.table.DefaultTableModel());
         tableAllowedConnections.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tableAllowedConnections.setColumnSelectionAllowed(true);
         jScrollPane3.setViewportView(tableAllowedConnections);
         ((AllowedConnectionsTable)tableAllowedConnections).initModel();
 
@@ -724,6 +731,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
 
     class StructureLearningThread extends Thread {
         private java.awt.Frame parent;
+
         
         public StructureLearningThread(java.awt.Frame parent) {
             this.parent = parent;
@@ -835,6 +843,66 @@ public class DialogStructureLearning extends javax.swing.JDialog {
                 firstColumnWidth = Math.max (comp.getPreferredSize().width, firstColumnWidth);
             }
             this.getColumnModel().getColumn(0).setPreferredWidth(firstColumnWidth);
+            
+            
+            // on right click show a popup menu to tick/untick all items in a row or column
+            this.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    if(e.getButton() == MouseEvent.BUTTON3)
+                        onRightClickCell(e);
+                }
+            });
+        }
+        
+        private void onRightClickCell(MouseEvent e) {
+            int row = this.rowAtPoint(e.getPoint()),
+                column = this.columnAtPoint(e.getPoint());
+            final int from = row,
+                      to = column - 1;
+            // create popup menu
+            JMenuItem menuDisableRow = new JMenuItem("Disable row");
+            JMenuItem menuEnableRow = new JMenuItem("Enable row");
+            JMenuItem menuDisableColumn = new JMenuItem("Disable column");
+            JMenuItem menuEnableColumn = new JMenuItem("Enable column");
+            menuDisableRow.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) { setRow(from, false); }
+            });
+            menuEnableRow.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) { setRow(from, true); }
+            });
+            menuDisableColumn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) { setColumn(to, false); }
+            });
+            menuEnableColumn.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) { setColumn(to, true); }
+            });
+            JPopupMenu menu = new JPopupMenu("Batch settings");
+            menu.add(menuDisableRow);
+            menu.add(menuEnableRow);
+            menu.add(menuDisableColumn);
+            menu.add(menuEnableColumn);
+            // show menu
+            menu.show(this, e.getPoint().x, e.getPoint().y);
+        }
+        
+        private void setRow(int row, boolean connectionAllowed) {
+            Variable[] variables = dataset.getVariables();
+            int variableCount = variables.length;
+            for(int to = 0 ; to < variableCount ; to++)
+                this.setConnectionAllowed(row, to, connectionAllowed);
+        }
+        
+        private void setColumn(int col, boolean connectionAllowed) {
+            Variable[] variables = dataset.getVariables();
+            int variableCount = variables.length;
+            for(int from = 0 ; from < variableCount ; from++)
+                this.setConnectionAllowed(from, col, connectionAllowed);
+        }
+        
+        private void setConnectionAllowed(int from, int to, boolean allowed) {
+            if(from == to)
+                return;
+            this.getModel().setValueAt(new Boolean(allowed), from, to + 1);
         }
         
         @Override

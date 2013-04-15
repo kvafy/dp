@@ -4,6 +4,7 @@
 
 package bna.bnlib.sampling;
 
+import bna.bnlib.io.ParsedQuery;
 import bna.bnlib.*;
 import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;

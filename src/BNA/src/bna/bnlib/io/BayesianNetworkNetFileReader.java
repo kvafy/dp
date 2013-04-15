@@ -55,9 +55,7 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     }
     
     private void parse() throws BNLibIOException {
-        final String VAR_NAME_REGEXP = "[a-zA-Z0-9_]+",
-                     VAR_VALUE_REGEXP = "\"[-+?*a-zA-Z0-9\\.,_/<>=]+\"",
-                     NUMBER_REGEXP = "[-+0-9\\.e]+"; // must be this way because of the expectInput method
+        final String NUMBER_REGEXP = "[-+0-9\\.e]+"; // must be this way because of the expectInput method
         ParsingContext context = null;
         try {
             context = new ParsingContext(new BufferedInputStream(new FileInputStream(this.filename)));
@@ -73,14 +71,14 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
             while(this.expectInput(context, "node", true)) {
                 String nodeName;
                 ArrayList<String> nodeValues = new ArrayList<String>();
-                this.expectInput(context, VAR_NAME_REGEXP, false);
+                this.expectInput(context, IOConfiguration.VARNAME_REGEX, false);
                 nodeName = context.token;
                 this.expectInput(context, "\\{", false);
                 this.expectInput(context, "states", false);
                 this.expectInput(context, "=", false);
                 //scanner.next("\\(");
                 this.expectInput(context, "[()]*", true);
-                while(this.expectInput(context, VAR_VALUE_REGEXP, true)) {
+                while(this.expectInput(context, "\"" + IOConfiguration.VARVALUE_REGEX + "\"", true)) {
                     String quotedValue = context.token;
                     nodeValues.add(unquote(quotedValue));
                     this.expectInput(context, "[() ]*", true);
@@ -98,12 +96,12 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
             // }
             while(this.expectInput(context, "potential", true)) {
                 this.expectInput(context, "\\(", false);
-                this.expectInput(context, VAR_NAME_REGEXP, false);
+                this.expectInput(context, IOConfiguration.VARNAME_REGEX, false);
                 String var = context.token;
                 ArrayList<String> varParentsList = new ArrayList<String>();
                 if(this.expectInput(context, "\\|", true)) {
                     boolean canFail = false;
-                    while(this.expectInput(context, VAR_NAME_REGEXP, canFail)) {
+                    while(this.expectInput(context, IOConfiguration.VARNAME_REGEX, canFail)) {
                         varParentsList.add(context.token);
                         canFail = true;
                     }
@@ -152,6 +150,9 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
             throw new BNLibIOException(String.format("The following IOException occured: %s", ex.getMessage()));
         }
         catch(BNLibIOException ex) {
+            throw new BNLibIOException(String.format("Line %d: %s", context.line, ex.getMessage()));
+        }
+        catch(BNLibIllegalVariableSpecificicationException ex) {
             throw new BNLibIOException(String.format("Line %d: %s", context.line, ex.getMessage()));
         }
     }
