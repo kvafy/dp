@@ -1635,21 +1635,94 @@ Bayesian score
 
 
 \section{Spam filtering}
-Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam as a stand-alone class of malware has many subtypes distinguished by their content and purpose, for example advertisement or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may even pose a threat for a careless or trustful user.
+Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam, as a stand-alone class of malware, has many subtypes distinguished by their content and purpose, for example advertisement or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may even pose a serious threat to a careless or trustful user.
 
 If not stated otherwise, all technical knowledge regarding data-mining in this section has been drawn from a university course based on~\cite{han_datamining}.
 
-\subsection{General document classification}
-The problem of spam detection falls within general document classification with two classes\,--\,spam or ham (term used for a non-spam email). General classification methods work with data representation in the form of feature vectors which may contain polynomial or continuous values, each carrying information regarding presence of a specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of features and finally creating feature representation of documents. Because document preprocessing and feature extraction is not the subject of this thesis I~will rely on a publicly accessible dataset of spam messages that has already been preprocessed and converted to feature representation.
+\subsection{Overview of document classification}
+The problem of spam detection falls within general document classification with two classes\,--\,spam or ham (term used for a non-spam email). General classification methods work with data representation in the form of feature vectors which may contain polynomial or continuous values, each carrying information regarding presence of a specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of features and finally creating feature representation of documents. Because document preprocessing and feature extraction is not the subject of this thesis I~will rely on a publicly accessible dataset of spam messages that has already been preprocessed and converted to vector feature representation.
+
+According to the papers I have studied, probabilistic approaches to spam filtering are very successful and the Naïve Bayes model is among the most popular spam detector even among commercial solutions~\cite{blanzieri09}. Probabilistic techniques have been applied to the problem of spam detection in many forms: a simple Bayesian framework~\cite{isaac09}, raw Naïve Bayes model~\cite{heckerman98_spam} (with impressive results) or Naïve Bayes with an SVD-like input preprocessing so that the strong independency among features holds true~\cite{renuka11}. In context of Bayesian networks naturally arises the question whether the assumption of independency between feature variables given the class variable in Naïve Bayes model isn't too strong and whether a properly trained Bayesian network can perform better. Goal of this section is simple\,--\,compare the best performance achievable with a Naïve Bayes model and with a~more general Bayesian network.
+
+
+\subsection{Dataset and data preprocessing}
+We will use a standard dataset called \term{Spambase}\footnote{Spambase is a freely spam dataset available at the UCI Machine Learning Repository at \url{http://archive.ics.uci.edu/ml/datasets/Spambase}} which contains 4601 records, each having 57 features and a class label. Other than being used as a benchmark in some spam-related papers, another advantage of Spambase is that the emails have already been preprocessed and converted to vector representation. For this dataset we will explore best performance achievable by a more general Bayesian network and compare it to performance of Naïve Bayes. We will consider Bayesian networks structurally somewhat similar to Naïve Bayes in that regard that the class variable stands above all others, ie. cannot be a~child; feature variables have no restrictions except for maximal number of parents to limit the search space of feasible network structures.
+
+Because this thesis considers strictly discrete Bayesian networks and because the Spambase features are continuous we need to perform some kind of discretization. At first I~experimented with partitioning values of each feature by binning to three bins of equal depth but it turned out that many features are distributed very unevenly and the equal depth condition couldn't be met. So, instead of binning I am using k-means clustering with $k=3$ and transform values of each attribute to the discrete set $\lbrace low, medium, high \rbrace$. As other techniques of spam detection work with the continuous feature representation it is to be expected that the discretization step will reduce accuracy of the classifiers I will use.
 
 
 \subsection{Experiments}
-A handful of successful publicly available implementations of spam filters (eg. \term{SpamBayes}) are based on a simple Naive Bayes model. Other than that, also the pioneering article~\cite{heckerman98_spam}, which I will often refer, demonstrates impressive performance of this simple model. In context of Bayesian networks arises the question whether the assumption of independency between feature variables given the class variable isn't too strong and whether a properly trained Bayesian network can perform better. Goal of this section is simple\,--\,compare the best achievable performance for a Naive Bayes model and for a more general Bayesian network.
+As the Bayesian score for structure learning and the Bayesian estimation for parameter estimation are both parametrized we need to undertake a great number of time costly experiments to find the optimal parameter setting. That is why I will initially use a simple holdout testing with 80:20 split produced by stratified sampling to select the best possible parameter settings. Then, accuracy of these specific settings \todo{will be validated using 5-fold cross-validation, each fold having the same ratio of spam to ham}.
+
+The metric used for evaluating  classification capabilities of our models will be accuracy which is computed from the test set as follows:
+$$accuracy = \frac{\# \text{ of correctly classified samples}}{\# \text{ of all samples}}$$
+In context of spam filtering there is the fact that penalties for false positives and false negatives are asymmetric because placing a ham email to the spam folder (or even automatically deleting) is considered very undesirable. Therefore metrics such as precision, recall or their combination is often used. To ensure higher precision, and thereby to reduce the amount of false positives, a~threshold $\tau$ is employed. Semantics of the threshold $\tau$ is that an email is classified as ham unless our model predicts $P(Spam = true \mid email) \geq \tau$.
+A study~\cite{androutsopoulos00_spam} inspecting the impact of selection of $\tau$ on the overall performance suggests that $\tau$ merely regulates the trade-off between precision and recall and that accuracy can be used as a~metric just as correctly. That is why I use accuracy as the metric and set $\tau = 0.5$.
 
 \medskip
+Crucial step in answering the question whether a general Bayesian network can beat the Naïve Bayes model is to explore the space of possible parameter settings of parameter learning and of structure learning. Let $\alpha_S$ denote equivalent sample size used for structure learning using the Bayesian score and let $\alpha_P$ denote equivalent sample size used for parameter learning using the Bayesian estimation. I have manually inspected all combinations of $\alpha_S \in \lbrace 1, 2, 5, 7.5, 10, 12.5, 15, 20, 30\rbrace$ and $\alpha_P \in \lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$; unparameterized methods (maximum likelihood estimation for parameters and the BIC score for structure) were also considered but outperformed in each case. Result of these experiments shows the Figure~\ref{fig:spam-holdout-whole-space}. As we can see, the best performance was achieved around the point ($\alpha_S, \alpha_P) = (10, 12.5)$, so this point and its close neighborhood will together with the Naïve Bayes model be subjects to thorough 5-fold cross-validation tests.
 
-For a given set of training e-mails, we need to preprocess the data and extract relevant features (keywords, sender domain, font color, numbers and currency symbols etc.) to form a feature vector. Some of the features may be hand-crafted, other might be automatically selected, for example by the highest mutual information between a feature $X_i$ and the class variable~$C$. Then we may learn (1) a Naïve Bayesian model, (2) an extension of the naive model which also allows for a limited degree of dependencies between features. Finally, we can analyze the increase in accuracy (if any) of the more complex and more expressive model.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-2.2cm}
+        \includegraphics[scale=0.75]{fig/spam-holdout-whole-space-3d}
+    \end{subfigure}
+    \qquad
+    \begin{subfigure}[b]{0.45\linewidth}
+        \hspace{-1cm}
+        \includegraphics[scale=0.75]{fig/spam-holdout-whole-space-map}
+    \end{subfigure}
+    \caption{Accuracy of a Bayesian network model trained with different values of equivalent sample size $\alpha_S$ for structure learning (with Bayesian score) and for different values of $\alpha_P$ for parameter estimation (with Bayesian estimation).}
+    \label{fig:spam-holdout-whole-space}
+\end{figure}
 
+\begin{comment}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=1]{fig/spam-holdout-best}
+    \caption{Best accuracy achieved with Naïve Bayes model and with more general Bayesian networks learnt using different structure scores\,--\,BIC score and Bayesian score with different equivalent sample sizes. CPDs of each model have been computed using Bayesian estimation with equivalent sample size from the set $\lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$ and the best accuracy was chosen.}
+    \label{fig:spam-holdout-testing}
+\end{figure}
+\end{comment}
+
+Results of the 5-fold cross-validation are the following. Naïve Bayes model (parameters estimated via MLE) has the average accuracy 85.4\,\% which is by 3.6\,\% less than was reported for the Spambase dataset and Naïve Bayes in~\cite{renuka11} (reported 89\,\%). I believe this drop in accuracy is caused by discretization of the input dataset and, in fact, it is almost surprising that the loss of variance isn't greater. The more general Bayesian network model has the average accuracy \todo{$z$}\,\% with \todo{$(\alpha_S, \alpha_P) = (x,x)$}.
+
+
+
+\todo{oargumentovat proc ma muj bayes mensi accuracy (diky diskretizaci) a to i pres uziti Bayesian estimation misto klasickeho MLE}
+
+\todo{ty 3 procenta zlepseni jsou vyznamna protoze v tom pejpru renuka11 to tak rikaji taky}
+
+\todo{performance drops (for Naïve Bayes as well as for Bayesian network) when spam-to-ham ratio isn't fixed, why?}
+
+
+
+\subsection{Conclusion}
+
+
+
+\bigskip
+My notes:
+\begin{itemize}
+    \item My Naïve Bayes has even with the best possible Bayesian parameter estimation (not MLE) about 3\,\% lower accuracy than the one presumably using continuous values~\cite{renuka11}. On the other hand discretization could have discarded the much more information.
+    \item Try naive, try naive with dependencies among non-label variables (disallow spam to be a child), totally unrestricted network
+    \item My thought: BNs are ideal because new features can be added and even if an e-mail has some unknowns, inference can be carried out.
+    \item Dataset doesn't contain the best features (some of them are isolated variables in a learnt structure suggesting they are not significantly correlated with spam variable nor any other).
+\end{itemize}
+
+
+\bigskip
+
+\todo{
+Bayesian network is better for large datasets because the BIC or Bayesian score naturally adjusts the bias-variance trade-off wrt. size of the dataset.
+
+renuka11 uses UCI dataset and Naïve Bayes but, it seems, continuous attributes (and gets 89\,\% accuracy). Also introduces a FBL algorithm which is Naïve Bayes with preprocessed input to reduce dependencies (something like SVD). Best difference between their three methods is 3\,\%, so pretty small and my result is also significant (but I don't use 10-fold cross-validation).
+}
+
+
+
+\bigskip
 The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}:
 \begin{itemize}
     \item Indicators of spam: words (money, free, earn, 100\,\%, only), currency symbols, numbers, run-length of capital letters, send time, resolution of the source IP etc.~\cite{heckerman98_spam}
@@ -1667,18 +1740,8 @@ Various thresholds are studied after Heckerman in~\cite{androutsopoulos00_spam}:
 \end{itemize}
 
 
-My notes:
-\begin{itemize}
-    \item Data representation: vector space model (each dimension represents a word), we need to discretize the data (equi-depth binning  didn't work, used k-means instead with $k=3$)
-    \item split 80:20 train:test (3681:920), stratified sampling (with RapidMiner)
-    \item Try naive, try naive with dependencies among non-label variables (disallow spam to be a child), totally unrestricted network
-    \item My thought: BNs are ideal because new features can be added and even if an e-mail has some unknowns, inference can be carried out.
-    \item \todo{Find the biggest dataset possible.}
-    \item Use an already pre-processed dataset as the preprocessing textual documents for datamining isn't concern of this thesis.
-    \item Discretization: wanted equi-depth binning but turned out some attributes are very unevenly distributed, so two bins were often the same. Used k-means clustering ($k=3$) instead.
-    \item Dataset doesn't contain the best features (some of them are isolated variables in a learnt structure suggesting they are not significantly correlated with spam variable nor any other).
-    \item Dataset \uv{Spambase} from UCI Machine Learning Repository \url{http://archive.ics.uci.edu/ml/datasets/Spambase}.
-\end{itemize}
+\ignore{
+\bigskip
 
 Best performance of Naive Bayes:
 \begin{itemize}
@@ -1711,10 +1774,22 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
     \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.891, 0.879, 0.840), (1, 0.891, 0.877, 0.843), (1.5, 0.891, 0.877, 0.843), (2, 0.887, 0.875, 0.832), (3, 0.895, 0.882, 0.846), (5, 0.895, 0.882, 0.846), (7.5, 0.889, 0.876, 0.837), (10, 0.890, 0.879, 0.837), (20, 0.881, 0.871, 0.818), (30, 0.884, 0.874, 0.824), (40, 0.887, 0.878, 0.829), (50, 0.883, 0.870, 0.826), (60, 0.886, 0.873, 0.832)
 \end{itemize}
 
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=7.5$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.875, 0.885, 0.785)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.896, 0.889, 0.840), (1, 0.895, 0.889, 0.837), (1.5, 0.897, 0.890, 0.843), (2, 0.893, 0.891, 0.829), (3, 0.896, 0.889, 0.840), (5, 0.895, 0.891, 0.835), (10, 0.897, 0.892, 0.840), (20, 0.893, 0.886, 0.835), (30, 0.886, 0.882, 0.821), (40, 0.888, 0.880, 0.829), (50, 0.888, 0.880, 0.829), (60, 0.886, 0.879, 0.824)
+\end{itemize}
+
 Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=10$:
 \begin{itemize}
     \item MLE(accuracy, precision, recall): (0.875, 0.876, 0.796)
     \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.896, 0.880, 0.851), (1, 0.898, 0.885, 0.851), (1.5, 0.896, 0.878, 0.854), (2, 0.897, 0.883, 0.851), (3, 0.896, 0.883, 0.848), (5, 0.895, 0.884, 0.843), (10, 0.897, 0.887, 0.846), (20, 0.897, 0.887, 0.846), (30, 0.896, 0.885, 0.846), (40, 0.891, 0.879, 0.840), (50, 0.897, 0.890, 0.843), (60, 0.894, 0.886, 0.837)
+\end{itemize}
+
+Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=15$:
+\begin{itemize}
+    \item MLE(accuracy, precision, recall): (0.882, 0.885, 0.804)
+    \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0.897, 0.887, 0.846), (1, 0.898, 0.890, 0.846), (1.5, 0.898, 0.890, 0.846), (2, 0.898, 0.890, 0.846), (3, 0.897, 0.890, 0.843), (5, 0.898, 0.890, 0.846), (10, 0.896, 0.889, 0.840), (20, 0.896, 0.889, 0.840), (30, 0.895, 0.889, 0.837), (40, 0.891, 0.886, 0.832), (50, 0.894, 0.886, 0.837), (60, 0.891, 0.883, 0.835)
 \end{itemize}
 
 Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $\alpha=20$:
@@ -1734,6 +1809,7 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
     \item MLE(accuracy, precision, recall): (0., 0., 0.)
     \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0., 0., 0.), (1, 0., 0., 0.), (1.5, 0., 0., 0.), (2, 0., 0., 0.), (3, 0., 0., 0.), (5, 0., 0., 0.), (10, 0., 0., 0.), (20, 0., 0., 0.), (30, 0., 0., 0.), (40, 0., 0., 0.), (50, 0., 0., 0.), (60, 0., 0., 0.)
 \end{itemize}
+}
 
 Parameters of structure learning: 200 runs, 3\,000 iterations per run, 60 random restart steps, 0.15 relative size of tabu-list.
 
