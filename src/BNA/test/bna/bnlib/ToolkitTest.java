@@ -70,7 +70,7 @@ public class ToolkitTest {
      * Test of cardinality method, of class Toolkit.
      */
     @Test
-    public void testCardinality() throws BayesianNetworkException {
+    public void testCardinality() {
         System.out.println("cardinality");
         String[] values = {"low", "medium", "high"};
         Variable[] X = {new Variable("A", values),
@@ -85,7 +85,7 @@ public class ToolkitTest {
      * Test of validateAssignment method, of class Toolkit.
      */
     @Test
-    public void testValidateAssignment_OK() throws BayesianNetworkException {
+    public void testValidateAssignment_OK() {
         System.out.println("validateAssignment");
         String[] values2 = {"false", "true"},
                  values3 = {"low", "medium", "high"};
@@ -101,8 +101,8 @@ public class ToolkitTest {
     /**
      * Test of cardinality method, of class Toolkit.
      */
-    @Test(expected=BayesianNetworkRuntimeException.class)
-    public void testValidateAssignment_fail1() throws BayesianNetworkException {
+    @Test(expected=BNLibInvalidInstantiationException.class)
+    public void testValidateAssignment_fail1() {
         System.out.println("validateAssignment");
         String[] values2 = {"false", "true"},
                  values3 = {"low", "medium", "high"};
@@ -113,14 +113,14 @@ public class ToolkitTest {
         Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
         int[] invalidAssignment = {2, 2};
         fBinTern.getProbability(invalidAssignment);
-        fail();
+        //fail();
     }
     
     /**
      * Test of cardinality method, of class Toolkit.
      */
-    @Test(expected=BayesianNetworkRuntimeException.class)
-    public void testValidateAssignment_fail2() throws BayesianNetworkException {
+    @Test(expected=BNLibInvalidInstantiationException.class)
+    public void testValidateAssignment_fail2() {
         System.out.println("validateAssignment");
         String[] values2 = {"false", "true"},
                  values3 = {"low", "medium", "high"};
@@ -131,14 +131,14 @@ public class ToolkitTest {
         Factor fBinTern = new Factor(new Variable[]{binaryVar, ternaryVar}, values);
         int[] invalidAssignment = {1, 3};
         fBinTern.getProbability(invalidAssignment);
-        fail();
+        //fail();
     }
     
     /**
      * Test of cardinality method, of class Toolkit.
      */
-    @Test(expected=BayesianNetworkRuntimeException.class)
-    public void testValidateAssignment_fail3() throws BayesianNetworkException {
+    @Test(expected=BNLibInvalidInstantiationException.class)
+    public void testValidateAssignment_fail3() {
         System.out.println("validateAssignment");
         String[] values2 = {"false", "true"},
                  values3 = {"low", "medium", "high"};

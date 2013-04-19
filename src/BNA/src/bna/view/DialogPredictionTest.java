@@ -22,7 +22,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class DialogPredictionTest extends javax.swing.JDialog {
     /** How many samples are generated used in stochastic inference to make a prediction. */
-    public static final long SAMPLES_PER_PREDICTION = 1000;
+    public static final long SAMPLES_PER_PREDICTION = 5000;
     
     private BayesianNetwork bn;
     private Dataset dataset;

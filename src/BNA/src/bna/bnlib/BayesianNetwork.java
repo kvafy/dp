@@ -207,7 +207,7 @@ public class BayesianNetwork {
         return reader.load();
     }
     
-    public Variable getVariable(String variableName) {
+    public Variable getVariable(String variableName) throws BNLibNonexistentVariableException {
         return this.getNode(variableName).getVariable();
     }
     

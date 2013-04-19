@@ -15,7 +15,15 @@ public class VariableSubsetMapper {
     private int[] indexMapping;   // subset -> index in superset
     private int[][] valueMapping; // supersetIntValue -> subsetIntValue
     
-    public VariableSubsetMapper(Variable[] superset, Variable[] subset)  {
+    
+    /**
+     * Creates new mapper to map an assignment of superset variables to an assignment
+     * of subset variables.
+     * @throws BNLibIllegalArgumentException When variables of the first array
+     *         aren't a superset of the variables of the second argument or
+     *         when the variables don't have the exact same set of possible assingments.
+     */
+    public VariableSubsetMapper(Variable[] superset, Variable[] subset) throws BNLibIllegalArgumentException {
         if(!Toolkit.isSubset(superset, subset))
             throw new BNLibIllegalArgumentException("Second array isn't a subset of the first one.");
         this.superset = superset;
@@ -39,11 +47,30 @@ public class VariableSubsetMapper {
         }
     }
     
+    /**
+     * Map an assignment of the superset variables of this mapper to an assignment
+     * to the subset variables of this mapper.
+     * @throws BNLibInvalidInstantiationException When the first argument isn't
+     *         an instantiation of the superset variables of this mapper.
+     */
     public int[] map(int[] supersetAssignment) {
         int[] subsetAssignment = new int[indexMapping.length];
         return this.map(supersetAssignment, subsetAssignment);
     }
     
+    /**
+     * Map an assignment of the superset variables of this mapper to an assignment
+     * to the subset variables of this mapper.
+     * For the subset assignment is used the passed array.
+     * @param supersetAssignment
+     * @param subsetAssignment
+     * @return
+     * @throws BNLibInvalidInstantiationException When the first argument isn't
+     *         an instantiation of the superset variables of this mapper.
+     * @throws BNLibIllegalArgumentException When the second argument is not
+     *         exactly of the size needed for holding an assignment of the
+     *         subset variables of this mapper.
+     */
     public int[] map(int[] supersetAssignment, int[] subsetAssignment) throws BNLibInvalidInstantiationException, BNLibIllegalArgumentException {
         if(subsetAssignment.length != this.indexMapping.length)
             throw new BNLibIllegalArgumentException("Invalid array for target assignment.");

@@ -70,11 +70,15 @@ public class Dataset implements DatasetInterface {
         return Collections.unmodifiableList(this.records);
     }
     
-    /** Add new record to the dataset. */
+    /**
+     * Add new record to the dataset.
+     * @throws BNLibIllegalArgumentException When the given record cannot be an
+     *         assignment of the variables in this dataset.
+     */
     @Override
-    public void addRecord(int[] record) {
+    public void addRecord(int[] record) throws BNLibIllegalArgumentException {
         if(!Toolkit.validateAssignment(this.variables, record))
-            throw new BayesianNetworkRuntimeException("Record of invalid lenght.");
+            throw new BNLibIllegalArgumentException("Record of invalid lenght or with invalid values.");
         this.records.add(Arrays.copyOf(record, record.length));
     }
     
@@ -91,14 +95,18 @@ public class Dataset implements DatasetInterface {
         return counter.toFactor();
     }
     
-    /** Compute mutual information between two sets of variables. */
+    /**
+     * Compute mutual information between two sets of variables.
+     * @throws BNLibIllegalArgumentException When the two sets aren't disjoint
+     *         or containt a variable not present in the dataset.
+     */
     @Override
-    public double mutualInformation(Variable[] set1, Variable[] set2) {
+    public double mutualInformation(Variable[] set1, Variable[] set2) throws BNLibIllegalArgumentException {
         if(!Toolkit.areDisjoint(set1, set2))
-            throw new BayesianNetworkRuntimeException("Sets to compute mutual information for are not disjoint.");
+            throw new BNLibIllegalArgumentException("Sets to compute mutual information for are not disjoint.");
         Variable[] union = Toolkit.union(set1, set2);
         if(!Toolkit.isSubset(this.variables, union))
-            throw new BayesianNetworkRuntimeException("Sets contain variables not present in the dataset.");
+            throw new BNLibIllegalArgumentException("Sets contain variables not present in the dataset.");
         
         if(set1.length == 0 || set2.length == 0)
             return 0.0;

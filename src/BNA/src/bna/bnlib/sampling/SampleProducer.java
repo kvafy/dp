@@ -32,13 +32,25 @@ public abstract class SampleProducer {
                                        // and (2) the sampling order of these variables
     protected VariableSubsetMapper sampledVarsToXYVarsMapper; // mapping of sampledVars assignment to XYVars
     
-    public SampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
+    
+    /**
+     * Create a sample producer for the query P(X | Y, E = e).
+     * The X,Y,E,e arguments may not be null (use an 0-length array). The X argument
+     * must contain at least one variable. X, Y and E have to be disjoint and
+     * all have to be variables contained in the given network.
+     * @throws BNLibIllegalArgumentException When conditions of valid query aren't met.
+     */
+    public SampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) throws BNLibIllegalArgumentException {
+        if(X == null || Y == null || E == null || e == null)
+            throw new BNLibIllegalArgumentException("None of the arrays can be null.");
+        if(X.length == 0)
+            throw new BNLibIllegalArgumentException("The X array must be non-empty.");
         Variable[] allVars = bn.getVariables();
         Variable[] XY = Toolkit.union(X, Y);
         // validate inputs
         if(!Toolkit.areDisjoint(X, Y) || !Toolkit.areDisjoint(XY, E)
                 || !Toolkit.isSubset(allVars, XY) || !Toolkit.isSubset(allVars, E))
-            throw new BayesianNetworkRuntimeException("Invalid variables specified.");
+            throw new BNLibIllegalArgumentException("Invalid variables specified.");
         
         this.bn = bn;
         this.XVars = X;

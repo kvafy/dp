@@ -77,7 +77,13 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
         this.deltaFamilyScoreCache.put(action, value);
     }
     
-    private double computeDeltaFamilyScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
+    /**
+     * Determines the delta family score if given action is applied.
+     * @throws BNLibIllegalStructuralModificationException If the structural modification
+     *         is invalid.
+     * @throws BNLibIllegalArgumentException If the action is unknown.
+     */
+    private double computeDeltaFamilyScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException, BNLibIllegalArgumentException {
         double scoreOld, scoreNew;
         if(action instanceof AlterationActionAddEdge || action instanceof AlterationActionRemoveEdge) {
             Variable childVar = action.getChildVariable();
@@ -98,7 +104,7 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
             action.undo(bn);
         }
         else
-            throw new BayesianNetworkRuntimeException("Unknown action type.");
+            throw new BNLibIllegalArgumentException("Unknown action type.");
         
         return scoreNew - scoreOld;
     }
@@ -121,6 +127,7 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
      * computed using Parents(X) or Parents(Y) is no longer valid.
      * Cached value of add/remove (X,Y) is invalid if Parents(Y) changed.
      * Cached value of reverse (X,Y) is invalid if Parents(X) or Parents(Y) changed.
+     * @throws BNLibIllegalArgumentException When the action is of unknown type.
      */
     public final void notifyNetworkAlteration(AlterationAction actionTaken) {
         // by taking the given action, whose parents have changed?
@@ -133,7 +140,7 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
             variablesWithNewParents.add(actionTaken.getParentVariable());
         }
         else
-            throw new BayesianNetworkRuntimeException("Unknown action type.");
+            throw new BNLibIllegalArgumentException("Unknown action type.");
         
         // determine what cached mutual information changes are invalidated by the action
         Set<AlterationAction> cachedActions = this.deltaFamilyScoreCache.keySet();
@@ -151,7 +158,7 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
                     cachedActionsIterator.remove();
             }
             else
-                throw new BayesianNetworkRuntimeException("Unknown action type.");
+                throw new BNLibIllegalArgumentException("Unknown action type.");
         }
     }
     

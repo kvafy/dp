@@ -22,7 +22,7 @@ public class ParameterLearnerTest {
     private int[] recordHeads, recordTails;
     
     
-    public ParameterLearnerTest() throws BayesianNetworkException {
+    public ParameterLearnerTest() {
         this.coinVar = new Variable("COIN", new String[]{"heads", "tails"});
         this.recordHeads = new int[]{0};
         this.recordTails = new int[]{1};

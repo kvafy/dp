@@ -183,92 +183,87 @@ public class BNA {
         
         /* testing */
         String networkName, networkFile;
-        try {
-            BayesianNetwork bn;
-            Variable[] X;
-            Variable[] Y;
-            Variable[] E;
-            int[] e;
-            
-            // load the network according to configuration
-            switch(networkVariant) {
-                case SprinklerNet:
-                    networkFile = "../../networks/sprinkler.net";
-                    networkName = "sprinkler_net";
-                    bn = BayesianNetwork.loadFromFile(networkFile);
-                    // P(Rain | WetGrass = true)
-                    X = new Variable[] {bn.getVariable("RAIN")};
-                    Y = new Variable[] {};
-                    E = new Variable[] {bn.getVariable("WETGRASS")};
-                    e = new int[] {1};
-                    break;
-                    
-                case ICUNet:
-                    networkFile = "../../networks/alarm.net";
-                    networkName = "icu_net";
-                    bn = BayesianNetwork.loadFromFile(networkFile);
-                    // P(PVSAT | ECO2, SAO2 = HIGH)
-                    //  - PVSAT ~ PVS   ( "LOW" "NORMAL" "HIGH" )
-                    //  - EXPCO2 ~ ECO2 ( "ZERO" "LOW" "NORMAL" "HIGH" )
-                    //  - SAO2          ( "LOW" "NORMAL" "HIGH" )
-                    X = new Variable[] {bn.getVariable("PVSAT")};
-                    Y = new Variable[] {bn.getVariable("EXPCO2")};
-                    E = new Variable[] {bn.getVariable("SAO2")};
-                    e = new int[] {2};
-                    break;
-                default:
-                    throw new RuntimeException("unsupported network variant for benchmark");
-            }
-            
-            // sampling type
-            SampleProducer sampleProducer;
-            String samplingVariantName;
-            switch(samplingVariant) {
-                case WeightedSampling:
-                    sampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
-                    samplingVariantName = "weighted_sampling";
-                    break;
-                case MCMCSampling:
-                    sampleProducer = new MCMCSampleProducer(bn, X, Y, E, e);
-                    samplingVariantName = "mcmc_sampling";
-                    break;
-                default:
-                    throw new RuntimeException("unsupported sampling variant for benchmark");
-            }
-            
-            System.out.println(String.format("test for \"%s\" on network \"%s\":", samplingVariantName, networkName));
-            int samplesPerSecondSingleThread = 0;
-            for(int threadcount : THREAD_COUNTS) {
-                LinkedList<Double> runningTimes = new LinkedList<Double>();
-                System.out.print(String.format("- run times for %d thread(s):", threadcount));
-                while(runningTimes.size() < RUNS_COUNT) {
-                    long timeStart, timeEnd;
-                    SamplerInterface sampler;
-                    sampler = new QuerySamplerMultithreaded(sampleProducer, threadcount); // also for a single thread
-                    SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT / threadcount);
-                    timeStart = System.currentTimeMillis();
-                    sampler.sample(weightedSamplingController);
-                    timeEnd = System.currentTimeMillis();
-                    // statistics
-                    runningTimes.add((timeEnd - timeStart) / 1000.0);
-                    System.out.print(String.format(" %.3f", runningTimes.getLast()));
-                }
-                long samplesPerRun = SAMPLES_COUNT;
-                //double timePerRun = computeMedian(runningTimes);
-                double timePerRun = computeTrimmedMean(runningTimes, TRIMM_COUNT);
-                int samplesPerSecond = (int)(samplesPerRun / timePerRun);
-                if(threadcount == 1) {
-                    // new referential value for speedup computation
-                    samplesPerSecondSingleThread = samplesPerSecond;
-                }
-                System.out.println("");
-                System.out.println(String.format(
-                        "- %d thread(s): %d samples/second (%.2f speedup)",
-                        threadcount, samplesPerSecond, ((double)samplesPerSecond) / samplesPerSecondSingleThread));
-            }
+        BayesianNetwork bn;
+        Variable[] X;
+        Variable[] Y;
+        Variable[] E;
+        int[] e;
+
+        // load the network according to configuration
+        switch(networkVariant) {
+            case SprinklerNet:
+                networkFile = "../../networks/sprinkler.net";
+                networkName = "sprinkler_net";
+                bn = BayesianNetwork.loadFromFile(networkFile);
+                // P(Rain | WetGrass = true)
+                X = new Variable[] {bn.getVariable("RAIN")};
+                Y = new Variable[] {};
+                E = new Variable[] {bn.getVariable("WETGRASS")};
+                e = new int[] {1};
+                break;
+
+            case ICUNet:
+                networkFile = "../../networks/alarm.net";
+                networkName = "icu_net";
+                bn = BayesianNetwork.loadFromFile(networkFile);
+                // P(PVSAT | ECO2, SAO2 = HIGH)
+                //  - PVSAT ~ PVS   ( "LOW" "NORMAL" "HIGH" )
+                //  - EXPCO2 ~ ECO2 ( "ZERO" "LOW" "NORMAL" "HIGH" )
+                //  - SAO2          ( "LOW" "NORMAL" "HIGH" )
+                X = new Variable[] {bn.getVariable("PVSAT")};
+                Y = new Variable[] {bn.getVariable("EXPCO2")};
+                E = new Variable[] {bn.getVariable("SAO2")};
+                e = new int[] {2};
+                break;
+            default:
+                throw new RuntimeException("unsupported network variant for benchmark");
         }
-        catch(BayesianNetworkRuntimeException bnex) {
-            bnex.printStackTrace();
+
+        // sampling type
+        SampleProducer sampleProducer;
+        String samplingVariantName;
+        switch(samplingVariant) {
+            case WeightedSampling:
+                sampleProducer = new WeightedSampleProducer(bn, X, Y, E, e);
+                samplingVariantName = "weighted_sampling";
+                break;
+            case MCMCSampling:
+                sampleProducer = new MCMCSampleProducer(bn, X, Y, E, e);
+                samplingVariantName = "mcmc_sampling";
+                break;
+            default:
+                throw new RuntimeException("unsupported sampling variant for benchmark");
+        }
+
+        System.out.println(String.format("test for \"%s\" on network \"%s\":", samplingVariantName, networkName));
+        int samplesPerSecondSingleThread = 0;
+        for(int threadcount : THREAD_COUNTS) {
+            LinkedList<Double> runningTimes = new LinkedList<Double>();
+            System.out.print(String.format("- run times for %d thread(s):", threadcount));
+            while(runningTimes.size() < RUNS_COUNT) {
+                long timeStart, timeEnd;
+                SamplerInterface sampler;
+                sampler = new QuerySamplerMultithreaded(sampleProducer, threadcount); // also for a single thread
+                SamplingController weightedSamplingController = new SamplingController(SAMPLES_COUNT / threadcount);
+                timeStart = System.currentTimeMillis();
+                sampler.sample(weightedSamplingController);
+                timeEnd = System.currentTimeMillis();
+                // statistics
+                runningTimes.add((timeEnd - timeStart) / 1000.0);
+                System.out.print(String.format(" %.3f", runningTimes.getLast()));
+            }
+            long samplesPerRun = SAMPLES_COUNT;
+            //double timePerRun = computeMedian(runningTimes);
+            double timePerRun = computeTrimmedMean(runningTimes, TRIMM_COUNT);
+            int samplesPerSecond = (int)(samplesPerRun / timePerRun);
+            if(threadcount == 1) {
+                // new referential value for speedup computation
+                samplesPerSecondSingleThread = samplesPerSecond;
+            }
+            System.out.println("");
+            System.out.println(String.format(
+                    "- %d thread(s): %d samples/second (%.2f speedup)",
+                    threadcount, samplesPerSecond, ((double)samplesPerSecond) / samplesPerSecondSingleThread));
         }
     }
     

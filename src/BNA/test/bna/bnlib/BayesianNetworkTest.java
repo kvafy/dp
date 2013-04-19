@@ -33,7 +33,7 @@ public class BayesianNetworkTest {
     /**
      * Test of loadFromFile method, of class BayesianNetwork.
      */
-    @Test(expected=BayesianNetworkException.class)
+    @Test(expected=BNLibIOException.class)
     public void testLoadFromFile_NotDAG() throws Exception {
         System.out.println("loadFromFile - not a DAG");
         String filename = CYCLIC_NET_PATH;
@@ -59,16 +59,11 @@ public class BayesianNetworkTest {
     /**
      * Test of getVariable method, of class BayesianNetwork.
      */
-    @Test(expected=BayesianNetworkRuntimeException.class)
+    @Test(expected=BNLibNonexistentVariableException.class)
     public void testGetVariable_Fail() {
         System.out.println("getVariable - non-existing variable");
         BayesianNetwork bn = null;
-        try {
-            bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
-        }
-        catch(Exception bnex) {
-            fail("Sprinkler net threw an exception.");
-        }
+        bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         bn.getVariable("cloudy");
     }
 
@@ -91,16 +86,11 @@ public class BayesianNetworkTest {
     /**
      * Test of getNode method, of class BayesianNetwork.
      */
-    @Test(expected=BayesianNetworkRuntimeException.class)
+    @Test(expected=BNLibNonexistentVariableException.class)
     public void testGetNode_Fail() {
         System.out.println("getNode - non-existing variable");
         BayesianNetwork bn = null;
-        try {
-            bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
-        }
-        catch(Exception bnex) {
-            fail("Sprinkler net threw an exception.");
-        }
+        bn = BayesianNetwork.loadFromFile(SPRINKLER_NET_PATH);
         bn.getNode("cloudy");
     }
 

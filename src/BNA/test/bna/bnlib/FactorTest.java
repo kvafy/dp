@@ -21,7 +21,7 @@ public class FactorTest {
     private final double DOUBLE_EPS = 1e-5;
     
     
-    public FactorTest() throws BayesianNetworkException {
+    public FactorTest() {
         String[] cloudyVariableValues = {"low", "medium", "high"};
         this.cloudyVariable = new Variable("Cloudy", cloudyVariableValues);
         
@@ -45,7 +45,7 @@ public class FactorTest {
     public static void tearDownClass() throws Exception {
     }
     
-    @Test(expected=BayesianNetworkRuntimeException.class)
+    @Test(expected=BNLibIllegalArgumentException.class)
     public void testInconsistentCreation() {
         System.out.println("inconsistent creation (short CPT)");
         Variable[] rainGivenCloudyFactorScope = {this.rainVariable, this.cloudyVariable};
@@ -95,7 +95,7 @@ public class FactorTest {
      * Test of marginalize method, of class Factor.
      */
     @Test
-    public void testMarginalize() throws BayesianNetworkException {
+    public void testMarginalize() {
         System.out.println("marginalize");
         // marginalize P(RAIN | CLOUDY) over RAIN => every entry should be one
         Factor marginalizedByRain = this.rainGivenCloudyFactor.marginalize(new Variable[]{this.rainVariable});
@@ -157,7 +157,7 @@ public class FactorTest {
      * Test of normalizeByFirstNVariables method, of class Factor.
      */
     @Test
-    public void testNormalizeByFirstNVariables() throws BayesianNetworkException {
+    public void testNormalizeByFirstNVariables() {
         System.out.println("normalizeByFirstNVariables");
         // normalization of the P(RAIN | CLOUDY) factor by the RAIN variable should't change anything
         Factor normalized = this.rainGivenCloudyFactor.normalizeByFirstNVariables(1);
@@ -196,7 +196,7 @@ public class FactorTest {
      * Test of sumFactors method, of class Factor.
      */
     @Test
-    public void testSumFactors() throws BayesianNetworkException {
+    public void testSumFactors() {
         System.out.println("sumFactors");
         // test adding two factors with different order of variables in their scopes
         Variable var2 = new Variable("V2", new String[] {"k", "l"}),

@@ -21,13 +21,27 @@ public class Factor implements Iterable<int[]> {
     private AssignmentIndexMapper mapper;
     
     
-    public Factor(Variable[] scope, double[] values) {
+    /**
+     * Create a new factor with given scope and values.
+     * The values are interpreted in the following way: Initially all variables
+     * are assigned their first possible value which corresponds to value
+     * values[0] of this factor. Then the leftmost variable increments its assignment,
+     * possibly overflowing wich results in the next variable incrementing its
+     * value etc.; the new assignment corresponds with values[1] etc.
+     * @param scope
+     * @param values
+     * @throws BNLibIllegalArgumentException When scope or values argument is
+     *         invalid.
+     */
+    public Factor(Variable[] scope, double[] values) throws BNLibIllegalArgumentException {
+        if(scope == null || scope.length == 0)
+            throw new BNLibIllegalArgumentException("Scope cannot null nor empty");
         this.scope = Arrays.copyOf(scope, scope.length);
         this.values = Arrays.copyOf(values, values.length);
         this.mapper = new AssignmentIndexMapper(scope);
         
         if(!this.hasValidCardinality())
-            throw new BayesianNetworkRuntimeException("Invalid values length wrt scope.");
+            throw new BNLibIllegalArgumentException("Invalid values length wrt scope.");
     }
     
     public Factor(Variable[] scope, double valueOfEachEntry) {
@@ -111,17 +125,22 @@ public class Factor implements Iterable<int[]> {
         return this.values.length == cardinalityByScope;
     }
     
-    public static Factor sumFactors(Factor[] factors) {
+    /**
+     * Sums set of factor which all have exactly the same scope.
+     * @throws BNLibIllegalArgumentException When the factors cannot be summed
+     *         (the array is empty or the factors don't have the same set of variables).
+     */
+    public static Factor sumFactors(Factor[] factors) throws BNLibIllegalArgumentException {
         if(factors == null || factors.length == 0)
-            throw new BayesianNetworkRuntimeException("The factors array must be non-empty.");
+            throw new BNLibIllegalArgumentException("The factors array must be non-empty.");
         for(int i = 1 ; i < factors.length ; i++)
             if(!Toolkit.areEqual(factors[0].getScope(), factors[i].getScope()))
-                throw new BayesianNetworkRuntimeException("All factors need to have the same variables in their scope.");
+                throw new BNLibIllegalArgumentException("All factors need to have the same variables in their scope.");
         
         Variable[] sumScope = factors[0].getScope();
         double[] sumValues = new double[factors[0].getCardinality()];
         AssignmentIndexMapper sumIndexMapper = new AssignmentIndexMapper(sumScope);
-        VariableSubsetMapper mappers[] = new VariableSubsetMapper[factors.length];
+        VariableSubsetMapper mappers[] = new VariableSubsetMapper[factors.length]; // throws BNLibIllegalArgumentException
         for(int i = 0 ; i < mappers.length ; i++)
             mappers[i] = new VariableSubsetMapper(sumScope, factors[i].getScope());
         for(int[] assignment : factors[0]) {

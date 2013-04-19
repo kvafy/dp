@@ -57,12 +57,12 @@ public class DialogDatasetIO extends javax.swing.JDialog {
     private void setCustomizeByAction() {
         switch(this.action) {
             case DialogDatasetIO.ACTION_LOAD:
-                this.buttonConfirm.setText("Load");
+                this.buttonConfirm.setText("Import");
                 this.labelPath.setText("Input CSV file");
                 this.setTitle("Import dataset from a CSV file");
                 break;
             case DialogDatasetIO.ACTION_SAVE:
-                this.buttonConfirm.setText("Save");
+                this.buttonConfirm.setText("Export");
                 this.labelPath.setText("Output CSV file");
                 this.setTitle("Export dataset to a CSV file");
                 break;
@@ -152,7 +152,7 @@ public class DialogDatasetIO extends javax.swing.JDialog {
             }
         });
 
-        buttonConfirm.setText("Load");
+        buttonConfirm.setText("Export");
         buttonConfirm.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 buttonConfirmActionPerformed(evt);

@@ -72,17 +72,17 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                 iteration++;
             }
         }
-        catch(BayesianNetworkException bnex) {
+        catch(BNLibIllegalStructuralModificationException bnex) {
             // network is somehow inconsistent (bestAlteration.apply threw this exception
             // meaning that the nodes, whose connection was to be changed, aren't
             // actually in the network)
-            throw new BayesianNetworkRuntimeException("Internal error during learing: " + bnex.getMessage());
+            throw new BNLibInternalException("Internal structure inconsistency during learing: " + bnex.getMessage());
         }
         
         return bnBest;
     }
     
-    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent, StructuralConstraints constraints) throws BayesianNetworkException {
+    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent, StructuralConstraints constraints) throws BNLibIllegalStructuralModificationException {
         // for keeping of the best actions for single step of local search
         ArrayList<AlterationAction> bestActions = new ArrayList<AlterationAction>();
         double bestGain = Double.NEGATIVE_INFINITY;

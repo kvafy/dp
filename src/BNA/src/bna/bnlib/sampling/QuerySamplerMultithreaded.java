@@ -21,9 +21,17 @@ public class QuerySamplerMultithreaded implements SamplerInterface {
     private Factor sampleCounter;
     
     
-    public QuerySamplerMultithreaded(SampleProducer sharedSampleProducer, int threadcount) {
+    /**
+     * Create new sampler that uses theadcount parallel threads sharing the given sample producer.
+     * @param sharedSampleProducer
+     * @param threadcount
+     * @throws BNLibIllegalArgumentException When the threadcount or sharedSampleProducer is invalid.
+     */
+    public QuerySamplerMultithreaded(SampleProducer sharedSampleProducer, int threadcount) throws BNLibIllegalArgumentException {
         if(threadcount <= 0)
-            throw new BayesianNetworkRuntimeException("Number of threads must be non-negative.");
+            throw new BNLibIllegalArgumentException("Number of threads must be non-negative.");
+        if(sharedSampleProducer == null)
+            throw new BNLibIllegalArgumentException("The sample producer may not be null");
         
         this.sharedSampleProducer = sharedSampleProducer;
         this.threadcount = threadcount;

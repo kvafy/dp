@@ -77,127 +77,74 @@ public class Toolkit {
         return true;
     }
     
-    /** Compute relative entropy between two networks with identical structure. */
-    /*public static double networkDistanceRelativeEntropy(BayesianNetwork bnExact, BayesianNetwork bnApprox) {
-        try {
-            double relativeEntropy = 0;
-            for(Node nodeExact : bnExact.getNodes()) {
-                Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
-                if(!Toolkit.areEqual(nodeExact.getParentVariables(), nodeApprox.getParentVariables()))
-                    throw new BayesianNetworkRuntimeException("A variable differs in parents in the two networks.");
-                VariableSubsetMapper exactToApproxMapper = new VariableSubsetMapper(nodeExact.getScope(), nodeApprox.getScope());
-                // relative entropy decomposes over the nodes in a BN
-                if(nodeExact.getParentCount() > 0) { // node with parents
-                    Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, nodeExact.getParentVariables());
-                    for(int[] parentsAssignment : parentsJointProbabilityFactor) {
-                        double innerSumOverX = 0;
-                        int[] exactParentsAssignment = parentsAssignment;
-                        int[] exactAssignment = new int[1 + parentsAssignment.length],
-                              approxAssignment = new int[1 + parentsAssignment.length];
-                        System.arraycopy(exactParentsAssignment, 0, exactAssignment, 1, exactParentsAssignment.length);
-                        for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
-                            exactAssignment[0] = x;
-                            exactToApproxMapper.map(exactAssignment, approxAssignment);
-                            double pXgivenP = nodeExact.getProbability(exactAssignment),
-                                   qXgivenP = nodeApprox.getProbability(approxAssignment);
-                            if(pXgivenP > 0 && qXgivenP > 0)
-                                innerSumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
-                        }
-                        double parentsProb = parentsJointProbabilityFactor.getProbability(parentsAssignment);
-                        relativeEntropy += parentsProb * innerSumOverX;
-                    }
-                }
-                else { // node without parents
-                    double innerSumOverX = 0;
-                    for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
-                        double pX = nodeExact.getProbability(new int[]{x}),
-                               qX = nodeApprox.getProbability(new int[]{x});
-                        if(pX > 0 && qX > 0)
-                            innerSumOverX += pX * Math.log(pX / qX);
-                    }
-                    relativeEntropy += innerSumOverX;
-                }
-            }
-            return relativeEntropy;
-        }
-        catch(BayesianNetworkRuntimeException bnrex) {
-            throw new BayesianNetworkRuntimeException("The two networks aren't structurally identical.");
-        }
-        catch(BayesianNetworkException bnex) {
-            throw new BayesianNetworkRuntimeException("Internal sampling error while computing relative entropy.");
-        }
-    }*/
-    
-    /** Compute relative entropy between two networks with identical structure. */
+    /**
+     * Compute relative entropy between two networks with identical structure.
+     * @throws BNLibIllegalArgumentException When the two networks aren't structurally equal.
+     */
     public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact,
                                                          Map<Variable, Factor> distributionsOverParents,
-                                                         BayesianNetwork bnApprox) {
+                                                         BayesianNetwork bnApprox) 
+                                                    throws BNLibIllegalArgumentException {
         final double MINIMAL_Q_PROB = 1e-6; // hard constant used when probability Q(x) = 0 && P(x) != 0
-        try {
-            double relativeEntropy = 0;
-            for(Node nodeExact : bnExact.getNodes()) {
-                // check if the two nodes have the same parents
-                Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
-                if(!Toolkit.areEqual(nodeExact.getParentVariables(), nodeApprox.getParentVariables()))
-                    throw new BayesianNetworkRuntimeException("A variable differs by its parents in the two networks.");
-                
-                // relative entropy decomposes over the nodes in a BN
-                if(nodeExact.getParentCount() > 0) { // node with parents
-                    Variable scopeVar = nodeExact.getVariable();
-                    Variable[] scopeParents = nodeExact.getParentVariables();
-                    Variable[] scope = Toolkit.union(new Variable[]{scopeVar}, scopeParents); // ensure the indexing
-                    VariableSubsetMapper scopeToExactMapper = new VariableSubsetMapper(scope, nodeExact.getScope()),
-                                         scopeToApproxMapper = new VariableSubsetMapper(scope, nodeApprox.getScope());
-                    int[] scopeAssignment = new int[scope.length],
-                          exactAssignment = new int[scope.length],
-                          approxAssignment = new int[scope.length];
-                    //Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, scopeParents);
-                    Factor parentsJointProbabilityFactor = distributionsOverParents.get(nodeExact.getVariable());
-                    for(int[] scopeParentsAssignment : parentsJointProbabilityFactor) { // sum over instantiations of parents
-                        double sumOverX = 0;
-                        System.arraycopy(scopeParentsAssignment, 0, scopeAssignment, 1, scope.length - 1);
+        double relativeEntropy = 0;
+        for(Node nodeExact : bnExact.getNodes()) {
+            // check if the two nodes have the same parents
+            Node nodeApprox = bnApprox.getNode(nodeExact.getVariable());
+            if(!bnExact.equalsStructurally(bnApprox))
+                throw new BNLibIllegalArgumentException("A variable differs by its parents in the two networks.");
 
-                        for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
-                            scopeAssignment[0] = x;
-                            scopeToExactMapper.map(scopeAssignment, exactAssignment);
-                            scopeToApproxMapper.map(scopeAssignment, approxAssignment);
-                            
-                            double pXgivenP = nodeExact.getProbability(exactAssignment),
-                                   qXgivenP = nodeApprox.getProbability(approxAssignment);
-                            if(pXgivenP > 0) {
-                                if(qXgivenP == 0)
-                                    qXgivenP = MINIMAL_Q_PROB; // correction so that all values are accounted for
-                                sumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
-                            }
-                            else if(pXgivenP < 0 || qXgivenP < 0) // TODO defensive
-                                throw new BayesianNetworkRuntimeException("unexpected");
-                        }
-                        double pParents = parentsJointProbabilityFactor.getProbability(scopeParentsAssignment);
-                        relativeEntropy += pParents * sumOverX;
-                    }
-                }
-                else { // node without parents
+            // relative entropy decomposes over the nodes in a BN
+            if(nodeExact.getParentCount() > 0) { // node with parents
+                Variable scopeVar = nodeExact.getVariable();
+                Variable[] scopeParents = nodeExact.getParentVariables();
+                Variable[] scope = Toolkit.union(new Variable[]{scopeVar}, scopeParents); // ensure the indexing
+                VariableSubsetMapper scopeToExactMapper = new VariableSubsetMapper(scope, nodeExact.getScope()),
+                                        scopeToApproxMapper = new VariableSubsetMapper(scope, nodeApprox.getScope());
+                int[] scopeAssignment = new int[scope.length],
+                        exactAssignment = new int[scope.length],
+                        approxAssignment = new int[scope.length];
+                //Factor parentsJointProbabilityFactor = Toolkit.inferJointDistribution(bnExact, scopeParents);
+                Factor parentsJointProbabilityFactor = distributionsOverParents.get(nodeExact.getVariable());
+                for(int[] scopeParentsAssignment : parentsJointProbabilityFactor) { // sum over instantiations of parents
                     double sumOverX = 0;
-                    for(int[] assignment : nodeExact.getFactor()) {
-                        double pX = nodeExact.getProbability(assignment),
-                               qX = nodeApprox.getProbability(assignment);
-                        if(pX > 0) {
-                            if(qX == 0)
-                                qX = MINIMAL_Q_PROB;
-                            sumOverX += pX * Math.log(pX / qX);
+                    System.arraycopy(scopeParentsAssignment, 0, scopeAssignment, 1, scope.length - 1);
+
+                    for(int x = 0 ; x < nodeExact.getVariable().getCardinality() ; x++) {
+                        scopeAssignment[0] = x;
+                        scopeToExactMapper.map(scopeAssignment, exactAssignment);
+                        scopeToApproxMapper.map(scopeAssignment, approxAssignment);
+
+                        double pXgivenP = nodeExact.getProbability(exactAssignment),
+                                qXgivenP = nodeApprox.getProbability(approxAssignment);
+                        if(pXgivenP > 0) {
+                            if(qXgivenP == 0)
+                                qXgivenP = MINIMAL_Q_PROB; // correction so that all values are accounted for
+                            sumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
                         }
-                        else if(pX < 0 || qX < 0) // TODO defensive
-                            throw new BayesianNetworkRuntimeException("unexpected");
+                        else if(pXgivenP < 0 || qXgivenP < 0) // TODO defensive
+                            throw new BNLibInternalException("unexpected probabilities");
                     }
-                    relativeEntropy += sumOverX;
+                    double pParents = parentsJointProbabilityFactor.getProbability(scopeParentsAssignment);
+                    relativeEntropy += pParents * sumOverX;
                 }
             }
-            return relativeEntropy;
+            else { // node without parents
+                double sumOverX = 0;
+                for(int[] assignment : nodeExact.getFactor()) {
+                    double pX = nodeExact.getProbability(assignment),
+                            qX = nodeApprox.getProbability(assignment);
+                    if(pX > 0) {
+                        if(qX == 0)
+                            qX = MINIMAL_Q_PROB;
+                        sumOverX += pX * Math.log(pX / qX);
+                    }
+                    else if(pX < 0 || qX < 0) // TODO defensive
+                        throw new BNLibInternalException("unexpected probabilities");
+                }
+                relativeEntropy += sumOverX;
+            }
         }
-        catch(BayesianNetworkRuntimeException bnrex) {
-            bnrex.printStackTrace();
-            throw new BayesianNetworkRuntimeException("Internal error while computing relative entropy.");
-        }
+        return relativeEntropy;
     }
     
     public static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) {
@@ -309,6 +256,8 @@ public class Toolkit {
      * @param rand Random generator to be used.
      * @return Valid random index to array uniformDistribution according
      *         to uniform distribution defined by uniformDistribution values.
+     * @throws BNLibIllegalArgumentException When the values in given distribution
+     *         don't sum to one.
      */
     public static int randomIndex(double[] uniformDistribution, double sum, Random rand) {
         boolean divideBySum = !Toolkit.doubleEquals(sum, 1.0);
@@ -325,7 +274,7 @@ public class Toolkit {
             return uniformDistribution.length - 1;
         }
         // if the uniformDistribution are normalized, it shouldn't come to this
-        throw new BayesianNetworkRuntimeException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
+        throw new BNLibIllegalArgumentException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
     }
     
     /** Compute transitive closure of given relation. */
