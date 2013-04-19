@@ -922,31 +922,56 @@ This chapter will present the program realization of this thesis and should be a
 \begin{itemize}
 	\item What data structures are used for representing factors/CPDs, network nodes and the overall Bayesian network.
 	\item The overall design of the resulting library and \todo{application}, \todo{a class diagram} and description of single classes, their dependencies and responsibilities.
-	\item \todo{Algorithms needed for effective inference and learning including their modifications and tweaks. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.}
+	\item \todo{Solutions for effective inference and learning. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.}
 \end{itemize}
 The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will describe the inter-class dependencies in terms of names of used design patterns as presented in~\cite{head_first_design_patterns}.
 
 \todo{Extent of this chapter is expected to be about 10 pages.}
 
 
+
+
 \section{Package structure}
-\todo{listing of packages, brief description}
+The application and library is decomposed into the following packages:
+\begin{itemize}
+    \item \srccode{bna.bnlib}: Classes for internal representation of a Bayesian network as a set of variables, their connections and CPDs represented as factors. Also contains all library exceptions.
+    \item \srccode{bna.bnlib.io}: Classes for reading and writing \srccode{.net} files with Bayesian network specifications and \srccode{.csv} files with datasets. Also contains logic for parsing textual probabilistic queries. 
+    \item \srccode{bna.bnlib.learning}: Parameter learning and structure learning classes.
+    \item \srccode{bna.bnlib.misc}: Classes that are inconvenient to put elsewhere (cache implementation, multipurpose toolkit, a general digraph representation).
+    \item \srccode{bna.bnlib.sampling}: Classes for performing stochastic inference by sampling (weighted samping and Markov chain Monte-Carlo).
+    \item \srccode{bna.bnlib.view}: All the GUI logic; mostly visualization, network layout generation, dialogs, GUI components etc.
+\end{itemize}
+
+
 
 
 \section{Data structures}
-\todo{\srccode{Variable, Factor, Node, BayesianNetwork} etc.}
+This section introduces the key classes used for internal representation of a Bayesian network\,--\,data structures \srccode{Variable}, \srccode{Factor}, \srccode{Node}, \srccode{BayesianNetwork} and auxiliary objects \srccode{VariableSubsetMapper} and \srccode{AssignmentIndexMapper}.
+
+A variable, represented by the \srccode{Variable} class, has two components: a unique name (attribute \srccode{String name}) and a non-empty list of unique assignments (attribute \srccode{String[] values}). Assignment of a variable is one of its values, ie. a string but because operations over strings (most of all equality) would be costly, internally an assignment is represented as an integer which is interpreted as an index to the \srccode{values} array.
+
+A factor, represented by the \srccode{Factor} class, has a scope, which is a list of variables \srccode{Variable[] scope}, and defines a mathematical function from the set of possible assignments of its scope to the set $\mathbb{R}$. This mathematical function is internally represented by a 1D real vector \srccode{double[] values}. Mapping of a concrete assignment \srccode{int[] assignment} to an integral index into the \srccode{values} vector (and vice versa) is defined as follows: \srccode{values[0]} corresponds with the assignment $(0, \dots, 0)$, then the subsequent assignments corresponding with \srccode{values[1]}, \srccode{values[2]} etc. are obtained by incrementing assignment of the leftmost variable which may possibly overflow and cause to increment the next variable, ie. assignment of the leftmost variable changes the most rapidly. To make this mapping efficient there is an extra class \srccode{AssignmentIndexMapper} that keeps some internal information which needs to be computed only once, not with every assignment-index or index-assignment transformation.
+
+A node, represented by the \srccode{Node} class, is a component of a Bayesian network. It holds a variable, a CPD in the form of a factor with scope $X,Parents(X)$ and structural information\,--\,parent nodes and child nodes. An instance of the \srccode{BayesianNetwork} is nothing more than a set of nodes.
+
+A frequent operation is transformation of an assignment of a list of variables to an assignment of a subset of these variables (eg. extracting assignment of parent variables during sampling, determining some counter $N_{x,\vars{pa}}$ from a dataset etc.). This transformation includes two operations: (1)~extraction of a subset of the original assignment (for each subset variable we need to know on which index this variable is in the original list) and (2)~transforming the integer value representing assignment of a variable $X$ in the original list to another integer representing the same assignment of the same variable $X$ in the subset; this step is necessary because there may be two same variables (same name and same set of possible values) having different ordering of their possible values and therefore the integer values serving as indices into the \srccode{value} arrays don't match. 
+
+
+
+
+
+\section{Exceptions}
+In the whole \srccode{bnlib} library all exceptions are unmanaged with a single base exception \srccode{BNLibException}. Each method specifies a list of throwable exceptions via the \srccode{throws} keyword and its javadoc comment explains condition under which the listed exceptions may be thrown.
 
 
 
 
 
 
+\section{Input, output}
+\todo{structure of .net files (see for yourself, \uv{net} section is ignored,) and .csv files (firs line is header containing variable names and complete list of values (even if no such value is presented in the particular dataset)}
 
-
-\section{Auxiliary objects}
-\todo{Toolkit, the two mappers}
-
-
+\todo{maybe put query specification in this section}
 
 
 
@@ -1492,7 +1517,7 @@ Parameters of the experiments: 200 runs, 200 iterations per run, 15 random resta
 \subsubsection{Experiments with Child network}
 The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children).
 
-With a dataset of 500 samples and the BIC score there are two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is almost surprisingly strongly consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to two may be reversed due to a chain structure $Disease - LVH - LVHreport$ causing at least three I-equivalent variants of the learnt network. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. I~believe this to be a great success but we must take into account that this network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
+With a dataset of 500 samples and the BIC score the structure learning yields a structure with two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is to an almost surprisingly high degree consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to two may be reversed due to a chain structure $Disease - LVH - LVHreport$ causing at least three I-equivalent variants of the learnt network. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. I~believe this to be a great success but we must take into account that the \uv{child} network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
 
 With the Bayesian score and 500 samples the best result is similar to those of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}), the only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$.
 
@@ -1501,7 +1526,7 @@ With the Bayesian score and 500 samples the best result is similar to those of t
     \begin{subfigure}[b]{0.45\linewidth}
         \hspace{-2.3cm}
         \includegraphics[scale=0.37]{fig/structure-learning-child-500-bic}
-        \caption{Using the BIC score.}
+        \caption{Using the BIC score. \todo{LungParench may be reversed and its descendants then too (more runs)}}
         \label{fig:structure-learning-child-500-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
@@ -1514,9 +1539,9 @@ With the Bayesian score and 500 samples the best result is similar to those of t
     \\Legend: Red dotted edges are missing, red edges are reversed.}
 \end{figure}
 
-With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and two other edges are reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are three chain structures involving the $Disease$ variable and additional three edges (painted in gray color) may be reversed if it doesn't introduce a V-structure in the $Disease$ variable (depends on the concrete variant of the three chain structures involving $Disease$).
+With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and two other edges are reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are three chain structures involving the $Disease$ variable; legal variants of the chain structures are only those that don't form a V-structure in the $Disease$ variable, eg. if $Age$ is parent of $Disease$ then no other variable of the other two chain structures may be a parent of $Disease$. Additional four outcoming edges of the $Disease$ variable (painted in gray color) may be reversed if it doesn't introduce a V-structure in the $Disease$ variable which, again, depends on the concrete variant of the three chain structures. If you think about it, these reversible edges form with the $Disease$ variable a two-node chain. Furthermore, if the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively become a chain structure with three variants. \todo{why are there so much more variants than with 500 samples, especially the gray edges? run with many runs (1000+)}
 
-With the Bayesian score (best results achieved with $\alpha=1.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-1_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and three edges are reversed. There is a single redundant connection $Disease - LVHreport$ which doesn't seem to be a big mistake because variables $LVH$ and $LVHreport$ are both descendants of $Disease$ and there are no other connections from these two nodes, so the error is local and doesn't affect any other node.
+With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-2_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and three edges are reversed. There is a single redundant connection $Disease - LVHreport$ which doesn't seem to be a big mistake because variables $LVH$ and $LVHreport$ are both descendants of $Disease$ and there are no other connections from these two nodes, so the error is local and doesn't affect any other node. We can make the observation that higher value of $\alpha$ means higher chance of the learnt network having an extra edge and also doesn't improve the number of reversed edges. So, $\alpha$ should be kept at a small value.
 
 \begin{figure}[ht]
     \centering
@@ -1528,9 +1553,9 @@ With the Bayesian score (best results achieved with $\alpha=1.5$, see Figure~\re
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
         \hspace{-0.7cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bayes-1_5}
-        \caption{Using the Bayesian score with $\alpha = 1.5$.}
-        \label{fig:structure-learning-child-2000-bayes-1_5}
+        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bayes-2_5}
+        \caption{Using the Bayesian score with $\alpha = 2.5$.}
+        \label{fig:structure-learning-child-2000-bayes-2_5}
     \end{subfigure}
     \caption{Best-scoring network structure found for the child network with a dataset of 2\,000 samples.
     \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in $Disease$ wrt. concrete variant of the three chain structures in the $Disease$ variable}
@@ -1562,7 +1587,7 @@ The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning
 
 
 \medskip
-Parameters of the experiments: 200 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=1.5-3$.
+Parameters of the experiments: 1\,000 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=1.5-3$.
 
 
 
@@ -1585,7 +1610,7 @@ Based on the experiments regarding structure we can make some general observatio
     \item There are often more than one best-scoring structures due to I-equivalence and, with training, chain structures and central variable structures are actually easy to spot. Other than these two types of structures we sometimes observe swapping two variables $B,C$ in a cascade of the form $A-B-C$ while preserving edge $A \rightarrow B$ and introducing an edge $A \rightarrow C$. The experiments suggest that the mistakes are just local and don't involve other variables.
     \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data.
     \item Bayesian score is more conservative, BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although in some cases with a tuned value of $\alpha$ results with the Bayesian score may be even the same as those of the BIC score.
-    \item Best value of $\alpha$ for the Bayesian score usually, although not always, is that for which the Bayesian score of the best-scoring structure is the highest. This provides us with a powerful rule of thumb on how to pick $\alpha$ when learning a network structure whose original structure is unknown to us.
+    \item Best value of $\alpha$ for the Bayesian score usually, although not always, is that for which the Bayesian score of the best-scoring structure is the highest. This provides us with a powerful rule of thumb on how to pick $\alpha$ when learning a network structure whose original structure is unknown to us. \todo{verify, plot graphs for best score vs $\alpha$}
 \end{itemize}
 
 \todo{
