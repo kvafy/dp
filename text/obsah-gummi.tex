@@ -918,15 +918,9 @@ If for two structures $\mathcal{G}_1, \mathcal{G}_2$ holds that $I(\mathcal{G}_1
 
 
 \chapter{Implementation}
-This chapter will present the program realization of this thesis and should be also considered program documentation and reference for anyone who wishes to write an extension. I will describe:
-\begin{itemize}
-	\item What data structures are used for representing factors/CPDs, network nodes and the overall Bayesian network.
-	\item The overall design of the resulting library and \todo{application}, \todo{a class diagram} and description of single classes, their dependencies and responsibilities.
-	\item \todo{Solutions for effective inference and learning. As the previous chapters have mostly been of mathematical nature, at this point it might be useful to explain solutions of some of the problems in a more algorithmic way.}
-\end{itemize}
-The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will describe the inter-class dependencies in terms of names of used design patterns as presented in~\cite{head_first_design_patterns}.
+This chapter will present the program realization of this thesis and should be also considered program documentation and reference for anyone who intends to write an extension.
 
-\todo{Extent of this chapter is expected to be about 10 pages.}
+The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will describe the inter-class dependencies in terms of names of used design patterns as presented in~\cite{head_first_design_patterns}.
 
 
 
@@ -1515,18 +1509,18 @@ Parameters of the experiments: 200 runs, 200 iterations per run, 15 random resta
 
 
 \subsubsection{Experiments with Child network}
-The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children).
+The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children). At first we will inspect the best structures found with datasets of different sizes (best in the sense of minimal differences from the original network) and explore what inconsistencies they have. Then we will discuss how to proceed when attempting to find the best structure when the original structure is unknown.
 
-With a dataset of 500 samples and the BIC score the structure learning yields a structure with two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is to an almost surprisingly high degree consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to two may be reversed due to a chain structure $Disease - LVH - LVHreport$ causing at least three I-equivalent variants of the learnt network. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network. I~believe this to be a great success but we must take into account that the \uv{child} network has such a structure that there aren't any chain nor central variable structures except for chain $BirthAsphyxia - Disease$ and therefore the number of reversed edges is so small.
+With a dataset of 500 samples and the BIC score the structure learning yields a structure with two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is to an almost surprisingly high degree consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to three may be reversed due to chain structures. There is one obvious chain structure $Disease - LVH - LVHreport$ causing three I-equivalent variants of the learnt network. Notice that when the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively becomes a chain structure (edges that might be reversed are painted in gray). In either case, only those variants of the chain structures are allowed such that they don't introduce a V-structure in the $Disease$ variable as this would imply conditional dependencies and marginal independencies that aren't supported by the data. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network.
 
-With the Bayesian score and 500 samples the best result is similar to those of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}), the only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$.
+With the Bayesian score and 500 samples the best result is similar to those of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}). The only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$. I believe this difference may be caused by a local maximum in the Bayesian scoring function which makes it for the optimization algorithm difficult to find the I-equivalent structures which the BIC score does find.
 
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
         \hspace{-2.3cm}
         \includegraphics[scale=0.37]{fig/structure-learning-child-500-bic}
-        \caption{Using the BIC score. \todo{LungParench may be reversed and its descendants then too (more runs)}}
+        \caption{Using the BIC score.}
         \label{fig:structure-learning-child-500-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
@@ -1536,17 +1530,17 @@ With the Bayesian score and 500 samples the best result is similar to those of t
         \label{fig:structure-learning-child-500-bayes-2_5}
     \end{subfigure}
     \caption{Best-scoring network structure found for the child network with a dataset of 500 samples.
-    \\Legend: Red dotted edges are missing, red edges are reversed.}
+    \\Legend: Red dotted edges are missing, red edges are reversed, gray edges may be reversed (under certain conditions).}
 \end{figure}
 
-With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and two other edges are reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are three chain structures involving the $Disease$ variable; legal variants of the chain structures are only those that don't form a V-structure in the $Disease$ variable, eg. if $Age$ is parent of $Disease$ then no other variable of the other two chain structures may be a parent of $Disease$. Additional four outcoming edges of the $Disease$ variable (painted in gray color) may be reversed if it doesn't introduce a V-structure in the $Disease$ variable which, again, depends on the concrete variant of the three chain structures. If you think about it, these reversible edges form with the $Disease$ variable a two-node chain. Furthermore, if the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively become a chain structure with three variants. \todo{why are there so much more variants than with 500 samples, especially the gray edges? run with many runs (1000+)}
+With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and one or two of many edges may be reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are many chain structures involving the $Disease$ variable (one with three variables, expressed by the boxed graphical notation, and seven chain structures with two variables, expressed with a gray edge). Legal variants of the chain structures are only those that don't introduce a V-structure in the $Disease$ variable, eg. if $Age$ were parent of $Disease$ then no other variable of the other chain structures may be a parent of $Disease$. Furthermore, if the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively become a chain structure with three I-equivalent variants.
 
-With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-2_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and three edges are reversed. There is a single redundant connection $Disease - LVHreport$ which doesn't seem to be a big mistake because variables $LVH$ and $LVHreport$ are both descendants of $Disease$ and there are no other connections from these two nodes, so the error is local and doesn't affect any other node. We can make the observation that higher value of $\alpha$ means higher chance of the learnt network having an extra edge and also doesn't improve the number of reversed edges. So, $\alpha$ should be kept at a small value.
+With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-2_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and two edges are reversed which is a particularly nice result.
 
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.3cm}
+        \hspace{-2.5cm}
         \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-2000-bic}
@@ -1558,14 +1552,12 @@ With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\re
         \label{fig:structure-learning-child-2000-bayes-2_5}
     \end{subfigure}
     \caption{Best-scoring network structure found for the child network with a dataset of 2\,000 samples.
-    \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in $Disease$ wrt. concrete variant of the three chain structures in the $Disease$ variable}
+    \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in the $Disease$ variable wrt. concrete variants of the other chain structures in the $Disease$ variable}
 \end{figure}
 
-Dataset of 5\,000 samples and the BIC score get us as close to the original network as no missing connections, three reversed edges and one redundant edge. The mistake is again local involving a closed structure of four nodes $Disease$, $DuctFlow$, $HypDistrib$ and $CardiacMixing$ (see Figure~\ref{fig:structure-learning-child-5000-bic}). 
+Dataset of 5\,000 samples and the BIC score get us as close to the original network as no missing connections, three reversed edges and one redundant edge. The mistake introduced by the redundant edge is somewhat local, involving a closed structure of three nodes $LungParench$, $CO2$ and $CO2Report$ (see Figure~\ref{fig:structure-learning-child-5000-bic}) and no other variables are involved. Curious thing is that there has actually been formed a V-structure in the $CO2$ variable.
 
-The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning-child-5000-bayes-3_0}) in this particular test did significantly better than the BIC did. They both agree on the reversed edge $Disease - BithAsphyxia$ and other than that with Bayesian score there is only one reversed edge and no redundant edge.
-
-\ignore{Bayes performance: $(\alpha=1, x, x, x)$, $(\alpha=1.5, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=2.5, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=3.5, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$}
+The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning-child-5000-bayes-3_0}) in this particular test did significantly better than the BIC did. They both agree on the reversed edge $Disease - BithAsphyxia$ and, other than that, with the Bayesian score there is only one reversed edge and no redundant edges.
 
 \begin{figure}[ht]
     \centering
@@ -1585,41 +1577,57 @@ The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning
     \\Legend: Red dotted edges are missing, red edges are reversed, blue edges are redundant.}
 \end{figure}
 
+\medskip
+In a situation when our goal is to discover the original structure the question is how to pick the right equivalent sample size $\alpha$ for the Bayesian score so that the learnt structure would be as close as possible to the correct one. For a range of $\alpha$ values I have inspected the relation between Bayesian score of a learnt structure and how closely this structure matches the original one and I have found out that within the approximate range $\alpha \in [1,4]$ structure with the highest score is also the closest. 
+I have made the observation that higher value of $\alpha$ means higher chance of the learnt network having an extra edge and also doesn't improve the number of reversed edges. So, $\alpha$ should be kept at a small value.
+It is true that with higher values of $\alpha$ we can discover a structure with even better Bayesian score but, in my experience, this structure typically has some redundant edges that aren't present in the original network and also the number of other deviations isn't pleasing. So, when attempting to learn the best possible structure (and the number of variables is comparable with the child network) we should try the learning procedure for $\alpha \in [1,4]$ with a step $0.5$ and pick the structure and $\alpha$ such that its Bayesian score is the highest.
+
+\begin{comment}
+\begin{figure}[p]
+    \vspace{-1cm}
+    \centering
+    \begin{subfigure}[b]{1\linewidth}
+        \centering
+        \includegraphics[scale=0.85]{fig/child-500-alpha-score}
+        \caption{500 samples}
+    \end{subfigure}
+    \\ \vspace{0.3cm}
+    \begin{subfigure}[b]{1\linewidth}
+        \centering
+        \includegraphics[scale=0.85]{fig/child-2000-alpha-score}
+        \caption{2\,000 samples}
+    \end{subfigure}
+    \\ \vspace{0.3cm}
+    \begin{subfigure}[b]{1\linewidth}
+        \centering
+        \includegraphics[scale=0.85]{fig/child-5000-alpha-score}
+        \caption{5\,000 samples}
+    \end{subfigure}
+    \caption{Bayesian scores of the best-scoring structures for different values of $\alpha$ and datasets of various sizes. The structure, that resembles the original network the most, is always found with $\alpha$ within the approximate range $[1,4]$.}
+    \label{fig:structure-learning-child-alpha-analysis}
+\end{figure}
+\end{comment}
+
 
 \medskip
-Parameters of the experiments: 1\,000 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=1.5-3$.
+Parameters of the learning procedure: 1\,000 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 4 parents, $\alpha=1.5-3$.
 
 
-
-\ignore{
-%\subsubsection{Experiments with ICU Alarm network}
-%ICU alarm network is with its 37 variables the largest network I experiment with in this section. There are many two-node chains (eg. $PMB - PAP$, $APL - TPR$ or $MVS - VMCH$) meaning there are quite a few structures I-equivalent with the original network. On the other hand, there are many V-structures and the assumption is that V-structures are relative stable.
-%1\,000 samples: BIC (8, 5, 3), Bayesian $(\alpha=0.1, 2, 9, 5)$, $(\alpha=1, 2, 6, 5)$, $(\alpha=2, 2, 10, 7)$, $(\alpha=3, 2, 7, 9)$, $(\alpha=4, 2, 11, 13)$, $(\alpha=5, 3, 19, 20)$
-%5\,000 samples: BIC (x, x, x), Bayesian $(\alpha=0.1, x, x, x)$, $(\alpha=1, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$
-%20\,000 samples: BIC (x, x, x), Bayesian $(\alpha=0.1, x, x, x)$, $(\alpha=1, x, x, x)$, $(\alpha=2, x, x, x)$, $(\alpha=3, x, x, x)$, $(\alpha=4, x, x, x)$, $(\alpha=5, x, x, x)$
-\todo{xxx}
-
-
-Parameters of the experiments: 300 runs, 1\,000 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 6 parents, $\alpha=0.1-5$.
-}
 
 
 \subsubsection{Conclusion of the the experiments}
 Based on the experiments regarding structure we can make some general observations:
 \begin{itemize}
     \item There are often more than one best-scoring structures due to I-equivalence and, with training, chain structures and central variable structures are actually easy to spot. Other than these two types of structures we sometimes observe swapping two variables $B,C$ in a cascade of the form $A-B-C$ while preserving edge $A \rightarrow B$ and introducing an edge $A \rightarrow C$. The experiments suggest that the mistakes are just local and don't involve other variables.
-    \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data.
-    \item Bayesian score is more conservative, BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although in some cases with a tuned value of $\alpha$ results with the Bayesian score may be even the same as those of the BIC score.
-    \item Best value of $\alpha$ for the Bayesian score usually, although not always, is that for which the Bayesian score of the best-scoring structure is the highest. This provides us with a powerful rule of thumb on how to pick $\alpha$ when learning a network structure whose original structure is unknown to us. \todo{verify, plot graphs for best score vs $\alpha$}
+    \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data and incorrect V-structures are rare.
+    \item Best value of $\alpha$ for the Bayesian score is usually relatively small\,--\,for the used datasets the best values of $\alpha$ were from the interval $[1,3]$ in all cases. Also, structures with better Bayesian score were generally closer to the original network. This provides us with a powerful rule of thumb on how to determine the right $\alpha$ when learning a~network structure whose original structure is unknown to us\,--\,look for a local maximum in the best score within a range, say $\alpha \in [1,4]$.
+    \item Bayesian score is more conservative, BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although with a tuned value of $\alpha$ results with the Bayesian score may be the same or even better than those of the BIC score.
 \end{itemize}
 
-\todo{
-V-structures are stable (vs. child 10\,000 samples Bayesian score), need to be strongly implied by the data
-}
 
 
-\subsubsection{Optimal parameters for structure learning}
-I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count. \todo{Try for the child network (best score found in 50 iterations or something like that.}
+%\subsubsection{Optimal parameters for structure learning}
+%I have performed a series of experiments to determine the optimal set of parameters for tabu-search algorithm (tabu-list size and random restart steps count) for networks of various degrees of complexity but, surprisingly, the space of achieved results turned out flat without any clear peaks suggesting a local maximum (metrics used were the average score of the resulting network and the relative frequency of finding the \uv{true} network, both taken from 1000 runs). Therefore I generally use random restart of about 25--50 steps and tabu-list size of 0.15-times the upper bound of feasible network alterations count. \todo{Try for the child network (best score found in 50 iterations or something like that.}
 
 
 
@@ -1833,13 +1841,11 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
 
 
 \chapter{Conclusion}
-During the term project I focused on studying the theory of Bayesian networks, mainly from the books~\cite{pgm,russell_norvig_ed2}. As a supporting material I also attended an on-line course called Probabilistic Graphical Models at \url{http://www.coursera.org} taught by professor Daphne Koller at Stanford University.
+This master's thesis explained the fundamentals of Bayesian networks, described various inference methods and methods of model learning. To get better hold of the theoretical concepts and to gain some insight I supplied commented formal proofs or derivations of multiple statements, some of the proofs were constructed by myself. I also focused on explaining strong points and limitations throughout this thesis. All techniques have been studied and presented in such a detail that is fully sufficient in order to implement them and to understand their limitations.
 
-I studied and explained the fundamentals of Bayesian networks, described various inference methods and methods of model learning. To get better hold of the theoretical concepts and to gain some insight I supplied commented formal proofs or derivations of multiple statements, some of the proofs were constructed by myself. I also focused on explaining strong points and limitations throughout this thesis. All techniques have been studied and presented in such a detail that is fully sufficient in order to implement them and to understand their limitations.
+Practical part of this thesis is divided into three areas. The first area is a study of effects of different parameter settings of presented model learning methods for datasets and networks of various sizes. This study provides the reader with some intuition on how to proceed when the correct network structure and/or CPDs are unknown. The second practical part \todo{\dots}. The third practical part examines the possibilities of using a Bayesian network in the field of spam detection and shows that a Bayesian network outperforms the very successful Naïve Bayes model, even with a relatively small training set.
 
-\medskip
-
-In the summer semester I am going to study the selected application cases in depth and provide a program realization. At first, I am going to attempt to reproduce results achieved by other authors and then possibly apply the presented techniques to other problems or to achieve better results than have been presented. If needed, I will also study specific variants of model learning (especially from~\cite{heckerman96_tutorial} and~\cite{buntine94}) and stochastic inference (especially from~\cite{neal93}). Furthermore, the book~\cite{pgm} provides an extensive list of relevant literature for every topic presented in this thesis. % SP
+\bigskip
 
 My original contributions:
 \begin{itemize}
