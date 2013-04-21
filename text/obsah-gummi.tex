@@ -939,7 +939,7 @@ The application and library is decomposed into the following packages:
 
 
 
-\section{Data structures}
+\section{Data structures}\label{ch:implementation-data_structures}
 This section introduces the key classes used for internal representation of a Bayesian network\,--\,data structures \srccode{Variable}, \srccode{Factor}, \srccode{Node}, \srccode{BayesianNetwork} and auxiliary objects \srccode{VariableSubsetMapper} and \srccode{AssignmentIndexMapper}.
 
 A variable, represented by the \srccode{Variable} class, has two components: a unique name (attribute \srccode{String name}) and a non-empty list of unique assignments (attribute \srccode{String[] values}). Assignment of a variable is one of its values, ie. a string but because operations over strings (most of all equality) would be costly, internally an assignment is represented as an integer which is interpreted as an index to the \srccode{values} array.
@@ -955,7 +955,7 @@ A frequent operation is transformation of an assignment of a list of variables t
 
 
 \section{Exceptions}
-In the whole \srccode{bnlib} library all exceptions are unmanaged with a single base exception \srccode{BNLibException}. Each method specifies a list of throwable exceptions via the \srccode{throws} keyword and its javadoc comment explains condition under which the listed exceptions may be thrown.
+In the whole \srccode{bnlib} library all exceptions are unmanaged and share a single base exception \srccode{BNLibException}. Each method specifies a list of throwable exceptions via the \srccode{throws} keyword and its javadoc comment explains conditions under which the listed exceptions are thrown.
 
 
 
@@ -963,30 +963,23 @@ In the whole \srccode{bnlib} library all exceptions are unmanaged with a single 
 
 
 \section{Input, output}
-\todo{structure of .net files (see for yourself, \uv{net} section is ignored,) and .csv files (firs line is header containing variable names and complete list of values (even if no such value is presented in the particular dataset)}
+There are two types of input/output operations. The first class of operations deals with specification of a Bayesian network, the other class is for datasets. There are generic format-independent classes in the \srccode{bna.bnlib.io} package that employ template method pattern to enable extensibility for currently unsupported file formats.
 
-\todo{maybe put query specification in this section}
+Bayesian networks can be imported in the \srccode{.net} (also known as LibB) format. The file itself contains only the network structure and CPDs, graphical layout of a network is always automatically generated. The format is very intuitive and, I believe, rather then providing formal specification the direct approach of looking at some existing file is a lot faster way to understand the format. I will provide just a few comments. A \srccode{.net} file contains three sections. The first section \srccode{net \{...\}} is ignored. The second section is an enumeration of all variables and their possible values. The third section specifies the network structure and CPDs; the CPDs are basically written as 1D arrays with exactly the same value ordering logic as I use in the \srccode{Factor} class (see Section~\ref{ch:implementation-data_structures}). Parentheses in the CPD specification are mandatory.
+
+For datasets I use a CSV-like format. The first line must be a header that specifies for each column its name (variable name) and complete list of possible values in this column. The format of a single header record is \srccode{<variable-name>(<value1>|...|<valueN>)}. Records in the whole file, including header, are separated by a specified character. 
+
 
 
 
 
 
 \section{Sampling}
-Sampling is implemented by classes in the \srccode{bna.bnlib.sampling} package. Basically, there are two parallel hierarchies of objects which will be further described in detail \todo{(see also class diagram in Figure~\ref{fig:sapling_package_class_diagram})}.
+Sampling is implemented by classes in the \srccode{bna.bnlib.sampling} package. Basically, there are two parallel hierarchies of objects which will be further described in detail.
 
 One family of objects with common base class \srccode{SampleProducer} aims to provide samples from a general distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ where $\vars{X} \neq \emptyset$. Two sampling approaches are implemented\,--\,weighted sampling (class \srccode{WeightedSampleProducer}) and Markov chain Monte-Carlo (class \srccode{MCMCSampleProducer}).
 
 Concern of the second family of objects, that share common interface \srccode{SamplerInterface}, is what to do with generated samples. We can maintain statistics from a sufficient number of samples and in the end compute an approximation of the real distribution $P(\vars{X} \mid \vars{Y}, \vars{E} = \vars{e})$ (class \srccode{QuerySampler}); the same task may be carried out in multiple threads at once (class \srccode{QuerySamplerMultithreaded}). Another goal might be to create an artificial dataset by sampling all the variables in a given BN and to write samples obtained to a file in CSV format (class \srccode{DatasetCreationSampler}) or to store the samples in memory within a \srccode{Dataset} instance. Dataset creation is useful when benchmarking learning algorithms for Bayesian networks\,--\,we already have a BN and we attempt to learn that network again based just on dataset of chosen size, finally we compare the network just learnt with the original one according to some metric.
-
-\begin{center}
-\begin{figure}[h]
-    \begin{center}
-    \includegraphics[scale=0.4]{fig/todo}
-    \end{center}
-    \caption{Class diagram of the \srccode{bna.bnlib.sampling} package.}
-    \label{fig:sapling_package_class_diagram}
-\end{figure}
-\end{center}
 
 
 
@@ -1027,10 +1020,10 @@ MCMC sampling is implemented by the class \srccode{MCMCSampleProducer}. As a sub
 \medskip
 List of noteworthy methods of the \srccode{MCMCSampleProducer} class:
 \begin{itemize}
-	\item \srccode{void initializeSample(SamplingContext context)}: MCMC actually is a sampling method that views the last generated sample as a state of the network (concrete instantiation of variables) and the next sample is produced by perturbing this state. So, in initialization we need to produce some valid instantiation of all \srccode{sampledVars} variables. Such instantiation has to (1)~respect given evidence and (2)~be a \uv{normal} sample (not something very improbable). Therefore we internally generate one sample using weighted sampling and use this as the initial state of the MCMC sampler. \todo{(not true wrt. current implementation)}
+	\item \srccode{void initializeSample(SamplingContext context)}: MCMC actually is a sampling method that views the last generated sample as a state of the network (concrete instantiation of variables) and the next sample is produced by perturbing this state. So, in initialization we need to produce some valid instantiation of all \srccode{sampledVars} variables. Such instantiation has to (1)~respect given evidence and (2)~be a \uv{normal} sample (not something very improbable). Therefore we internally set all evidence variables to the observed values and then resample each non-evidence variable a few times, so that the initial state isn't a very unlikely one.
 	\item \srccode{void produceSample(SamplingContext context)}: Sample is in MCMC produced by taking the last generated sample and resampling a single variable while values of other variables remain unchanged. For the purpose of resampling we keep an array named \srccode{resamplingActions} with one instance of \srccode{MCMCResamplingAction} for each non-evidence variable (evidence variable cannot be resampled). New sample is then produced by performing a randomly chosen resampling action.
 	
-	The \srccode{MCMCResamplingAction} for a variable $X$ works as follows: For each instantiation $x$ of the variable $X$ we compute the probability $P(x \mid parents(X)) \prod_{C_i \in Children(X)} P(c_i \mid parents(C_i))$\,--\,we don't need to consider variables other than $X \cup Children(X)$ because for other nodes different values $x$ of $X$ don't affect probability at these nodes given parents. Then by normalization we obtain the distribution $P(X \mid \text{rest-of-sample})$ and by sampling $X$ from this distribution we obtain the new value of $X$ which is written to the \srccode{context} object.
+	The \srccode{MCMCResamplingAction} for a variable $X$ works as follows: For each instantiation $x \in Val(X)$ we compute the probability $P(x \mid parents(X)) \prod_{C_i \in Children(X)} P(c_i \mid parents(C_i))$\,--\,we don't need to consider variables other than $X \cup Children(X)$ because for other nodes different values $x$ of $X$ don't affect probability at these nodes given parents. Then by normalization we obtain the distribution $P(X \mid \text{rest-of-sample})$ and by sampling $X$ from this distribution we obtain the new value of $X$ which is written to the \srccode{context} object.
 \end{itemize}
 
 
@@ -1186,7 +1179,7 @@ Speedup of the multi-threaded variant has been measured on multiple computers wi
 \end{table}
 
 \subsection{Implementation notes}
-In this section I will discuss some of the difficulties I encountered during implementation. Also, the following code snippet demonstrates the usage of classes described earlier to answer a probabilistic query via sampling:
+In this section I will discuss some of the difficulties I encountered during implementation. Also, the code snippet in Figure~\ref{fig:snippet-sampling} demonstrates the usage of classes described earlier to answer a probabilistic query via sampling
 
 \begin{figure}[ht]
 \begin{center}
@@ -1207,6 +1200,7 @@ Factor result = ((QuerySamplerMultithreaded)sampler).getSamplesCounterNormalized
 \end{verbatim}
 \end{center}
 \caption{Usage of the BN library classes to perform inference by sampling.}
+\label{fig:snippet-sampling}
 \end{figure}
 
 During implementation there have been some difficulties regarding thread-safety and sharing of resources among threads. Considering the overall performance of sampling, the ultimate problem turned out to be that generating pseudorandom numbers consumes the majority of time of sampling and therefore an instance of \srccode{java.util.Random} (further just \srccode{Random}) cannot be shared among threads. Because the method \srccode{Random.next(int bits)} for generating pseudorandom bits is synchronized, sharing of a \srccode{Random} instance among $n$ threads degrades computation time to virtually running the sampling $n$-times sequentially. The problem is easily solved by using \srccode{java.util.concurrent.ThreadLocalRandom} class that provides the caller with a~thread-local instance of \srccode{Random} on demand. Still, generating of random data remains the bottleneck of sampling.
@@ -1266,6 +1260,38 @@ To achieve the correct dropping behavior we need to understand how the delta fam
 Size of the delta family score cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why lets consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be violated. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any concrete BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the complementary edges allowed by the topological ordering but not currently present can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
 
 
+\subsection{Implementation notes}
+This section provides a code snippet (see Figure~\ref{fig:snippet-learning}) that demonstrates the usage of classes described earlier to perform structure and parameter learning.
+
+\begin{figure}[ht]
+\begin{center}
+\begin{verbatim}
+DatasetFileReader datasetReader = new DatasetCSVFileReader(FILENAME, SEPARATOR);
+Dataset dataset = datasetReader.load();
+Variable[] allVars = dataset.getVariables();
+dataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+
+LearningController controller = new LearningController(MAX_ITERATIONS);
+StructuralConstraints constraints = new StructuralConstraints(allVars);
+constraints.setMaxParentCount(MAX_PARENT_COUNT);
+BayesianNetwork bnDiscrete = new BayesianNetwork(allVars);
+
+DecomposableScoringMethod scoringMethod = new BICScoringMethod(dataset);
+StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(
+        scoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
+BayesianNetwork bnStructure = learningAlgorithm.learn(
+        bnDiscrete, controller, constraints);
+
+BayesianNetwork bnComplete = ParameterLearner.learnBayesianEstimationUniform(
+        bnStructure, dataset, ALPHA);
+\end{verbatim}
+\end{center}
+\caption{Usage of the BN library classes to perform structure and parameter learning.}
+\label{fig:snippet-learning}
+\end{figure}
+
+
+
 \subsection{Dataset}
 The \srccode{Dataset} class has been already introduced in context of sampling. For structure learning is important that the \srccode{Dataset} class provides methods for computing the mutual information $I_{\hat P}(X; Parents(X))$ and for counting number of occurrences of an event $\vars{x}$, ie. determining some value $N_\vars{x}$. Furthermore, to accelerate the learning process it is very useful to cache the least recent queries over a dataset because a pass through the entire dataset may be a very costly operation. Also, from the nature of local search, which examines all possible network alterations and picks the best one, majority of the possible alterations will be the same in consecutive steps of local search, therefore majority of the dataset queries will be the same. Usefulness of the cached entries depends on the course the local state-space search takes and as this is impossible to predict, LRU strategy (least recently used) is applied.
 
@@ -1288,11 +1314,11 @@ The value of $FamScore(X,Pa(X)^+)$ may be needed by edge addition or by edge rev
 
 
 \section{User interface}
-When speaking about user interface of the software outcome of this thesis, we may consider the \srccode{bnlib} library interface, which has been described in detail in earlier sections, and also graphical user interface (GUI) of the application presented in this thesis. This section will deal with the latter interpretation. We will briefly take a look at the internal logic and at some of its non-trivial parts.
+When speaking about user interface of the realization outcome of this thesis, we may consider the \srccode{bnlib} library interface, which has been described in detail in earlier sections, and also graphical user interface (GUI) of the application presented in this thesis. This section will deal with the latter interpretation. We will briefly take a look at the overall internal logic and at some of its non-trivial parts.
 
-\todo{state machine (what is enabled, what isn't)}
+A very important principle the whole GUI is build upon is the state machine principle. All the actions the user is enabled to do at the moment depend on the current state of things\,--\,do we have a network loaded, does the current network have valid CPDs, what is the current dataset if any, do the current dataset and the current network contain compatible variables? For example, in order to learn a complete network (both structure and parameters) and then to test its predictive capabilities on a test set we need to do the following steps: Load a training dataset, run structure learning, select a learnt structure so that it becomes the current network, learn CPDs of the current network (still using the training dataset), load the test dataset (containing the same set of variables as the training set) and finally perform the test of predictive power. So, the user is given a toolbox rather than a set of complex dialogs for all possible paths he chooses to follow, very much in the spirit of UNIX tools.
 
-\todo{GUI saves content of input fields, last network directory etc. to a file using \srccode{ini4j} package published under the Apache License 2.0.}
+To improve the user experience the GUI saves last state of its components to an \srccode{.ini} file, ie. contents of textfields, learning method that was last used, last query etc.
 
 \subsection{Network layout}
 Specific task that needs to be addressed when presenting a BN in graphical user interface is generating graphical layout of given BN so that it would be esthetically pleasing. Under this vague criteria we could imagine, for example, minimizing the number of crossing edges, minimizing edges lengths or forcing the graph or its parts to be symmetric. To generate such layout I used a~modification of hierarchical approach described in~\cite[p.~22]{graph_drawing}. The basic outline of my method is as follows:
@@ -1730,6 +1756,8 @@ Parameters of the structure learning procedure: 200 runs, 3\,000 iterations per 
 
 \subsection{Conclusion}
 In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a good bias-variance trade-off depending on the size of our dataset and because we can relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed up to three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
+
+\todo{There also exists an extension of Naïve Bayes, called Tree Augmented Naïve Bayes (TAM), that has the structure of Naïve Bayes model and furthermore allows for edges among attribute variables, as long as they don't form a V-structure. Advantage of TAM is that the optimal tree structure can be learnt in polynomial time whereas the learning of a more general Bayesian network, which I did, is generally NP-hard and therefore an optimization technique needs to be employed. (add citation, try to find a paper that employs TAM on spam)}
 
 
 \ignore{
