@@ -2,6 +2,8 @@
 package bna;
 
 import bna.bnlib.*;
+import bna.bnlib.io.DatasetCSVFileReader;
+import bna.bnlib.io.DatasetFileReader;
 import bna.bnlib.learning.*;
 import bna.bnlib.misc.TextualTable;
 import bna.bnlib.misc.Toolkit;
@@ -467,57 +469,54 @@ public class BNA {
         //final String NETWORK_FILE = "../../networks/cancer.net";
         //final String NETWORK_FILE = "../../networks/asia.net";
         final int MAX_PARENT_COUNT = 3;
-        try {
-            long timeStart, timeEnd;
-            System.out.println("Structure learning");
-            // sample some original network
-            System.out.println("Loading original network...");
-            BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
-            int N = bnOriginal.getNodeCount();
-            int maxAlterations = 2 * (N * (N - 1) / 2);
-            int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE);
-            // sample the network
-            System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
-            DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
-            SamplingController samplingController = new SamplingController(SAMPLES);
-            datasetSampler.sample(samplingController);
-            Dataset dataset = datasetSampler.getDataset();
-            
-            LearningController controller = new LearningController(MAX_ITERATIONS);
-            StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
-            constraints.setMaxParentCount(MAX_PARENT_COUNT);
-            BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
-            
-            // put the dataset cache in place
-            int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
-            LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
-            CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
-            
-            // learn using likelihood score
-            /*System.out.println("Learning structure by likelihood score...");
-            //BayesianNetwork bnInitial = new BayesianNetwork(dataset.getVariables());
-            ScoringMethod likelihoodScoringMethod = new LikelihoodScoringMethod(dataset);
-            StructureLearningAlgorithm likelihoodLearningAlgorithm = new HillClimbLearningAlgorithm(likelihoodScoringMethod);
-            BayesianNetwork bnResultLikelihood = likelihoodLearningAlgorithm.learn(bnInitial, controller);
-            System.out.println("Learning done!");
-            System.out.println("best structure:");
-            System.out.println(bnResultLikelihood.dumpStructure());
-            System.out.println("best total score: " + likelihoodScoringMethod.absoluteScore(bnResultLikelihood));
-            System.out.println("");*/
-            
-            // learn using likelihood score
-            timeStart = System.currentTimeMillis();
-            System.out.println("Learning structure by BIC score...");
-            DecomposableScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
-            StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
-            BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller, constraints);
-            timeEnd = System.currentTimeMillis();
-            System.out.printf("Learning done! (took %.2f s)\n", (timeEnd - timeStart) / 1000.0);
-            System.out.println("best structure:");
-            System.out.println(bnResultBIC.dumpStructure());
-            System.out.println("best total score: " + bicScoringMethod.absoluteScore(bnResultBIC));
-        }
-        finally {}
+        long timeStart, timeEnd;
+        System.out.println("Structure learning");
+        // sample some original network
+        System.out.println("Loading original network...");
+        BayesianNetwork bnOriginal = BayesianNetwork.loadFromFile(NETWORK_FILE);
+        int N = bnOriginal.getNodeCount();
+        int maxAlterations = 2 * (N * (N - 1) / 2);
+        int TABU_LIST_SIZE = (int)(maxAlterations * TABU_LIST_RELATIVE_SIZE);
+        // sample the network
+        System.out.println(String.format("Producing dataset with %d samples (to memory)...", SAMPLES));
+        DatasetCreationSampler datasetSampler = new DatasetCreationSampler(bnOriginal);
+        SamplingController samplingController = new SamplingController(SAMPLES);
+        datasetSampler.sample(samplingController);
+        Dataset dataset = datasetSampler.getDataset();
+
+        LearningController controller = new LearningController(MAX_ITERATIONS);
+        StructuralConstraints constraints = new StructuralConstraints(bnOriginal.getVariables());
+        constraints.setMaxParentCount(MAX_PARENT_COUNT);
+        BayesianNetwork bnInitial = bnOriginal.copyEmptyStructure();
+
+        // put the dataset cache in place
+        int LRU_CACHE_SIZE = N + 3 * (N * (N - 1) / 2); // TODO seems too small
+        LRU_CACHE_SIZE = (int)(LRU_CACHE_SIZE * 2.0); // edge
+        CachedDataset cachedDataset = new CachedDataset(dataset, LRU_CACHE_SIZE);
+
+        // learn using likelihood score
+        /*System.out.println("Learning structure by likelihood score...");
+        //BayesianNetwork bnInitial = new BayesianNetwork(dataset.getVariables());
+        ScoringMethod likelihoodScoringMethod = new LikelihoodScoringMethod(dataset);
+        StructureLearningAlgorithm likelihoodLearningAlgorithm = new HillClimbLearningAlgorithm(likelihoodScoringMethod);
+        BayesianNetwork bnResultLikelihood = likelihoodLearningAlgorithm.learn(bnInitial, controller);
+        System.out.println("Learning done!");
+        System.out.println("best structure:");
+        System.out.println(bnResultLikelihood.dumpStructure());
+        System.out.println("best total score: " + likelihoodScoringMethod.absoluteScore(bnResultLikelihood));
+        System.out.println("");*/
+
+        // learn using likelihood score
+        timeStart = System.currentTimeMillis();
+        System.out.println("Learning structure by BIC score...");
+        DecomposableScoringMethod bicScoringMethod = new BICScoringMethod(cachedDataset);
+        StructureLearningAlgorithm learningAlgorithm = new TabuSearchLearningAlgorithm(bicScoringMethod, TABU_LIST_SIZE, RANDOM_RESTART_STEPS);
+        BayesianNetwork bnResultBIC = learningAlgorithm.learn(bnInitial, controller, constraints);
+        timeEnd = System.currentTimeMillis();
+        System.out.printf("Learning done! (took %.2f s)\n", (timeEnd - timeStart) / 1000.0);
+        System.out.println("best structure:");
+        System.out.println(bnResultBIC.dumpStructure());
+        System.out.println("best total score: " + bicScoringMethod.absoluteScore(bnResultBIC));
     }
     
     private static void playing_structure_learning_evaluation() {

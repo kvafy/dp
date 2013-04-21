@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 
 /**
- * Template method object for reading a Bayesian network specification from file.
+ * Template method object for reading a Bayesian network specification from a file.
  */
 public abstract class BayesianNetworkFileReader {
     protected String filename;

@@ -7,6 +7,8 @@ package bna.view;
 import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Variable;
+import bna.bnlib.io.BayesianNetworkFileWriter;
+import bna.bnlib.io.BayesianNetworkNetFileWriter;
 import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
 import java.io.File;
@@ -214,6 +216,11 @@ public class MainWindow extends javax.swing.JFrame {
         menuNetwork.add(menuItemLoadNetwork);
 
         menuItemSaveNetwork.setText("Save to file");
+        menuItemSaveNetwork.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemSaveNetworkActionPerformed(evt);
+            }
+        });
         menuNetwork.add(menuItemSaveNetwork);
 
         menuItemQuery.setText("Query");
@@ -308,7 +315,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 408, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 412, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -433,6 +440,26 @@ public class MainWindow extends javax.swing.JFrame {
         DialogPredictionTest dialog = new DialogPredictionTest(this, true, bnCurrent, dataset);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemTestPredictionAccuracyActionPerformed
+
+    private void menuItemSaveNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemSaveNetworkActionPerformed
+        String lastNetworkDirectory = this.getConfiguration("Network", "directory");
+        if(lastNetworkDirectory == null)
+            lastNetworkDirectory = ".";
+        JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
+        networkFileChooser.setDialogTitle("Save the current network to file");
+        networkFileChooser.showSaveDialog(this);
+        if(networkFileChooser.getSelectedFile() == null)
+            return;
+        this.setConfiguration("Network", "directory", networkFileChooser.getSelectedFile().getParent());
+        try {
+            BayesianNetwork bnCurrent = this.panelNetworkView.getNetwork();
+            BayesianNetworkFileWriter writer = new BayesianNetworkNetFileWriter(networkFileChooser.getSelectedFile().getPath());
+            writer.save(bnCurrent);
+        }
+        catch(BNLibIOException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error saving the network", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_menuItemSaveNetworkActionPerformed
 
     /**
      * @param args the command line arguments

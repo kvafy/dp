@@ -8,7 +8,13 @@ import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Factor;
 import bna.bnlib.Node;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 
 /**
@@ -19,12 +25,14 @@ import java.util.Arrays;
  */
 public class GBayesianNetwork {
     private final BayesianNetwork bn;
-    private final GNode[] gnodes;
+    private GNode[] gnodes;
     
     // TODO kompletne jinak (uz NetworkLayoutGenerator vrati GBayesianNetwork)
     public GBayesianNetwork(BayesianNetwork bn, GNode[] gnodes) {
         this.bn = bn;
         this.gnodes = Arrays.copyOf(gnodes, gnodes.length);
+        for(GNode gnode : this.gnodes)
+            gnode.ownerBN = this;
         this.notifyCPDsChange();
     }
     
@@ -32,8 +40,35 @@ public class GBayesianNetwork {
         return this.bn;
     }
     
-    public GNode[] getGNodes() {
+    GNode[] getGNodes() {
         return Arrays.copyOf(this.gnodes, this.gnodes.length);
+    }
+    
+    /** Remove a dummy node by connecting its only parent and its only child directly. */
+    void removeDummyNode(GNode node) {
+        if(node == null || !(node instanceof GNodeDummy) || !bna.bnlib.misc.Toolkit.arrayContains(this.gnodes, node))
+            return;
+        GNodeDummy dnode = (GNodeDummy)node;
+        // break the connections (make transitive)
+        for(GNode dnodeParent : dnode.parents)
+            dnodeParent.removeDummyChild(dnode);
+        for(GNode dnodeChild : dnode.children)
+            dnodeChild.removeDummyParent(dnode);
+        // remove the node from this.gnodes array
+        GNode[] gnodesNew = new GNode[this.gnodes.length - 1];
+        int j = 0;
+        for(int i = 0 ; i < this.gnodes.length ; i++) {
+            if(this.gnodes[i] == dnode)
+                continue;
+            gnodesNew[j++] = this.gnodes[i];
+        }
+        
+        this.gnodes = gnodesNew;
+        java.awt.Container parentComponent = dnode.getParent();
+        if(parentComponent != null) {
+            parentComponent.remove(dnode);
+            parentComponent.repaint();
+        }
     }
     
     public Point getTopLeft() {
@@ -86,6 +121,7 @@ public class GBayesianNetwork {
 
 /** General node in graphical representation of a BN (variable node or dummy node). */
 abstract class GNode extends DraggableComponent {
+    GBayesianNetwork ownerBN;
     GNode[] parents, children;
     
     public GNode() {
@@ -104,6 +140,26 @@ abstract class GNode extends DraggableComponent {
     /** Place the node so that its center is at the specified location relative to parent. */
     public void setLocationByCenter(int cx, int cy) {
         this.setLocation(cx - this.getWidth() / 2, cy - this.getHeight() / 2);
+    }
+    
+    public void removeDummyParent(GNode parentToRemove) {
+        GNode parentTransitive = parentToRemove.parents[0]; // exactly one parent
+        for(int i = 0 ; i < this.parents.length ; i++) {
+            if(this.parents[i].equals(parentToRemove)) {
+                this.parents[i] = parentTransitive;
+                return;
+            }
+        }
+    }
+    
+    public void removeDummyChild(GNode childToRemove) {
+        GNode childTransitive = childToRemove.children[0]; // exactly one child
+        for(int i = 0 ; i < this.children.length ; i++) {
+            if(this.children[i].equals(childToRemove)) {
+                this.children[i] = childTransitive;
+                return;
+            }
+        }
     }
 }
 
@@ -171,6 +227,13 @@ class GNodeDummy extends GNode {
     
     public GNodeDummy() {
         this.setSize(GNodeDummy.SQUARE_SIZE, GNodeDummy.SQUARE_SIZE);
+        
+        this.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if(e.getButton() == MouseEvent.BUTTON3)
+                    onRightMouse(e);
+            }
+        });
     }
     
     @Override
@@ -183,5 +246,18 @@ class GNodeDummy extends GNode {
         // do nothing (dummy node is transparent)
         g.setColor(Color.RED);
         g.drawRect(0, 0, this.getWidth() - 1, this.getHeight() - 1);
+    }
+    
+    private void onRightMouse(MouseEvent e) {
+        final GNode thisNode = this;
+        // create popup menu
+        JMenuItem menuRemoveNode = new JMenuItem("Remove node");
+        menuRemoveNode.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { ownerBN.removeDummyNode(thisNode); }
+        });
+        JPopupMenu menu = new JPopupMenu("Node options");
+        menu.add(menuRemoveNode);
+        // show menu
+        menu.show(this, e.getPoint().x, e.getPoint().y);
     }
 }
