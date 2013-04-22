@@ -8,6 +8,7 @@ import bna.bnlib.BNLibInternalException;
 import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Node;
 import bna.bnlib.misc.Toolkit;
+import java.awt.Point;
 import java.util.*;
 
 
@@ -59,7 +60,11 @@ public class NetworkLayoutGenerator {
         // convert LNodes to GNodes (resp. to one of its subclasses) and also convert the grid coordinates to canvas coordinates
         GNode[] gnodes = NetworkLayoutGenerator.lnodesTOgnodes(relativeOrder);
         
-        return new GBayesianNetwork(bn, gnodes);
+        // optionally remove some dummy nodes
+        GBayesianNetwork gbn = new GBayesianNetwork(bn, gnodes);
+        NetworkLayoutGenerator.removeInconvenientDummyNodes(gbn);
+        
+        return gbn;
     }
     
     private static LNode[] copyNodeStructure(Node[] nodes) {
@@ -550,6 +555,31 @@ public class NetworkLayoutGenerator {
         
         // the final fitness function
         return -(edgeLenghtsSum2 + edgeTypesCountPerNode + edgeTypesCountPerLayer + maxGap2WithinLayerSum);
+    }
+    
+    private static void removeInconvenientDummyNodes(GBayesianNetwork gbn) {
+        double angleTolerance; // what maximal angle change is still considered a "straight line"
+        if(gbn.getDummyNodesCount() < gbn.getVariableNodesCount())
+            angleTolerance = 5;
+        else
+            angleTolerance = 15;
+        
+        // remove dummy nodes that lie on a straight line and therefore are totally useless
+        for(GNode gnode : gbn.getGNodes()) {
+            if(gnode instanceof GNodeDummy) {
+                Point locMe = gnode.getCenterOnCanvas(),
+                      locPa = gnode.parents[0].getCenterOnCanvas(),
+                      locCh = gnode.children[0].getCenterOnCanvas();
+                double dyPa = locPa.y - locMe.y,
+                       dxPa = locPa.x - locMe.x,
+                       dyCh = locMe.y - locCh.y,
+                       dxCh = locMe.x - locCh.x;
+                double anglePa = Math.atan(dyPa / dxPa) * 180 / Math.PI,
+                       angleCh = Math.atan(dyCh / dxCh) * 180 / Math.PI;
+                if(dxCh == 0 && dxPa == 0 || Toolkit.doubleEquals(anglePa, angleCh, angleTolerance))
+                    gbn.removeDummyNode(gnode);
+            }
+        }
     }
     
     

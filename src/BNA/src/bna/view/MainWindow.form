@@ -120,9 +120,9 @@
             </MenuItem>
           </SubComponents>
         </Menu>
-        <Menu class="javax.swing.JMenu" name="menuHelp">
+        <Menu class="javax.swing.JMenu" name="menuAbout">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Help"/>
+            <Property name="text" type="java.lang.String" value="About"/>
           </Properties>
         </Menu>
       </SubComponents>
@@ -170,7 +170,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="tabbedPane" min="-2" pref="412" max="32767" attributes="0"/>
+              <Component id="tabbedPane" min="-2" pref="416" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
           </Group>
       </Group>

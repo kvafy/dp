@@ -46,6 +46,8 @@ public class DialogParametersLearning extends javax.swing.JDialog {
         // equivalent sample size
         String alphaStr = mw.getConfiguration("LearningParameters", "alpha");
         this.textFieldEquivalentSampleSize.setText(alphaStr);
+        
+        mw.loadWindowBounds(this, "DialogParametersLearning");
     }
     
     private void saveConfiguration() {
@@ -101,6 +103,14 @@ public class DialogParametersLearning extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Learn parameters for the current network");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         jLabel2.setText("Equivalent sample size");
 
@@ -198,6 +208,14 @@ public class DialogParametersLearning extends javax.swing.JDialog {
         this.confirmed = false;
         this.dispose();
     }//GEN-LAST:event_buttonCancelActionPerformed
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogParametersLearning");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogParametersLearning");
+    }//GEN-LAST:event_formComponentResized
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

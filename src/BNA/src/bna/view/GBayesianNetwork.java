@@ -71,6 +71,22 @@ public class GBayesianNetwork {
         }
     }
     
+    int getVariableNodesCount() {
+        int count = 0;
+        for(GNode gnode : this.gnodes)
+            if(gnode instanceof GNodeVariable)
+                count++;
+        return count;
+    }
+    
+    int getDummyNodesCount() {
+        int count = 0;
+        for(GNode gnode : this.gnodes)
+            if(gnode instanceof GNodeDummy)
+                count++;
+        return count;
+    }
+    
     public Point getTopLeft() {
         int xMin = Integer.MAX_VALUE,
             yMin = Integer.MAX_VALUE;

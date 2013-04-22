@@ -34,8 +34,8 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         this.bn = bn;
         this.dataset = dataset;
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(this.getParent());
+        this.loadConfiguration();
     }
     
     private void loadConfiguration() {
@@ -47,6 +47,7 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         }
         catch(NumberFormatException ex) {}
         catch(IllegalArgumentException ex) {}
+        mw.loadWindowBounds(this, "DialogPredictionTest");
     }
     
     private void saveConfiguration() {
@@ -165,6 +166,14 @@ public class DialogPredictionTest extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Prediction accuracy test");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         labelPath.setText("Target attribute");
 
@@ -239,6 +248,14 @@ public class DialogPredictionTest extends javax.swing.JDialog {
         
         this.saveConfiguration();
     }//GEN-LAST:event_buttonTestActionPerformed
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogPredictionTest");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogPredictionTest");
+    }//GEN-LAST:event_formComponentResized
 
     /** Thread that carries out the prediction testing and notifies GUI. */
     class PredictionTestingThread extends Thread {

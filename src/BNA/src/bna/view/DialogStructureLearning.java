@@ -44,8 +44,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         this.dataset = dataset; // tables need to access the dataset variables
         this.bnOriginal = bnOriginal;
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(parent);
+        this.loadConfiguration();
         this.initializeEdgeFrequenciesTable();
         this.initializeNetworksSelectionCombobox();
     }
@@ -122,6 +122,8 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         }
         catch(NumberFormatException nfe) {}
         catch(IllegalArgumentException ex) {} // invalid index
+        
+        mw.loadWindowBounds(this, "DialogStructureLearning");
     }
     
     private void saveConfiguration() {
@@ -346,6 +348,14 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
+            }
+        });
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
             }
         });
 
@@ -689,6 +699,14 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         boolean bayesianScoringMethod = this.comboBoxMethod.getSelectedIndex() == 1;
         this.textFieldAlpha.setEnabled(bayesianScoringMethod);
     }//GEN-LAST:event_comboBoxMethodItemStateChanged
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogStructureLearning");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogStructureLearning");
+    }//GEN-LAST:event_formComponentResized
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

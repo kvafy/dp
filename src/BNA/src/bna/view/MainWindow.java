@@ -11,9 +11,15 @@ import bna.bnlib.io.BayesianNetworkFileWriter;
 import bna.bnlib.io.BayesianNetworkNetFileWriter;
 import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
@@ -77,6 +83,7 @@ public class MainWindow extends javax.swing.JFrame {
         catch(IOException ex) {
             this.configuration = new Ini();
         }
+        this.loadWindowBounds(this, "MainWindow");
     }
     
     /** Saves configurations in persistent form. */
@@ -116,6 +123,27 @@ public class MainWindow extends javax.swing.JFrame {
     
     void notifyActiveDatasetChange() {
         this.enableComponentsByState();
+    }
+    
+    void loadWindowBounds(java.awt.Window window, String id) {
+        String boundsStr = this.getConfiguration("WindowBounds", id);
+        if(boundsStr == null)
+            return;
+        Pattern pattern = Pattern.compile("^(\\d+)x(\\d+),(\\d+)x(\\d+)$");
+        Matcher matcher = pattern.matcher(boundsStr);
+        if(!matcher.matches())
+            return;
+        int x = Integer.valueOf(matcher.group(1)),
+            y = Integer.valueOf(matcher.group(2)) - window.getInsets().top, // compensate for titlebar
+            width = Integer.valueOf(matcher.group(3)),
+            height = Integer.valueOf(matcher.group(4));
+        window.setBounds(x, y, width, height);
+    }
+    
+    void saveWindowBounds(java.awt.Window window, String id) {
+        Rectangle bounds = window.getBounds();
+        String boundsStr = String.format("%dx%d,%dx%d", bounds.x, bounds.y, bounds.width, bounds.height);
+        this.setConfiguration("WindowBounds", id, boundsStr);
     }
     
     private boolean networkAndDatasetAreCompatible() {
@@ -166,7 +194,7 @@ public class MainWindow extends javax.swing.JFrame {
         menuLearning = new javax.swing.JMenu();
         menuItemLearnParameters = new javax.swing.JMenuItem();
         menuItemLearnStructure = new javax.swing.JMenuItem();
-        menuHelp = new javax.swing.JMenu();
+        menuAbout = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Bayesian networks applications");
@@ -297,8 +325,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         jMenuBar1.add(menuLearning);
 
-        menuHelp.setText("Help");
-        jMenuBar1.add(menuHelp);
+        menuAbout.setText("About");
+        jMenuBar1.add(menuAbout);
 
         setJMenuBar(jMenuBar1);
 
@@ -315,7 +343,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 412, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 416, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -409,10 +437,12 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItemLearnStructureActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        this.saveWindowBounds(this, "MainWindow");
         this.saveConfiguration();
     }//GEN-LAST:event_formWindowClosed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        this.saveWindowBounds(this, "MainWindow");
         this.saveConfiguration();
     }//GEN-LAST:event_formWindowClosing
 
@@ -505,9 +535,9 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JTable datasetTable;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JMenu menuAbout;
     private javax.swing.JMenu menuDataset;
     private javax.swing.JMenu menuFile;
-    private javax.swing.JMenu menuHelp;
     private javax.swing.JMenuItem menuItemExit;
     private javax.swing.JMenuItem menuItemExportDataset;
     private javax.swing.JMenuItem menuItemImportDataset;

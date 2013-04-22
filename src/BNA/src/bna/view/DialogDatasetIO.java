@@ -32,8 +32,8 @@ public class DialogDatasetIO extends javax.swing.JDialog {
     public DialogDatasetIO(java.awt.Frame parent, boolean modal, int action) {
         super(parent, modal);
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(this.getParent());
+        this.loadConfiguration();
         this.action = action;
         this.setCustomizeByAction();
     }
@@ -46,6 +46,7 @@ public class DialogDatasetIO extends javax.swing.JDialog {
             this.datasetDirectory = ".";
         // csv separator
         this.textFieldSeparator.setText(mw.getConfiguration("Dataset", "separator"));
+        mw.loadWindowBounds(this, "DialogDatasetIO");
     }
     
     private void saveConfiguration() {
@@ -141,6 +142,14 @@ public class DialogDatasetIO extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Import dataset from a CSV file");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         labelPath.setText("CSV file");
 
@@ -241,6 +250,14 @@ public class DialogDatasetIO extends javax.swing.JDialog {
             this.datasetDirectory = chooser.getSelectedFile().getParent();
         }
     }//GEN-LAST:event_textFieldFilenameMouseClicked
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogDatasetIO");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogDatasetIO");
+    }//GEN-LAST:event_formComponentResized
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonCancel;

@@ -26,8 +26,8 @@ public class DialogQuerySampling extends javax.swing.JDialog {
     public DialogQuerySampling(java.awt.Frame parent, boolean modal, BayesianNetwork bn) {
         super(parent, modal);
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(parent);
+        this.loadConfiguration();
         this.bn = bn;
     }
     
@@ -52,6 +52,8 @@ public class DialogQuerySampling extends javax.swing.JDialog {
             this.checkBoxOnline.setSelected(onlineFlag != 0);
         }
         catch(NumberFormatException nfe) {}
+        
+        mw.loadWindowBounds(this, "DialogQuerySampling");
     }
     
     private void saveConfiguration() {
@@ -93,6 +95,14 @@ public class DialogQuerySampling extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Answer a probabilistic query");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         jLabel1.setText("Number of samples");
 
@@ -290,6 +300,14 @@ public class DialogQuerySampling extends javax.swing.JDialog {
     private void checkBoxOnlineStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_checkBoxOnlineStateChanged
         this.textFieldTheadCount.setEnabled(!this.checkBoxOnline.isSelected());
     }//GEN-LAST:event_checkBoxOnlineStateChanged
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogQuerySampling");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogQuerySampling");
+    }//GEN-LAST:event_formComponentResized
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

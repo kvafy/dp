@@ -22,8 +22,13 @@ public class DialogNetworkStatistics extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.setLocationRelativeTo(parent);
+        this.loadConfiguration();
         this.bn = bn;
         this.fillStatisticalValues();
+    }
+    
+    private void loadConfiguration() {
+        MainWindow.getInstance().loadWindowBounds(this, "DialogNetworkStatistics");
     }
     
     private void fillStatisticalValues() {
@@ -61,6 +66,14 @@ public class DialogNetworkStatistics extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Network statistics");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         jLabel1.setText("Out-degree (min/max/ave):");
 
@@ -129,6 +142,14 @@ public class DialogNetworkStatistics extends javax.swing.JDialog {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogNetworkStatistics");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogNetworkStatistics");
+    }//GEN-LAST:event_formComponentResized
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

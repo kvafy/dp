@@ -23,14 +23,15 @@ public class DialogSampleDataset extends javax.swing.JDialog {
     public DialogSampleDataset(java.awt.Frame parent, boolean modal, BayesianNetwork bnToSample) {
         super(parent, modal);
         initComponents();
-        this.loadConfiguration();
         this.setLocationRelativeTo(this.getParent());
+        this.loadConfiguration();
         this.bn = bnToSample;
     }
     
     private void loadConfiguration() {
         MainWindow mw = MainWindow.getInstance();
         this.textFieldSampleCount.setText(mw.getConfiguration("DatasetSampling", "sample_count"));
+        mw.loadWindowBounds(this, "DialogSampleDataset");
     }
     
     private void saveConfiguration() {
@@ -102,6 +103,14 @@ public class DialogSampleDataset extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Replace dataset by sampling");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+            public void componentMoved(java.awt.event.ComponentEvent evt) {
+                formComponentMoved(evt);
+            }
+        });
 
         jLabel1.setText("Number of samples");
 
@@ -174,6 +183,14 @@ public class DialogSampleDataset extends javax.swing.JDialog {
         if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER)
             this.performSampling();
     }//GEN-LAST:event_textFieldSampleCountKeyPressed
+
+    private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
+        MainWindow.getInstance().saveWindowBounds(this, "DialogSampleDataset");
+    }//GEN-LAST:event_formComponentMoved
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        MainWindow.getInstance().saveWindowBounds(this, "DialogSampleDataset");
+    }//GEN-LAST:event_formComponentResized
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonCancel;
