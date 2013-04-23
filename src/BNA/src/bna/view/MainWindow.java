@@ -11,9 +11,6 @@ import bna.bnlib.io.BayesianNetworkFileWriter;
 import bna.bnlib.io.BayesianNetworkNetFileWriter;
 import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileReader;
@@ -134,9 +131,14 @@ public class MainWindow extends javax.swing.JFrame {
         if(!matcher.matches())
             return;
         int x = Integer.valueOf(matcher.group(1)),
-            y = Integer.valueOf(matcher.group(2)) - window.getInsets().top, // compensate for titlebar
+            y = Integer.valueOf(matcher.group(2)), 
             width = Integer.valueOf(matcher.group(3)),
             height = Integer.valueOf(matcher.group(4));
+        if(window != this) {
+            // compensate for insents (titlebar and borders) of the main window
+            x -= this.getInsets().left;
+            y -= this.getInsets().top;
+        }
         window.setBounds(x, y, width, height);
     }
     

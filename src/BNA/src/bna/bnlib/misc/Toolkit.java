@@ -293,7 +293,10 @@ public class Toolkit {
         return closure;
     }
     
-    /** Compute the angle (in radians) of vector determined by the specified points. */
+    /**
+     * Compute the angle (in radians) of vector determined by the specified points.
+     * The resulting angle is from interval [0, 2pi)
+     */
     public static double angleOfVector(Point begin, Point end) {
         double dx = end.x - begin.x,
                dy = end.y - begin.y;
@@ -306,6 +309,13 @@ public class Toolkit {
             else
                 return Math.PI + Math.atan(dy / dx);
         }
+    }
+    
+    /** Takes two angles in the interval [0, 2pi) and returns their difference [0, pi). */
+    public static double angleDiff(double a, double b) {
+        if(a > b)
+            return angleDiff(b, a); // ensure a <= b
+        return Math.min(b - a, 2 * Math.PI - b + a);
     }
     
     /** Compute unique floating point numbers when considering epsilon tolerance. */
@@ -321,6 +331,22 @@ public class Toolkit {
                 count++;
         }
         return count;
+    }
+    
+    /** Joins all the strings to a single string, each two occurences separated by separator. */
+    public static String stringJoin(String[] strs, String separator) {
+        if(strs == null)
+            return null;
+        if(separator == null)
+            separator = "";
+        StringBuilder sb = new StringBuilder();
+        if(strs.length > 0)
+            sb.append(strs[0]);
+        for(int i = 1 ; i < strs.length ; i++) {
+            sb.append(separator);
+            sb.append(strs[i]);
+        }
+        return sb.toString();
     }
     
     /** Method to overcome the "generic array creation" problem. */

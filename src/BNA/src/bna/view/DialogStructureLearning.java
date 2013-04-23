@@ -402,6 +402,7 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         tableAllowedConnections.setModel(new javax.swing.table.DefaultTableModel());
         tableAllowedConnections.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         tableAllowedConnections.setColumnSelectionAllowed(true);
+        tableAllowedConnections.getTableHeader().setReorderingAllowed(false);
         jScrollPane3.setViewportView(tableAllowedConnections);
         ((AllowedConnectionsTable)tableAllowedConnections).initModel();
 

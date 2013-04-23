@@ -189,6 +189,15 @@ class GNodeVariable extends GNode {
     public GNodeVariable(Node node) {
         this.node = node;
         this.setSize(2 * GNodeVariable.RADIUS, 2 * GNodeVariable.RADIUS);
+        
+        this.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if(e.getButton() == MouseEvent.BUTTON3)
+                    onRightMouse(e);
+                if(e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2)
+                    onDoubleLeftMouse(e);
+            }
+        });
     }
     
     @Override
@@ -234,6 +243,27 @@ class GNodeVariable extends GNode {
         textLeftCorner = Math.max(2, textLeftCorner); // preserve at leas the beginning of the variable name
         g.drawString(text, textLeftCorner, textBottomCorner);
     }
+    
+    private void onRightMouse(MouseEvent e) {
+        // create popup menu
+        JMenuItem menuShowDetails = new JMenuItem("Show details");
+        menuShowDetails.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { showDetailsDialog(); }
+        });
+        JPopupMenu menu = new JPopupMenu("Options of variable node");
+        menu.add(menuShowDetails);
+        // show menu
+        menu.show(this, e.getPoint().x, e.getPoint().y);
+    }
+    
+    private void onDoubleLeftMouse(MouseEvent e) {
+        showDetailsDialog();
+    }
+    
+    private void showDetailsDialog() {
+        DialogNodeInfo dialog = new DialogNodeInfo(MainWindow.getInstance(), true, this.node);
+        dialog.setVisible(true);
+    }
 }
 
 
@@ -271,7 +301,7 @@ class GNodeDummy extends GNode {
         menuRemoveNode.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) { ownerBN.removeDummyNode(thisNode); }
         });
-        JPopupMenu menu = new JPopupMenu("Node options");
+        JPopupMenu menu = new JPopupMenu("Options of dummy node");
         menu.add(menuRemoveNode);
         // show menu
         menu.show(this, e.getPoint().x, e.getPoint().y);

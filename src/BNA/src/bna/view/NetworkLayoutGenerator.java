@@ -559,29 +559,36 @@ public class NetworkLayoutGenerator {
     
     private static void removeInconvenientDummyNodes(GBayesianNetwork gbn) {
         double angleTolerance; // what maximal angle change is still considered a "straight line"
-        if(gbn.getDummyNodesCount() < gbn.getVariableNodesCount())
+        double realToDummyRatio = ((double)gbn.getVariableNodesCount()) / gbn.getDummyNodesCount();
+        if(realToDummyRatio > 2 || gbn.getVariableNodesCount() <= 10 || gbn.getDummyNodesCount() == 0)
             angleTolerance = 5;
-        else
+        else if(realToDummyRatio > 1.0)
             angleTolerance = 15;
+        else
+            angleTolerance = 30;
         
-        // remove dummy nodes that lie on a straight line and therefore are totally useless
-        for(GNode gnode : gbn.getGNodes()) {
-            if(gnode instanceof GNodeDummy) {
-                Point locMe = gnode.getCenterOnCanvas(),
-                      locPa = gnode.parents[0].getCenterOnCanvas(),
-                      locCh = gnode.children[0].getCenterOnCanvas();
-                double dyPa = locPa.y - locMe.y,
-                       dxPa = locPa.x - locMe.x,
-                       dyCh = locMe.y - locCh.y,
-                       dxCh = locMe.x - locCh.x;
-                double anglePa = Math.atan(dyPa / dxPa) * 180 / Math.PI,
-                       angleCh = Math.atan(dyCh / dxCh) * 180 / Math.PI;
-                if(dxCh == 0 && dxPa == 0 || Toolkit.doubleEquals(anglePa, angleCh, angleTolerance))
-                    gbn.removeDummyNode(gnode);
+        boolean removedSomething;
+        do {
+            removedSomething = false;
+            // remove dummy nodes that lie on a straight line and therefore are totally useless
+            for(GNode gnode : gbn.getGNodes()) {
+                if(gnode instanceof GNodeDummy) {
+                    Point locMe = gnode.getCenterOnCanvas(),
+                          locPa = gnode.parents[0].getCenterOnCanvas(),
+                          locCh = gnode.children[0].getCenterOnCanvas();
+                    double anglePa = Toolkit.angleOfVector(locMe, locPa),
+                           angleCh = Toolkit.angleOfVector(locCh, locMe);
+                    double angleDiff = Toolkit.angleDiff(anglePa, angleCh) * (180 / Math.PI);
+                    if(Toolkit.doubleEquals(angleDiff, 0.0, angleTolerance)) {
+                        gbn.removeDummyNode(gnode);
+                        removedSomething = true;
+                    }
+                }
             }
-        }
+        } while(removedSomething);
+        
+        // TODO remove dummy nodes that don't cause crossing over some real node
     }
-    
     
     /** Structure only for computations of the layout (only within this file). */
     static class LNode {
