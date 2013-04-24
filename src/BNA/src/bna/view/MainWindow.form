@@ -50,10 +50,19 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuItemNetworkStatistics">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Statistics"/>
+                <Property name="text" type="java.lang.String" value="Show statistics"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuItemNetworkStatisticsActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JCheckBoxMenuItem" name="menuItemShowEdgeWeights">
+              <Properties>
+                <Property name="selected" type="boolean" value="true"/>
+                <Property name="text" type="java.lang.String" value="Display edge weights (needs a dataset)"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuItemShowEdgeWeightsActionPerformed"/>
               </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuItemTestPredictionAccuracy">

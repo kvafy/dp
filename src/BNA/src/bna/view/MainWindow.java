@@ -40,9 +40,14 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         this.enableComponentsByState();
         this.configureTooltips();
         this.loadConfiguration();
-        // observer current network and current dataset
+        
+        // the main windows is observer of the current network and of the current dataset
         this.panelNetworkView.addObserver(this);
         ((DatasetViewTable)this.datasetTable).addObserver(this);
+        // network viewer observes current dataset (for edge weights)
+        ((DatasetViewTable)this.datasetTable).addObserver(this.panelNetworkView);
+        
+        //javax.swing.JColorChooser.showDialog(this, "HSB colors", null);
     }
     
     public static MainWindow getInstance() {
@@ -56,6 +61,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         this.menuItemSaveNetwork.setEnabled(hasNetwork);
         this.menuItemQuery.setEnabled(hasNetwork);
         this.menuItemNetworkStatistics.setEnabled(hasNetwork);
+        this.menuItemShowEdgeWeights.setEnabled(hasNetwork);
         this.menuItemTestPredictionAccuracy.setEnabled(hasNetwork && hasDataset);
         // menu "Dataset" and its items
         this.menuItemExportDataset.setEnabled(hasDataset);
@@ -83,11 +89,25 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         catch(IOException ex) {
             this.configuration = new Ini();
         }
+        
+        // configure the main window
         this.loadWindowBounds(this, "MainWindow");
+        String optionShowEdgeWeightsStr = this.getConfiguration("MainWindow", "show_edge_weights");
+        try {
+            int optionEdgeWeights = Integer.parseInt(optionShowEdgeWeightsStr);
+            this.menuItemShowEdgeWeights.setSelected(optionEdgeWeights != 0);
+        }
+        catch(NumberFormatException ex) {}
+        this.panelNetworkView.setShowEdgeWeights(this.menuItemShowEdgeWeights.isSelected());
     }
     
     /** Saves configurations in persistent form. */
     private void saveConfiguration() {
+        // save main window configuration
+        String optionShowEdgeWeightsStr = this.menuItemShowEdgeWeights.isSelected() ? "1" : "0";
+        this.setConfiguration("MainWindow", "show_edge_weights", optionShowEdgeWeightsStr);
+        
+        // save options of the whole application to a file
         try {
             if(this.configuration != null)
                 this.configuration.store(new File(MainWindow.CONFIG_FILENAME));
@@ -152,25 +172,6 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         String boundsStr = String.format("%dx%d,%dx%d", bounds.x, bounds.y, bounds.width, bounds.height);
         this.setConfiguration("WindowBounds", id, boundsStr);
     }
-    
-    private boolean networkAndDatasetAreCompatible() {
-        BayesianNetwork currentNetwork = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
-        Variable[] networkVariables = currentNetwork.getVariables();
-        Dataset currentDataset = ((DatasetViewTable)this.datasetTable).getDataset();
-        Variable[] datasetVariables = currentDataset.getVariables();
-        // test whether variables have the same name
-        boolean sameVariableNames = Toolkit.areEqual(networkVariables, datasetVariables);
-        if(!sameVariableNames)
-            return false;
-        // test whether variables have the same set of values
-        for(Variable bnVar : networkVariables) {
-            int index = Toolkit.indexOf(datasetVariables, bnVar);
-            Variable datasetVar = datasetVariables[index];
-            if(!Toolkit.areEqual(bnVar.getValues(), datasetVar.getValues()))
-                return false;
-        }
-        return true;
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -193,6 +194,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         menuItemSaveNetwork = new javax.swing.JMenuItem();
         menuItemQuery = new javax.swing.JMenuItem();
         menuItemNetworkStatistics = new javax.swing.JMenuItem();
+        menuItemShowEdgeWeights = new javax.swing.JCheckBoxMenuItem();
         menuItemTestPredictionAccuracy = new javax.swing.JMenuItem();
         menuDataset = new javax.swing.JMenu();
         menuItemImportDataset = new javax.swing.JMenuItem();
@@ -266,13 +268,22 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         });
         menuNetwork.add(menuItemQuery);
 
-        menuItemNetworkStatistics.setText("Statistics");
+        menuItemNetworkStatistics.setText("Show statistics");
         menuItemNetworkStatistics.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuItemNetworkStatisticsActionPerformed(evt);
             }
         });
         menuNetwork.add(menuItemNetworkStatistics);
+
+        menuItemShowEdgeWeights.setSelected(true);
+        menuItemShowEdgeWeights.setText("Display edge weights (needs a dataset)");
+        menuItemShowEdgeWeights.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemShowEdgeWeightsActionPerformed(evt);
+            }
+        });
+        menuNetwork.add(menuItemShowEdgeWeights);
 
         menuItemTestPredictionAccuracy.setText("Test prediction accuracy");
         menuItemTestPredictionAccuracy.addActionListener(new java.awt.event.ActionListener() {
@@ -415,14 +426,14 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     }//GEN-LAST:event_menuItemSampleNewDatasetActionPerformed
 
     private void menuItemLearnParametersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnParametersActionPerformed
-        if(!this.networkAndDatasetAreCompatible()) {
-            String msg = "Current network and current dataset must contain exactly the same variables\n"
-                       + "with the same sets of possible assignments.";
+        BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
+        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
+        if(!dataset.containsVariables(bn.getVariables())) {
+            String msg = "Current network may not contain any variable that\n"
+                       + "isn't present in the current dataset.";
             JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        BayesianNetwork bn = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
-        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
         DialogParametersLearning dialog = new DialogParametersLearning(this, true, bn, dataset);
         dialog.setVisible(true);
         if(dialog.confirmed)
@@ -456,12 +467,12 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         BayesianNetwork bnCurrent = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
         Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
         if(!bnCurrent.hasValidCPDs()) {
-            String msg = "Current network has invalid CPDs and therefore cannot be used for classification.\n"
-                       + "You probably learnt just network structure but not the parameters.";
+            String msg = "Current network may not contain any variable that\n"
+                       + "isn't present in the current dataset.";
             JOptionPane.showMessageDialog(this,msg, "Cannot use network for classification", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if(!this.networkAndDatasetAreCompatible()) {
+        if(!dataset.containsVariables(bnCurrent.getVariables())) {
             String msg = "Current network and current dataset must contain exactly the same variables\n"
                        + "with the same sets of possible assignments.";
             JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
@@ -490,6 +501,11 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error saving the network", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_menuItemSaveNetworkActionPerformed
+
+    private void menuItemShowEdgeWeightsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemShowEdgeWeightsActionPerformed
+        boolean showEdgeWeights = this.menuItemShowEdgeWeights.isSelected();
+        this.panelNetworkView.setShowEdgeWeights(showEdgeWeights);
+    }//GEN-LAST:event_menuItemShowEdgeWeightsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -548,6 +564,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     private javax.swing.JMenuItem menuItemQuery;
     private javax.swing.JMenuItem menuItemSampleNewDataset;
     private javax.swing.JMenuItem menuItemSaveNetwork;
+    private javax.swing.JCheckBoxMenuItem menuItemShowEdgeWeights;
     private javax.swing.JMenuItem menuItemTestPredictionAccuracy;
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;

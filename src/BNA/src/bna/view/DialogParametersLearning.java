@@ -199,8 +199,7 @@ public class DialogParametersLearning extends javax.swing.JDialog {
             this.dispose();
         }
         catch(BNLibInconsistentVariableSetsException ex) {
-            String msg = "Current network and current dataset must contain exactly the same variables.";
-            JOptionPane.showMessageDialog(this, msg, "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Incompatible network and dataset", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_buttonLearnActionPerformed
 

@@ -15,10 +15,11 @@ public class ParameterLearner {
 
     /**
      * Produce a new network with identical structure but with CPTs computed by maximum likelihood estimation.
-     * @throws BNLibInconsistentVariableSetsException When network and dataset contain different variables.
+     * @throws BNLibInconsistentVariableSetsException When the network contains
+     *         some variable not present in the dataset.
      */
     public static BayesianNetwork learnMLE(BayesianNetwork bnOrig, Dataset dataset) throws BNLibInconsistentVariableSetsException {
-        if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
+        if(!dataset.containsVariables(bnOrig.getVariables()))
             throw new BNLibInconsistentVariableSetsException("Some variables of the network aren't present in the dataset.");
         
         BayesianNetwork bnLearnt = bnOrig.copyStructureWithEmptyCPDs();
@@ -34,12 +35,12 @@ public class ParameterLearner {
     /**
      * Produce a new network with identical structure but with CPTs computed by Bayesian estimation with uniform prior.
      * @param alpha Equivalent sample size.
-     * @throws BNLibIllegalArgumentException When the dataset doesn't contain
-     *         all variables of the network.
+     * @throws BNLibInconsistentVariableSetsException When the network contains
+     *         some variable not present in the dataset.
      */
     public static BayesianNetwork learnBayesianEstimationUniform(BayesianNetwork bnOrig, Dataset dataset, double alpha) throws BNLibIllegalArgumentException {
-        if(!Toolkit.isSubset(dataset.getVariables(), bnOrig.getVariables()))
-            throw new BNLibIllegalArgumentException("Some variables of the network aren't present in the dataset.");
+        if(!dataset.containsVariables(bnOrig.getVariables()))
+            throw new BNLibInconsistentVariableSetsException("Some variables of the network aren't present in the dataset.");
         
         BayesianNetwork bnLearnt = bnOrig.copyStructureWithEmptyCPDs();
         for(Node node : bnLearnt.getNodes()) {

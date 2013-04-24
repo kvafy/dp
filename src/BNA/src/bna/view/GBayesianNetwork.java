@@ -7,6 +7,8 @@ package bna.view;
 import bna.bnlib.BayesianNetwork;
 import bna.bnlib.Factor;
 import bna.bnlib.Node;
+import bna.bnlib.Variable;
+import bna.bnlib.learning.Dataset;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -68,6 +70,53 @@ public class GBayesianNetwork {
         if(parentComponent != null) {
             parentComponent.remove(dnode);
             parentComponent.repaint();
+        }
+    }
+    
+    void invalidateEdgeWeights() {
+        for(GNode gnode : this.gnodes)
+            gnode.edgeWeightsToParents = null;
+    }
+    
+    void recomputeEdgeWeights(Dataset dataset) {
+        if(dataset == null || !dataset.containsVariables(this.bn.getVariables())) {
+            this.invalidateEdgeWeights();
+            return;
+        }
+        double edgeWeightMin = Double.MAX_VALUE,
+               edgeWeightMax = -Double.MAX_VALUE;
+        // compute for each variable node mutual information with each of his parents
+        for(GNode gnode : this.gnodes) {
+            if(!(gnode instanceof GNodeVariable))
+                continue;
+            gnode.edgeWeightsToParents = new double[gnode.parents.length];
+            Node node = ((GNodeVariable)gnode).node;
+            for(int i = 0 ; i < gnode.parents.length ; i++) {
+                GNode gparent = gnode.parents[i];
+                while(gparent instanceof GNodeDummy) // follow links to the GNodeVariable parent
+                    gparent = gparent.parents[0];
+                Node parent = ((GNodeVariable)gparent).node;
+                double mutualInformation = dataset.mutualInformation(new Variable[]{node.getVariable()},
+                                                                     new Variable[]{parent.getVariable()});
+                gnode.edgeWeightsToParents[i] = mutualInformation;
+                edgeWeightMin = Math.min(edgeWeightMin, mutualInformation);
+                edgeWeightMax = Math.max(edgeWeightMax, mutualInformation);
+            }
+        }
+        // transform to relative edge weights [0,1] and propagate the edge weights to dummy nodes upward
+        for(GNode gnode : this.gnodes) {
+            if(!(gnode instanceof GNodeVariable))
+                continue;
+            for(int i = 0 ; i < gnode.parents.length ; i++) {
+                gnode.edgeWeightsToParents[i] = (gnode.edgeWeightsToParents[i] - edgeWeightMin)
+                                              / (edgeWeightMax - edgeWeightMin);
+                GNode gparent = gnode.parents[i];
+                while(gparent instanceof GNodeDummy) {
+                    // follow links to the GNodeVariable parent
+                    gparent.edgeWeightsToParents = new double[] {gnode.edgeWeightsToParents[i]};
+                    gparent = gparent.parents[0];
+                }
+            }
         }
     }
     
@@ -139,6 +188,7 @@ public class GBayesianNetwork {
 abstract class GNode extends DraggableComponent {
     GBayesianNetwork ownerBN;
     GNode[] parents, children;
+    double[] edgeWeightsToParents = null; // null means the are no edge weights (ie. default)
     
     public GNode() {
         this.setRepaintParent(true); // because of graph edges we need to repaint everything

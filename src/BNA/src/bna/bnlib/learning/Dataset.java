@@ -17,7 +17,7 @@ import java.util.List;
 
 
 /**
- * HOlds samples for a set of variables.
+ * Holds samples for a set of variables.
  * Provides counting of occurences for a subset of dataset variables and also
  * computes mutual information.
  */
@@ -60,6 +60,11 @@ public class Dataset implements DatasetInterface {
         return Arrays.copyOf(this.variables, this.variables.length);
     }
     
+    /** Check whether the dataset contains each of the specified variables. */
+    public boolean containsVariables(Variable[] vars) {
+        return Toolkit.isSubset(this.variables, vars);
+    }
+    
     @Override
     public int getSize() {
         return this.records.size();
@@ -82,9 +87,15 @@ public class Dataset implements DatasetInterface {
         this.records.add(Arrays.copyOf(record, record.length));
     }
     
-    /** Count occurences of all assignments to given variables and return as a factor. */
+    /**
+     * Count occurences of all assignments to given variables and return as a factor.
+     * @throws BNLibInconsistentVariableSetsException When this dataset doesn't
+     *         contain all variables from the scope parameter.
+     */
     @Override
-    public Factor computeFactor(Variable[] scope) {
+    public Factor computeFactor(Variable[] scope) throws BNLibInconsistentVariableSetsException {
+        if(!this.containsVariables(scope))
+            throw new BNLibInconsistentVariableSetsException("Dataset doesn't contain all requested variables.");
         Counter counter = new Counter(scope);
         VariableSubsetMapper recordToScopeMapper = new VariableSubsetMapper(this.variables, scope);
         int[] scopeAssignment = new int[scope.length];
