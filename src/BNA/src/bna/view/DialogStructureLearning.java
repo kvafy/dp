@@ -11,10 +11,7 @@ import bna.bnlib.Variable;
 import bna.bnlib.learning.*;
 import bna.bnlib.misc.Toolkit;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 import javax.swing.JMenuItem;
@@ -29,7 +26,7 @@ import javax.swing.table.TableColumn;
 /**
  * Dialog that takes a dataset and learns structure of a BN that fits the dataset the best.
  */
-public class DialogStructureLearning extends javax.swing.JDialog {
+public class DialogStructureLearning extends javax.swing.JDialog implements ActiveDatasetObserver {
     private BayesianNetwork bnOriginal; // null if there was no original network
     private Dataset dataset;
     LearningController learningController = null;
@@ -39,19 +36,42 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     /**
      * Creates new form DialogSampling
      */
-    public DialogStructureLearning(java.awt.Frame parent, boolean modal, Dataset dataset, BayesianNetwork bnOriginal) {
+    public DialogStructureLearning(java.awt.Frame parent, boolean modal, BayesianNetwork bnOriginal, final DatasetViewTable datasetViewer) {
         super(parent, modal);
-        this.dataset = dataset; // tables need to access the dataset variables
-        this.bnOriginal = bnOriginal;
+        this.dataset = null; // tables need to access the dataset variables
+        this.bnOriginal = null;//bnOriginal;
         initComponents();
         this.setLocationRelativeTo(parent);
         this.loadConfiguration();
-        this.initializeEdgeFrequenciesTable();
+        this.prepareEdgeFrequenciesTable();
         this.initializeNetworksSelectionCombobox();
+        this.buttonAnalyze.setVisible(false);
+        
+        // ensure proper observing (registration and deregistration)
+        final DialogStructureLearning thisDialog = this;
+        datasetViewer.addObserver(thisDialog);
+        
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                datasetViewer.removeObserver(thisDialog);
+            }
+            @Override
+            public void windowClosed(WindowEvent e) {
+                datasetViewer.removeObserver(thisDialog);
+            }
+        });
     }
     
-    /** Called only from constructor to install the table headers. */
-    private void initializeEdgeFrequenciesTable() {
+    private void prepareAllowedConnectionsTable() {
+    }
+    
+    /** Installs the table headers. */
+    private void prepareEdgeFrequenciesTable() {
+        if(this.dataset == null) {
+            this.tableEdgeFrequency.setModel(new DefaultTableModel());
+            return;
+        }
         Variable[] variables = this.dataset.getVariables();
         int variableCount = variables.length;
         
@@ -404,7 +424,6 @@ public class DialogStructureLearning extends javax.swing.JDialog {
         tableAllowedConnections.setColumnSelectionAllowed(true);
         tableAllowedConnections.getTableHeader().setReorderingAllowed(false);
         jScrollPane3.setViewportView(tableAllowedConnections);
-        ((AllowedConnectionsTable)tableAllowedConnections).initModel();
 
         jLabel13.setText("Alpha");
 
@@ -747,6 +766,13 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     private javax.swing.JTextField textFieldTabulistRelsize;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    public void notifyNewActiveDataset(Dataset d) {
+        this.dataset = d;
+        this.prepareEdgeFrequenciesTable();
+        ((AllowedConnectionsTable)this.tableAllowedConnections).prepare();
+    }
+
 
     class StructureLearningThread extends Thread {
         private java.awt.Frame parent;
@@ -816,7 +842,11 @@ public class DialogStructureLearning extends javax.swing.JDialog {
     
     class AllowedConnectionsTable extends JTable {
         /** Establish the table model. */
-        private void initModel() {
+        void prepare() {
+            if(dataset == null) {
+                this.setModel(new DefaultTableModel());
+                return;
+            }
             Variable[] variables = dataset.getVariables();
             int variableCount = variables.length;
 

@@ -10,25 +10,41 @@ import bna.bnlib.Factor;
 import bna.bnlib.sampling.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.JOptionPane;
 
 
 /**
  * Dialog that takes a BN and allows to sample it with various options.
  */
-public class DialogQuerySampling extends javax.swing.JDialog {
+public class DialogQuerySampling extends javax.swing.JDialog implements ActiveNetworkObserver {
     private BayesianNetwork bn;
     
 
     /**
      * Creates new form DialogSampling
      */
-    public DialogQuerySampling(java.awt.Frame parent, boolean modal, BayesianNetwork bn) {
+    public DialogQuerySampling(java.awt.Frame parent, boolean modal, final NetworkViewPanel networkViewer) {
         super(parent, modal);
+        this.bn = null;
         initComponents();
         this.setLocationRelativeTo(parent);
         this.loadConfiguration();
-        this.bn = bn;
+        
+        // ensure proper observing of the current network
+        final ActiveNetworkObserver thisDialog = this;
+        networkViewer.addObserver(this);
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                networkViewer.removeObserver(thisDialog);
+            }
+            @Override
+            public void windowClosed(WindowEvent e) {
+                networkViewer.removeObserver(thisDialog);
+            }
+        });
     }
     
     private void loadConfiguration() {
@@ -212,6 +228,13 @@ public class DialogQuerySampling extends javax.swing.JDialog {
     }//GEN-LAST:event_comboBoxMethodActionPerformed
 
     private void buttonStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStartActionPerformed
+        if(this.bn == null || !this.bn.hasValidCPDs()) {
+            String msg = "Current network has invalid CPDs and therefore cannot be sampled.\n"
+                       + "You probably learnt just network structure but not the parameters.";
+            JOptionPane.showMessageDialog(this,msg, "Cannot sample network", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         try {
             // parse input (exceptions are caught)
             final long sampleCount = Long.valueOf(this.textFieldSampleCount.getText());
@@ -325,4 +348,13 @@ public class DialogQuerySampling extends javax.swing.JDialog {
     private javax.swing.JTextField textFieldSampleCount;
     private javax.swing.JTextField textFieldTheadCount;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void notifyNewActiveNetwork(GBayesianNetwork gbn) {
+        if(gbn == null) {
+            this.bn = null;
+            return;
+        }
+        this.bn = gbn.getNetwork();
+    }
 }

@@ -26,7 +26,7 @@ import org.ini4j.Ini;
 /**
  * The main window of the whole application.
  */
-public class MainWindow extends javax.swing.JFrame {
+public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObserver, ActiveNetworkObserver {
     // singleton
     private static MainWindow instance = new MainWindow();
     // application configuration
@@ -40,6 +40,9 @@ public class MainWindow extends javax.swing.JFrame {
         this.enableComponentsByState();
         this.configureTooltips();
         this.loadConfiguration();
+        // observer current network and current dataset
+        this.panelNetworkView.addObserver(this);
+        ((DatasetViewTable)this.datasetTable).addObserver(this);
     }
     
     public static MainWindow getInstance() {
@@ -114,11 +117,13 @@ public class MainWindow extends javax.swing.JFrame {
         ((NetworkViewPanel)this.panelNetworkView).setNetwork(bn);
     }
     
-    void notifyActiveNetworkChange() {
+    @Override
+    public void notifyNewActiveDataset(Dataset d) {
         this.enableComponentsByState();
     }
     
-    void notifyActiveDatasetChange() {
+    @Override
+    public void notifyNewActiveNetwork(GBayesianNetwork gbn) {
         this.enableComponentsByState();
     }
     
@@ -345,7 +350,7 @@ public class MainWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 416, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 420, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -377,14 +382,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItemLoadNetworkActionPerformed
 
     private void menuItemQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemQueryActionPerformed
-        BayesianNetwork bn = this.panelNetworkView.getNetwork();
-        if(bn == null || !bn.hasValidCPDs()) {
-            String msg = "Current network has invalid CPDs and therefore cannot be sampled.\n"
-                       + "You probably learnt just network structure but not parameters.";
-            JOptionPane.showMessageDialog(this,msg, "Cannot sample network", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        DialogQuerySampling dialog = new DialogQuerySampling(this, false, bn);
+        DialogQuerySampling dialog = new DialogQuerySampling(this, false, this.panelNetworkView);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemQueryActionPerformed
 
@@ -432,9 +430,9 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_menuItemLearnParametersActionPerformed
 
     private void menuItemLearnStructureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemLearnStructureActionPerformed
-        Dataset dataset = ((DatasetViewTable)this.datasetTable).getDataset();
         BayesianNetwork bnCurrent = ((NetworkViewPanel)this.panelNetworkView).getNetwork();
-        DialogStructureLearning dialog = new DialogStructureLearning(this, false, dataset, bnCurrent);
+        DatasetViewTable datasetViewer = (DatasetViewTable)this.datasetTable;
+        DialogStructureLearning dialog = new DialogStructureLearning(this, false, bnCurrent, datasetViewer);
         dialog.setVisible(true);
     }//GEN-LAST:event_menuItemLearnStructureActionPerformed
 

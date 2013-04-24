@@ -6,6 +6,7 @@ package bna.view;
 
 import bna.bnlib.Variable;
 import bna.bnlib.learning.Dataset;
+import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -18,6 +19,7 @@ public class DatasetViewTable extends javax.swing.JTable {
     
     private Dataset dataset = null;
     private int displayedRowCount = 1000;
+    private ArrayList<ActiveDatasetObserver> observers = new ArrayList<ActiveDatasetObserver>();
     
     
     public DatasetViewTable() {
@@ -38,7 +40,7 @@ public class DatasetViewTable extends javax.swing.JTable {
             return;
         this.dataset = dataset;
         this.updateTableModel();
-        MainWindow.getInstance().notifyActiveDatasetChange();
+        this.notifyObservers();
     }
     
     private void updateTableModel() {
@@ -64,5 +66,21 @@ public class DatasetViewTable extends javax.swing.JTable {
         }
         
         this.setModel(new DefaultTableModel(data, variableNames));
+    }
+    
+    public void addObserver(ActiveDatasetObserver observer) {
+        if(!this.observers.contains(observer)) {
+            this.observers.add(observer);
+            observer.notifyNewActiveDataset(this.dataset);
+        }
+    }
+    
+    public void removeObserver(ActiveDatasetObserver observer) {
+        this.observers.remove(observer);
+    }
+    
+    private void notifyObservers() {
+        for(ActiveDatasetObserver observer : this.observers)
+            observer.notifyNewActiveDataset(this.dataset);
     }
 }

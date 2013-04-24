@@ -8,6 +8,7 @@ import bna.bnlib.BayesianNetwork;
 import bna.bnlib.misc.LRUCache;
 import bna.bnlib.misc.Toolkit;
 import java.awt.*;
+import java.util.ArrayList;
 
 
 /**
@@ -16,6 +17,8 @@ import java.awt.*;
 public class NetworkViewPanel extends javax.swing.JPanel {
     private GBayesianNetwork gbn;
     private final LRUCache<BayesianNetwork, GBayesianNetwork> layoutCache = new LRUCache<BayesianNetwork, GBayesianNetwork>(10);
+    private ArrayList<ActiveNetworkObserver> observers = new ArrayList<ActiveNetworkObserver>();
+    
     
     public NetworkViewPanel() {
         this.gbn = null;
@@ -53,7 +56,7 @@ public class NetworkViewPanel extends javax.swing.JPanel {
     
     public void setNetwork(BayesianNetwork bn) {
         this.setNetwork((GBayesianNetwork)null);
-        MainWindow.getInstance().notifyActiveNetworkChange();
+        this.notifyObservers();
         if(bn == null)
             return;
         
@@ -76,7 +79,7 @@ public class NetworkViewPanel extends javax.swing.JPanel {
             }
             else
                 this.setPreferredSize(null); // automatic to fit in parent component
-            MainWindow.getInstance().notifyActiveNetworkChange();
+            this.notifyObservers();
             this.repaint();
         }
     }
@@ -155,5 +158,21 @@ public class NetworkViewPanel extends javax.swing.JPanel {
                             new int[]{arrowBeginY, arrowEndAY, arrowEndBY},
                             3);
         }
+    }
+    
+    public void addObserver(ActiveNetworkObserver observer) {
+        if(!this.observers.contains(observer)) {
+            this.observers.add(observer);
+            observer.notifyNewActiveNetwork(this.gbn);
+        }
+    }
+    
+    public void removeObserver(ActiveNetworkObserver observer) {
+        this.observers.remove(observer);
+    }
+    
+    private void notifyObservers() {
+        for(ActiveNetworkObserver observer : this.observers)
+            observer.notifyNewActiveNetwork(this.gbn);
     }
 }
