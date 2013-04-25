@@ -93,8 +93,8 @@
   %bud pomoci nasledujicich parametru nebo pomoci vyhrazenych maker (viz dale)
   %===========================================================================
   %Klicova slova
-  keywords.cs={Bayesovská síť, pravděpodobnost, inference, učení struktury.}, %klicova slova v ceskem jazyce
-  keywords.en={Bayesian network, probability, inference, structure learning.}, %klicova slova v anglickem jazyce
+  keywords.cs={Bayesovská síť, pravděpodobnost, inference, učení struktury, strojové učení, spam.}, %klicova slova v ceskem jazyce
+  keywords.en={Bayesian network, probability, inference, structure learning, machine learning, spam.}, %klicova slova v anglickem jazyce
   %Abstract
   abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti, později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně pochopení silných a~slabých stránek daných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury.}, % abstrakt v ceskem jazyce
   abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications suitable for learning a Bayesian network, both in terms of network parameters as well as structure.}, % abstrakt v anglickem jazyce
@@ -134,27 +134,26 @@
 % (c) Michal Bidlo, Bohuslav Křena, 2008
 
 \chapter{Introduction}
-Bayesian networks represent a subclass of probabilistic graphical models and serve as a~tool for modeling joint probability distributions of random variables. Bayesian networks were originally used to evaluate medical data of a patient in order to determine the probability of them having a certain disease\,--\,a situation with many unknown facts, eg. missing medical history or unknown results of possible tests. Since then there have been many other applications such as inspection of pedigree trees in genetics or general classification tasks.
+\vspace{-0.7mm}
+Bayesian networks are a subclass of probabilistic graphical models and serve as a~tool for modeling joint probability distributions of random variables. Bayesian networks were originally used to evaluate medical data of a patient in order to determine the probability of him having a certain disease which is a situation with many unknowns, eg. missing medical history or unknown results of medical tests that haven't been done. Since then there have been many other applications such as inspection of pedigree trees in genetics or discovery of protein signaling mechanisms based purely on statistical data.
 
-The main advantage of Bayesian networks lies in their inherent property that, thanks to conditional dependency and independency between variables, they represent the joint probability distribution in a very compact way in terms of space complexity. Construction of Bayesian networks for some concrete problem is a complicated process involving complex algorithms, enough input data and, in many cases, expert knowledge. Another problem is providing answers to queries over the underlaying probability distribution of a Bayesian network, so called inference.
+The main advantages of Bayesian networks lie in the fact that they are easy to interpret, even for a non-specialist, and in their inherent property that they can represent joint probability distributions in a very compact way in terms of space complexity. Construction of a Bayesian network for some concrete domain is a complicated task demanding complex algorithms, enough input data and, in many cases, expert knowledge. Another problem is providing answers to queries regarding the probability distribution induced by a given Bayesian network, so called inference.
 
-The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables as well as in terms of structure and to show possible application domains. Inference is narrowed down to stochastic approaches because other ways are complex even in the most basic form. Still, all approaches to inference will be mentioned at least on the level of basic concept, since it is a fundamental part of the theory of Bayesian networks.
+The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables, ie. model parameters, as well as in terms of structure, and to demonstrate their possible applications. Inference techniques are narrowed down to stochastic approaches because other ways are complex even in the most basic form. Still, all approaches to inference will be mentioned at least on the level of basic concept, since it is a fundamental part of the theory of Bayesian networks.
 
 \medskip
 
-Chapter 2 serves as an introduction to the fundamentals of the probability theory and provides necessary foundations for understanding the rest of this thesis and an overview of the notation used.
+Chapter 2 serves as an introduction to the fundamentals of the probability theory and provides necessary foundations for understanding the rest of this thesis, including the used mathematical notation.
 
-Chapter 3 discusses the theory of Bayesian networks. First we explain the main motivation for using Bayesian networks as a model for joint probability distributions. Then we move on to various inference methods and finally discuss model learning techniques in terms of model parameters and in terms of model structure.
+Chapter 3 discusses the theory of Bayesian networks. First, the motivation for using Bayesian networks is explained, followed by an overview of the inference methods and by survey of model learning techniques in terms of parameters as well as structure.
 
-In chapter 4 I will describe details of the program realization of this thesis. There will be presented used data structures, algorithms and the overall architecture of the final application.
-This part is yet to be worked on. % SP
+In chapter 4 I will introduce the realization output of this thesis with focus on the overall design and philosophy. This chapter should be partly seen as program documentation.
 
-Chapter 5 discusses selected applications suitable for parameter and structure learning of Bayesian networks. This part is to be one of the main interests of the summer semester.
+Chapter 5 discusses selected applications of parameter and structure learning of Bayesian networks. The first application is a study of optimal parameter settings of the model learning procedures for networks and datasets of various sizes. The second application uses model learning as a tool to discover the main causes of criminality. The third application explores the option of using a generalized Naïve Bayes model for spam filtering.
 
-The final chapter summarizes the overall achieved results of this term project and discusses further planned work.
+Appendix A provides an overview of the mathematical notation used in this thesis.
 
-\todo{Appendix A provides an overview of the mathematical notation used.}
-\todo{Appendix B describes content of the CD enclosed with this thesis.}
+Appendix B describes content of the CD enclosed with this thesis.
 
 
 
@@ -187,14 +186,14 @@ The final chapter summarizes the overall achieved results of this term project a
 
 
 \chapter{Preliminaries}
-This chapter will present theoretical foundations for understanding Bayesian networks and performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and to provide answers for probability queries. In some cases the mathematical derivation will be presented because, I believe, it provides useful insight into the underlaying theory. In other cases we will jump straight to the practical conclusion needed in order to algorithmically solve the problem at hand because the derivation is either very difficult or the process itself is uninteresting for a~non-mathematician and would rather obfuscate the topic.
+This chapter will present theoretical foundations for understanding Bayesian networks and for performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and to provide answers for probability queries. In case of some formulas their mathematical derivation will be presented because, I believe, it provides useful insight into the underlaying theory. In other cases we will jump straight to the practical conclusion needed in order to algorithmically solve the problem at hand because the derivation is either very difficult or the process itself is uninteresting for a~non-mathematician and would unnecessarily prolong the thesis or even obfuscate the topic.
 
-First will be established notation used in this thesis and necessary overview of probability theory. Then we will move on to the theory of Bayesian networks, explain their advantages and proceed to inference and construction techniques.
+First will be established notation used in this thesis and necessary overview of probability theory. Then we will move on to the theory of Bayesian networks, explain their advantages and proceed to inference and model learning techniques.
 
 
 
 \section{Philosophical views}
-Probability is usually interpreted as degree of belief in occurrence of a particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by a complex \term{wave function} $\Psi(x,y,z,t)$ and $\vert\Psi(\cdot)\vert^2$ describes \term{density probability} of the particle as a function of space-time coordinates~\cite[p.~1044]{hrw_physics}. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory.
+Probability of an event is usually interpreted as the degree of belief in occurrence of that particular event, eg. probability of a fair die rolling a six is $1/6$. Although probability is expressed as a~real number between zero and one, the ground truth is that in the end one and only one \emph{concrete} event is observed. In the case of a die, one concrete number is rolled regardless what the probabilities were. Although our intuition and general experience proves it to be true in our macroscopic world, objects in the microscopic world of quantum mechanics actually are probabilistic in nature and, a particle for example, is in many quantum states at the same time. The particle is then described by a complex \term{wave function} $\Psi(x,y,z,t)$ and $\vert\Psi(x,y,z,t)\vert^2$ describes \term{density probability} of the particle as a function of space-time coordinates~\cite[p.~1044]{hrw_physics}. Despite the obvious differences, certain qualities of both these worlds can be described by the same mathematical apparatus which is probability theory.
 
 Somewhat close to probability theory is the theory of fuzzy sets which operates with membership functions. These functions describe degrees of truth, eg. that a person is regarded as young or old. The main difference, when compared to probability, is that in fuzzy sets theory an object may have more than one quality to some degree and there is no ground truth or observation that would strictly place a person into one single category.
 
@@ -205,46 +204,47 @@ Let's begin by defining what a probability distribution is when there is only on
     $P(X)$ is discrete probability distribution of discrete random variable $X$ such that:
     \begin{itemize}
         \item $X$ can be assigned any value from the set $Val(X) = \lbrace x_1, x_2, \dots \rbrace$ which is finite or denumerable.
-        \item $\forall i: P(X = x_i) \geq 0$
+        \item $\forall x_i \in Val(X): P(X = x_i) \geq 0$
         \item $\Bigl( \sum_i P(X = x_i) \Bigr) = 1$
     \end{itemize}
 \end{math_def}
 
-Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables (instantiations) are denoted by small letters such as $x$. Further we will use bold capital letters to denote sets of random variables such as $\vars{X}$ and their instantiation with bold small letters such as $\vars{x}$.
+Notice that random variables are denoted by capital letters $X, Y, E$ etc., concrete values of random variables (assignments or instantiations) are denoted by small letters such as $x$. Further we will use bold capital letters to denote sets of random variables such as $\vars{X}$ and their instantiation with bold small letters such as $\vars{x}$.
 
-Probability distributions of more than one random variable are called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely every single outcome of a throw is. In this case there are $6 \times 6 = 36$ possibilities so the $P(X_{black},X_{white})$ function would have 36 entries if represented by a table.
+Probability distributions of more than one random variable are called \term{joint probability distributions}. For example if we were to study a simultaneous throw with two dices, black and white, we would get joint probability distribution $P(X_{black},X_{white})$. In this probability distribution we know how likely every single outcome of a throw is. In this case there are $6 \times 6 = 36$ possibilities so the probability distribution $P(X_{black},X_{white})$ would have 36 entries if represented by a table.
 
-So far we have described so called \term{prior probabilities} which are applicable in situations when no observation has been made and hence everything is governed purely by probability. If, on the other hand, we know concrete value of some random variable then we speak about \term{posterior probability} or \term{conditional probability}.
+So far we have described so called \term{prior probabilities} which are applicable in situations when no observation has been made and hence everything is governed purely by probability. If, on the other hand, we observe that some random variable takes on a concrete value (eg. the weather today is sunny) then we speak about \term{posterior probability} or \term{conditional probability} distribution.
 Posterior and prior probability distributions are not the same in general because observation of a~variable may affect distribution of other variables as we will see later in context of flow of probabilistic influence in Bayesian networks.
-Conditional probability distribution of variables $\vars{X}$ depending on variables $\vars{E}$ is denoted $P(\vars{X}\mid\vars{E})$ and such expression is usually read as \uv{probability of $\vars{X}$ given $\vars{E}$} where $\vars{E}$ are called \term{evidence} or \term{observed} variables. Conditional probability distribution can be seen as a collection of probability distributions over variables $\vars{X}$ for every possible instantiation of variables $\vars{E}$.
+Conditional probability distribution of variables $\vars{X}$ depending on variables $\vars{E}$ is denoted $P(\vars{X}\mid\vars{E})$ and such expression is usually read as \uv{probability of $\vars{X}$ given $\vars{E}$} where $\vars{E}$ are called \term{evidence} or \term{observed} variables. Conditional probability distribution can be seen as a collection of probability distributions over variables $\vars{X}$ for every possible instantiation $\vars{e}$ of variables $\vars{E}$.
 
 
 \section{Factors}
-When reasoning about Bayesian networks we express probability distributions as so called \term{factors}. Factors are interesting for us because factor operations correspond to mathematical operations we need to do with probability distributions in order to answer queries in a~Bayesian network. 
+When reasoning about Bayesian networks we express probability distributions as so called \term{factors}. Factors are interesting for us because factor operations, among other uses, correspond to mathematical operations we need to perform with probability distributions in order to answer queries in a~Bayesian network.
 \begin{math_def}\label{def_factor}
     Factor $\phi$ is a function $\phi: X_1 \times X_2 \times \dotsm \times X_k \rightarrow \mathbb{R}_0^+$. The non-empty set $\lbrace X_1, X_2, \dots, X_k \rbrace$ is called scope of the factor $\phi$.
 \end{math_def}
 According to the definition of a factor and to the definition \ref{def_prob_distribution} of a discrete probability distribution, probability distributions are special cases of factors. They both require their values to be non-negative and, in addition, every probability distribution must sum to one. A~factor, of course, may sum to one too in which case we say it is \term{normalized}.
 
-There are 4 operations over factors we will need further in this thesis\,--\,pointwise product, marginalization, conditioning and renormalization. Definitions below are inspired by description of these operations in~\cite{russell_norvig_ed2, pgm}
+Factor representation of a joint probability distribution $P(X,\dots,Z)$ is straightforward\,--\,simply put $\phi(x,\dots,z) = P(x,\dots,z)$ for every assignment $x,\dots,z$ of variables $X,\dots,Z$. In this case probabilities of all possible assignments must necessarily sum to one since $P(X,\dots,Z)$ is a~probability distribution. For further reference, this summation is denoted $\sum_{X,\dots,Z} P(x,\dots,z) = 1$.
+
+Let's examine the case of a conditional probability distribution $P(\vars{X}\mid\vars{E})$. Suppose that, according to the established notation, $\vars{X}$ and $\vars{E}$ are sets of variables rather than single variables. Then $scope(\phi) = \vars{X} \cup \vars{E}$ but probabilities of all possible assignments to $\vars{X}$ and $\vars{E}$ doesn't sum to one! This is because the conditional probability distribution $P(\vars{X}\mid\vars{E})$ is more like a collection of probability distributions of variables $\vars{X}$ for every assignment to $\vars{E}$. So, for any concrete assignment $\vars{e}$ of evidence variables $\vars{E}$, the probability distribution $P(\vars{X}\mid\vars{e})$ again sums to one, ie. $\sum_\vars{X} P(\vars{x}\mid\vars{e}) = 1$.
+
+\medskip
+There are 4 operations over factors we will need further in this thesis\,--\,pointwise product, marginalization, conditioning and renormalization. Formal definitions below are derived from description of these operations in~\cite{russell_norvig_ed2, pgm}
 
 \subsubsection{Pointwise product}
-Pointwise product of factors $\phi_1$ and $\phi_2$ is a factor $\psi$, denoted $\psi = \phi_1 \cdot \phi_2$, defined as follows. The scope of $\psi$ is $scope(\phi_1) \cup scope(\phi_2)$. Let $scope(\phi_1) = \lbrace X_1, \dots, X_m, Y_1, \dots, Y_n \rbrace$ and $scope(\phi_2) = \lbrace Y_1, \dots, Y_n, Z_1, \dots, Z_k \rbrace$ where $\lbrace X_1, \dots, X_m \rbrace$ and $\lbrace Z_1, \dots, Z_k \rbrace$ are disjoint. For every assignment $x_1, \dots, x_m, y_1, \dots, y_n, z_1, \dots, z_k$ of variables in $scope(\psi)$ the value of $\psi$ is given as:
+Pointwise product of factors $\phi_1$ and $\phi_2$ is a factor $\psi$, denoted $\psi = \phi_1 \cdot \phi_2$, defined as follows. The scope of $\psi$ is $scope(\phi_1) \cup scope(\phi_2)$. Let $scope(\phi_1) = \lbrace X_1, \dots, X_m, Y_1, \dots, Y_n \rbrace$ and $scope(\phi_2) = \lbrace Y_1, \dots, Y_n, Z_1, \dots, Z_k \rbrace$ where $\lbrace X_1, \dots, X_m \rbrace$ and $\lbrace Z_1, \dots, Z_k \rbrace$ are disjoint. For every assignment $x_1, \dots, x_m, y_1, \dots, y_n, z_1, \dots, z_k$ of variables in $scope(\psi)$ the value of $\psi(\cdot)$ is given as:
 $$\psi(x_1, \dots, x_m, y_1, \dots, y_n, z_1, \dots, z_k)
 = \phi_1(x_1, \dots, x_m, y_1, \dots, y_n) \cdot \phi_2(y_1, \dots, y_n, z_1, \dots, z_k)
 $$
 
-Please note that it is also possible for the sets $\lbrace X_i \rbrace, \lbrace Y_i \rbrace,\lbrace Z_i \rbrace$ to be empty (of course, according to the definition~\ref{def_factor}, factor must have at least one variable in its scope).
-
-Factor representation of a joint probability distribution $P(X,\dots,Z)$ is straightforward\,--\,simply put $\phi(x,\dots,z) = P(x,\dots,z)$ for every assignment $x,\dots,z$ of variables $X,\dots,Z$. In this case probabilities of all possible assignments must necessarily sum to one since $P(X,\dots,Z)$ is a~probability distribution. For further reference, this summation is denoted $\sum_{X,\dots,Z} P(x,\dots,z) = 1$.
-
-Let's examine the case of a conditional probability distribution $P(\vars{X}\mid\vars{E})$. Suppose that, according to the established notation, $\vars{X}$ and $\vars{E}$ are sets of variables rather than single variables. Then $scope(\phi)$ is $\vars{X} \cup \vars{E}$ but probability of all possible assignments to $\vars{X}$ and $\vars{E}$ doesn't sum to one! This is because the conditional probability distribution $P(\vars{X}\mid\vars{E})$ is more like a collection of probability distributions of variables $\vars{X}$ for every assignment to $\vars{E}$. So, for any concrete assignment $\vars{e}$ of evidence variables $\vars{E}$, the probability distribution $P(\vars{X}\mid\vars{e})$ again sums to one, ie. $\sum_\vars{X} P(\vars{x}\mid\vars{e}) = 1$.
+Please note that it is also possible for the sets $\lbrace X_i \rbrace_i, \lbrace Y_i \rbrace_i,\lbrace Z_i \rbrace_i$ to be empty (of course, according to the definition~\ref{def_factor}, any factor must have at least one variable in its scope).
 
 \subsubsection{Marginalization}
 Marginalization of a factor $\phi$ over variables $\vars{Y}$ is operation of summing out these variables, effectively producing factor $\psi$. Then $scope(\psi) = scope(\phi) \setminus \vars{Y}$ and for every assignment $\vars{x}$ of variables in $scope(\phi)$ holds that $\psi(\vars{x}) = \sum_\vars{Y} \phi(\vars{x},\vars{y})$.
 
 \subsubsection{Conditioning}
-Conditioning is operation used when there is some observed evidence $\vars{e}$ of variables $\vars{E}$. By conditioning we set probabilities of all events inconsistent with observed evidence to 0. Of~course the resulting factor will not be normalized in general.
+Conditioning is operation used when there is some observed evidence $\vars{e}$ of variables $\vars{E}$. By conditioning we set probabilities of all events inconsistent with observed evidence to 0. Of~course, the resulting factor will not be normalized in general.
 
 \subsubsection{Renormalization}
 Renormalization of a factor $\phi$ ensures that all values of the factor sum to one. Suppose that $\vars{X} = scope(\phi)$ and let $\alpha = \sum_\vars{X} \phi(\vars{x})$ be normalizing constant. Values of the resulting factor $\psi$ are given for every assignment $\vars{x}$ of variables $\vars{X}$ as $\psi(\vars{x}) = \phi(\vars{x}) / \alpha$.
@@ -288,48 +288,47 @@ It may be useful to point out that renormalization makes sense only for factors 
 \chapter{Theory of Bayesian networks}
 In this chapter we will first discuss the reasons for using Bayesian networks. Then we will move on to various inference methods and to methods of model learning, both in terms of model parameters as well as in terms of structure.
 
-Question might be why to use Bayesian networks? First of all, having a complicated joint probability distribution with many random variables inevitably leads to a potentially enormously large table that would represent such probability distribution. Let's assume we have binary random variables $X_1, \dots, X_k$. Then to represent the joint probability distribution $P(X_1, \dots, X_k)$ we would need a table with $2^k$ entries. This exponential growth brings several problems:
+Let's ask the question why to use Bayesian networks? What do they bring us? First of all, having a complicated joint probability distribution with many random variables inevitably leads to an enormously large table that would represent such probability distribution. Let's assume we have binary random variables $X_1, \dots, X_k$. Then to represent the joint probability distribution $P(X_1, \dots, X_k)$ we would need a table with $2^k$ entries. This exponential growth brings several problems:
 \begin{itemize}
     \item Table completely describing a joint probability distribution may be too big to store. That is because the table would hold probability of every possible event separately in its own record.
     \item Even if the table could be stored, performing calculations over it (e.g. factor marginalization or factor multiplication) would not be efficient. In fact, operations such as exact inference are known to be NP-hard in the number of variables~\cite{pgm}.
     \item In order to construct probability table for a joint probability distribution:
     \begin{enumerate}
-        \item[a)] We would require huge amount of training data to create an accurate statistical model from, since we would essentially count occurrences of every single event (ie. of possible instantiations of all random variables) and finally divide these counts by the total number of all training examples.
-        \item[b)] We would need a human expert to determine the probability of every possible assignment to random variables. This is generally not possible because all probabilities would be near to zero and human experts are simply not able to correctly capture probabilities on this level~\cite{pgm}.
+        \item[a)] We would require a huge amount of training data to create an accurate statistical model from, since we would essentially count occurrences of every single event (ie. of \emph{each possible} instantiation of all random variables) and finally divide these counts by the total number of all training examples.
+        \item[b)] We would need a human expert to determine the probability of every possible assignment of random variables. This is generally not possible because all probabilities would be near to zero and human experts are simply not able to correctly capture probabilities on this level~\cite{pgm}.
     \end{enumerate}
 \end{itemize}
 
-As will be shown later, Bayesian networks couple with the problem of exponential growth of records in probability tables by having several smaller conditional probability distributions (factors) based on dependencies between random variables. Product of all these conditional probabilities (factors) gives the underlaying joint probability distribution which would, if represented directly, require an exponentially bigger table.
+As will be shown later, Bayesian networks couple with the problem of exponential growth of record counts in probability tables by having several smaller local conditional probability distributions (factors) based on dependencies between random variables. Product of all these conditional probabilities (factors) in the entire network gives the underlaying joint probability distribution which would, if represented naively, require an exponentially large table.
 
 
 
 \begin{math_def}\label{def_bayesian_network}
-    Bayesian network $G$ is a directed acyclic graph where each node represents a~random variable and oriented edges between nodes express direct dependencies between random variables.
+    Bayesian network is a tuple $(\mathcal{G}, \Theta)$. $\mathcal{G}$ is a directed acyclic graph where each node represents a~random variable and oriented edges between nodes express direct dependencies between random variables represented by the connected nodes. $\Theta$ are parameters of the network representing for each node $X$ its probability distribution conditioned on its immediate parents, denoted $P(X \mid Parents(X))$.
 \end{math_def}
 
-The definition of Bayesian network (further abbreviated BN) implies several things. Acyclic and directed properties tell us that there is a hierarchy of nodes in terms of parent-child relation, meaning that child random variable $C$ is dependent on its parent random variables $P_1, \dots, P_m$ (also denoted $Parents(C)$). This conditional probability distribution $P(C \mid Parents(C))$ is usually\footnote{For purposes of this thesis, we assume probability distributions of discrete, not continuous, variables whose events are from a finite set. Such probability distribution can be expressed by a table.} expressed via a \term{Conditional Probability Table (CPT)} that defines probability distribution of variable $C$ for every possible assignment of variables $Parents(C)$. Of course, for every assignment $p_1,\dots,p_m$ of variables $Parents(C)$ must hold that $\sum_C P(c \mid p_1, \dots, p_m) = 1$. Otherwise $P(C \mid Parents(C))$ would not be a probability distribution (by definition~\ref{def_prob_distribution}).
+The definition of Bayesian network (further abbreviated BN) implies several things. Acyclic and directed properties tell us that there is a hierarchy of nodes in terms of parent-child or predecessor-successor relation, meaning that a random variable $C$ is dependent on its parent random variables $\lbrace P_1, \dots, P_m \rbrace$ (denoted $Parents(C)$). This conditional probability distribution $P(C \mid Parents(C))$ is usually\footnote{For purposes of this thesis, we assume probability distributions of discrete, not continuous, variables whose events are from a finite set. Such probability distribution can be expressed by a table.} expressed via a \term{Conditional Probability Table (CPT)} that defines probability distribution of variable $C$ for every possible assignment of variables $Parents(C)$. Of course, for every assignment $p_1,\dots,p_m$ of variables $Parents(C)$ must hold that $\sum_C P(c \mid p_1, \dots, p_m) = 1$. Otherwise $P(C \mid Parents(C))$ would not be a~probability distribution (by definition~\ref{def_prob_distribution}).
 
-We say that Bayesian network $G$ with nodes $\lbrace X_1, \dots, X_k\rbrace$ induces joint probability distribution $P(X_1, \dots, X_k)$ as follows:
+We say that Bayesian network $(\mathcal{G}, \Theta)$ with nodes $\lbrace X_1, \dots, X_k\rbrace$ induces joint probability distribution $P(X_1, \dots, X_k)$ as follows:
 \begin{equation}\label{eq:bn_joint}
     P(X_1, \dots, X_k) = \prod_{i=1}^k P(X_i \mid Parents(X_i))
 \end{equation}
-Equivalent statement is that $P(X_1, \dots, X_k)$ factorizes over BN $G$ if the equation \eqref{eq:bn_joint} holds. This is because the terms $P(X_i \mid Parents(X_i))$ are \term{factors} and by constructing a~Bayesian network we can factorize otherwise very space-consuming CPD of $P(X_1, \dots, X_k)$ into several smaller CPDs $P(X_i \mid Parents(X_i))$, one for every node $X_i$.
+Equivalent statement is that $P(X_1, \dots, X_k)$ factorizes over a BN $(\mathcal{G}, \Theta)$ if the equation \eqref{eq:bn_joint} holds. This is because the terms $P(X_i \mid Parents(X_i))$ are \term{factors} and by constructing a~Bayesian network we can factorize otherwise very space-consuming CPD of $P(X_1, \dots, X_k)$ into several smaller CPDs $P(X_i \mid Parents(X_i))$, one for every node $X_i$.
 
-I have devised a proof that $P(X_1, \dots, X_k)$ induced by a BN $G$ is indeed a probability distribution, when assuming that every factor $P(X_i \mid Parents(X_i))$ in $G$ is also a probability distribution. Main purpose of this proof is to provide the reader with some familiarity when mathematically reasoning about BNs because similar tricks will be used later on. Core of the proof is to show that both axioms of a probability distribution (Definition \ref{def_prob_distribution}) are satisfied\footnote{Because of long expressions in the following two paragraphs, $Pars(X)$ denotes $Parents(X)$.}:
+I have devised a proof that $P(X_1, \dots, X_k)$ induced by a BN is indeed a probability distribution, when assuming that every factor $P(X_i \mid Parents(X_i))$ is also a probability distribution. Main purpose of this proof is to provide the reader with some familiarity when mathematically reasoning about BNs because similar tricks will be used later on. Core of the proof is to show that both axioms of a probability distribution (Definition \ref{def_prob_distribution}) are satisfied\footnote{Because of long expressions in the following two paragraphs, $Pars(X)$ denotes $Parents(X)$.}:
 \begin{enumerate}
    \item $P(X_1, \dots, X_k) \geq 0$:
        Trivial since factors $P(X_i \mid Parents(X_i))$ are assumed to be valid probability distributions. Then, by definition of probability distribution~\ref{def_prob_distribution}, we know that $\forall i: P(X_i \mid Parents(X_i)) \geq 0$. And product of non-negative numbers (factors) is also non-negative, ie. $\prod_{i=1}^k P(X_i \mid Parents(X_i)) \geq 0$.
-   \item $\sum P(x_1, \dots, x_k) = 1$:
-       If the remaining variables $X_1, \dots, X_k$ are all independent, then by definition of independent random variables $P(X_1, \dots, X_k) = P(X_1) \dotsm P(X_k)$. So the sum can be written as $\sum P(x_1, \dots, x_k) = \sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm \sum_{X_k} P(x_k)$. By assumption, all factors are valid probability distributions, so $\sum_{X_k} P(x_k) = 1$. Then $\sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm \sum_{X_k} P(x_k) = \sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm 1$. Thus we have eliminated variable $X_k$ and transformed the problem to $\sum P(x_1, \dots, x_{k-1}) = 1$. By eliminating all remaining variables the same way, we get $\sum P(x_1, \dots, x_k) = 1$.
+   \item $\sum P(x_1, \dots, x_k) = 1$: If the remaining variables $X_1, \dots, X_k$ are all independent, then by definition of independent random variables $P(X_1, \dots, X_k) = P(X_1) \dotsm P(X_k)$. So the sum can be written as $\sum P(x_1, \dots, x_k) = \sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm \sum_{X_k} P(x_k)$. By assumption, all factors are valid probability distributions, so $\sum_{X_k} P(x_k) = 1$. Then $\sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm \sum_{X_k} P(x_k) = \sum_{X_1} P(x_1) \sum_{X_2} P(x_2) \dotsm 1$. Thus we have eliminated variable $X_k$ and transformed the problem to $\sum P(x_1, \dots, x_{k-1}) = 1$. By eliminating all remaining variables the same way, we get $\sum P(x_1, \dots, x_k) = 1$.
        
-       If there is a direct dependency between some two variables let's relabel the variables so that their indices correspond to a topological sort of the given BN (every BN is a~DAG, so a topological sort exists).  Then we can rewrite the inspected summation in the form $\sum P(x_1, \dots, x_k) = \sum_{X_1} P(x_1 | Pars(X_1)) \sum_{X_2} P(x_2 | Pars(X_2)) \dotsm \sum_{X_k} P(x_k | Pars(X_k))$ because, thanks to the topological sort, all parent variables of a variable $X_i$ must have smaller index that $i$. Also note that the maximal element $X_k$ has no child. By assumption, $P(X_k \mid Pars(X_k))$ is a probability distribution, so $\sum_{X_k} P(x_k \mid Pars(X_k)) = 1$. By substituting the term $\sum_{X_k} P(x_k \mid Pars(X_k))$ in the summation we eliminate the variable $X_k$ and transform the problem to question if $\sum P(x_1, \dots, x_{k-1}) = 1$ which we approach analogically.
+       If there is a direct dependency between some two variables let's relabel the variables so that their indices correspond to a topological sort of the given BN (every BN is a~DAG, so a topological sort exists).  Then we can rewrite the inspected summation in the form $\sum P(x_1, \dots, x_k) = \sum_{X_1} P(x_1 | Pars(X_1)) \sum_{X_2} P(x_2 | Pars(X_2)) \dotsm \sum_{X_k} P(x_k | Pars(X_k))$ because, thanks to the topological sort, all parent variables of a variable $X_i$ must have smaller index that $i$. Also note that the maximal element $X_k$ has no child. By assumption, $P(X_k \mid Pars(X_k))$ is a probability distribution, so $\sum_{X_k} P(x_k \mid Pars(X_k)) = 1$. By substituting the term $\sum_{X_k} P(x_k \mid Pars(X_k))$ in the summation we eliminate the variable $X_k$ and transform the problem to question if $\sum P(x_1, \dots, x_{k-1}) = 1$ which we approach recursively.
 \end{enumerate}
 
 
 \section{Flow of probabilistic influence}
-To describe how observing certain facts propagates through a Bayesian network and how it affects probability distributions of unobserved variables on qualitative level, let's introduce \term{flow of probabilistic influence}. Flow of influence also enables us to formally capture conditional dependency and/or independency of random variables in a BN given some facts.
+To describe how observing certain facts propagates through a Bayesian network and how it affects probability distributions of unobserved variables on qualitative level, we introduce \term{flow of probabilistic influence}. Flow of influence also enables us to formally capture conditional dependency and/or independency of random variables in a BN given some facts.
 \begin{math_def}
-    Let $G$ be a Bayesian network with nodes $X_1, X_2, \dots, X_k$ and let $\vars{Z}$ be a~set of observed variables. Connected undirected trail $X_a - X_{a+1} - \dots - X_b$ given facts $\vars{Z}$ is active iff
+    Let $(\mathcal{G}, \Theta)$ be a Bayesian network with nodes $X_1, X_2, \dots, X_k$ and let $\vars{Z}$ be a~set of observed variables, where $\vars{Z} \subseteq \lbrace X_1, \dots, X_k \rbrace$. A connected undirected trail $X_a - X_{a+1} - \dots - X_b$ given facts $\vars{Z}$ is active if and only if
     \begin{itemize}
         \item For every so called \uv{V-structure} $X_{i-1} \rightarrow X_i \leftarrow X_{i+1}$ on the trail is $X_i \in \vars{Z}$.
         \item No other node of given trail is in $\vars{Z}$.
@@ -338,14 +337,14 @@ To describe how observing certain facts propagates through a Bayesian network an
 \end{math_def}
 
 \begin{math_def}
-    Let $G$ be a Bayesian network, $X,Y$ two of its nodes and $\vars{Z}$ observed variables. We say that $X,Y$ given $\vars{Z}$ are d-separated in $G$ iff there is no active trail between $X$ and $Y$ given $\vars{Z}$.
+    Let $(\mathcal{G}, \Theta)$ be a Bayesian network, $X,Y$ two of its nodes and $\vars{Z}$ observed variables. We say that $X,Y$ given $\vars{Z}$ are d-separated in $\mathcal{G}$ iff there is no active trail between $X$ and $Y$ given $\vars{Z}$.
     
     Note: $X$ and $Y$ being d-separated given $\vars{Z}$ is equivalent to $X$ and $Y$ being conditionally independent given $\vars{Z}$, denoted $X \perp Y \mid \vars{Z}$.
 \end{math_def}
 
-By using d-separation (direction-dependent separation) we can quite elegantly determine if observation of a variable $X$ can or cannot affect distribution of some other random variable. Clearly two random variables that are directly connected are dependent. But we can also examine other than these intuitively obvious relations. Also, please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $\vars{Z}$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
+By using d-separation (direction-dependent separation) we can quite elegantly determine if observation of a variable $X$ can or cannot affect distribution of some other random variable. Clearly, two random variables that are directly connected are dependent. But we can also examine other than these intuitively obvious relations. Also, please note that whether two random variables $X,Y$ are independent in Bayesian network depends on our observations $\vars{Z}$ as it can activate some trails in V-structures just as it can deactivate direct segments of other trails.
 
-To understand better the notion of active trails and d-separation we will use examples in Figure~\ref{fig:bn_d-separation}. In Figure~\ref{fig:bn_d-separation_a} you can see a Naïve Bayes model in which all feature variables $X_i$ and $X_j$ are conditionally independent given class variable $C$ because knowing the class variable deactivates all trails between $X_i$ and $X_j$.
+To understand better the notion of active trails and d-separation we will refer to examples in Figure~\ref{fig:bn_d-separation}. In Figure~\ref{fig:bn_d-separation_a} you can see a Naïve Bayes model in which all feature variables $X_i$ and $X_j$ are conditionally independent given class variable $C$ because knowing the class variable deactivates all trails between $X_i$ and $X_j$.
 In Figure~\ref{fig:bn_d-separation_traffic} we can see an activated V-structure $R\rightarrow T \leftarrow A$, provided the variable $T$ is observed. Intuitively, when we know whether there is a traffic jam then an accident decreases probability of being it in a rush hour because an accident is sufficient to cause a traffic jam by itself, formally $R \not\perp A \mid T$. To go one step further, if it is not a rush hour then knowing there is a~traffic jam increases the probability of there being an accident which causally means higher probability of hearing sirens, hence $R\not\perp H \mid T$. The argumentation involving activated V-structures is an example of \term{inter-causal} reasoning (causes with common effect are conditionally dependent given the effect variable).
 In Figure~\ref{fig:bn_d-separation_abstract} we will examine three more complicated cases of interest. The first selected case is $A \not\perp C \mid B, G$ because of the active trail $A-D-F-G-F-C$ (node $F$ is twice on the trail which is perfectly legal). The second selected case is $A \perp F \mid B, D$ because both possible trails between $A$ and $F$ are deactivated. The third selected case is $E \not\perp B \mid F, C$ because there is an active trail $E-F-D-A-B$.
 
@@ -375,7 +374,7 @@ In Figure~\ref{fig:bn_d-separation_abstract} we will examine three more complica
 \end{figure}
 \end{center}
 
-It might be useful to explicitly point out what the notation $P(X_i \mid Parents(X_i))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X_i)$ of a variable $X_i$, the variable is independent of all its indirect parents in the network. In Markov chain Monte-Carlo sampling we will also introduce so called \term{Markov blanket} of variable $X$ which is minimal set of variables such that $X$ is conditionally independent on any other variable in the network given its Markov blanket.
+It might be useful to explicitly point out what the notation $P(X \mid Parents(X))$ tells us in context of d-separation. It is a fact frequently used in mathematical derivations in context of BNs that, when given all parents $Parents(X)$ of a variable $X$, the variable is independent of all its indirect predecessors in the network. In Markov chain Monte-Carlo sampling we will also introduce so called \term{Markov blanket} of variable $X$ which is minimal set of variables such that $X$ is conditionally independent on any other variable in the network given its Markov blanket.
 
 
 
@@ -390,20 +389,19 @@ It might be useful to explicitly point out what the notation $P(X_i \mid Parents
 
 
 \section{Inference in Bayesian networks}
-There are several types of queries that might be asked in context of a Bayesian network. Most frequently, by inference in BNs is meant computing the posterior probability distribution for a set of query variables $\vars{X}$ given values $\vars{e}$ of evidence variables $\vars{E}$. Mathematically, the task is to compute the probability distribution $P(\vars{X} \mid \vars{e})$. Another type of query is so called \term{maximum a~posteriori} (abbreviated as MAP) that is finding $arg\ max_\vars{X} P(\vars{X} \mid \vars{e})$. MAP is basically used for finding out the most probable cause (concrete assignment of variables $\vars{X}$) for observation $\vars{e}$. A practical example could be getting the most probable word (sequence of letters) that corresponds to classifier output for a segmented picture containing that word. Although this is an example more frequently used in context of Markov networks.
+There are several types of queries that might be asked in context of a Bayesian network. In my case, inference in BNs is primarily understood as computing the posterior probability distribution for a set of query variables $\vars{X}$ given values $\vars{e}$ of evidence variables $\vars{E}$. Mathematically, the task is to compute the probability distribution $P(\vars{X} \mid \vars{e})$. Another type of query is so called \term{maximum a~posteriori} (abbreviated as MAP) which is finding $arg\ max_\vars{X} P(\vars{X} \mid \vars{e})$. MAP is basically used for finding out the most probable cause (concrete assignment of variables $\vars{X}$) for observation $\vars{e}$. A practical example could be getting the most probable word (sequence of letters) that corresponds to classifier output for a~segmented picture containing that word. Although, this is an example more frequently used in context of Markov networks.
 
-Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of mathematical description and naive algorithmic implementation but exhibits serious running-time disadvantage\,--\,exponential running time in the number of variables in the worst case. On the other hand, approximate inference methods allow us to answer queries more quickly but precision of the solution may be questionable, especially for very rare events.
+Inference in a BN may be carried out in many ways depending on nature of the query and precision requirements. Exact inference is relatively straightforward in terms of mathematical description and naive algorithmic implementation but exhibits serious running-time disadvantage\,--\,exponential running time in the number of variables in the worst case. On the other hand, approximate inference methods allow us to answer queries more quickly but precision of the results may be questionable, especially for very rare events.
 
-\todo{maybe show types of queries\,--\,diagnostic, causal, intercausal, mixed?~\cite[p.~448]{russell_norvig_ed2}}
 
 \subsection{Sum-product}
-Probably the simplest method for computing a conditional probability query is called sum-product. The problem at hand is to compute conditional probability distribution $P(\vars{X} \mid \vars{e})$ where $\vars{X}$ is one or more variables, $\vars{e}$ is an assignment to evidence variables $\vars{E}$ and $\vars{Y}$ variables that are neither query nor evidence variables. The query is computed according to Bayes' theorem as follows:
+At the conceptual level, the simplest method for computing a conditional probability query is called sum-product. The problem at hand is to compute conditional probability distribution $P(\vars{X} \mid \vars{e})$ where $\vars{X}$ is one or more variables, $\vars{e}$ is an assignment to evidence variables $\vars{E}$ and $\vars{Y}$ are variables that are neither query nor evidence variables (the rest of the variables in the BN). The query is computed according to Bayes' theorem as follows:
 \begin{equation*}
 P(\vars{X} \mid \vars{e})
  = \frac{P(\vars{X}, \vars{e})} {P(\vars{e})}
  = \frac{\sum_\vars{Y} P(\vars{X}, \vars{y}, \vars{e})}{\sum_{\vars{X},\vars{Y}} P(\vars{x}, \vars{y}, \vars{e})}
 \end{equation*}
-The denominator is constant and since $P(\vars{X} \mid \vars{e})$ has to be a probability distribution, we can simply omit the denominator and in the end normalize numerator by some constant $\alpha$. Hence we can write
+The denominator is constant and since $P(\vars{X} \mid \vars{e})$ has to be a probability distribution, we can simply omit the denominator and in the end normalize numerator by an appropriate constant $\alpha$. Hence we can write:
 \begin{equation*}
 P(\vars{X} \mid \vars{e})
  = \alpha \sum_\vars{Y} P(\vars{X}, \vars{y}, \vars{e})
@@ -413,81 +411,64 @@ Computation of this expression using the sum-product method means performing fou
 	\item reducing all factors in the Bayesian network by evidence $\vars{e}$,
 	\item multiplying reduced factors all together producing single joint factor $P(\vars{X},\vars{Y},\vars{e})$ which is not a probability distribution because, in general, all values of the factor don't sum to one,
 	\item marginalizing over the variables $\vars{Y}$ (non-query and non-evidence variables) and finally
-	\item renormalizing the resulting factor, obtaining the joint probability distribution $P(\vars{X},\vars{e})$.
+	\item renormalizing the resulting factor, obtaining the probability distribution $P(\vars{X} \mid \vars{e})$.
 \end{enumerate}
 
-Every item of the sum in numerator, ie. probability of every possible assignment to variables $\vars{Y}$, can be written according to the joint probability distribution represented by a~BN (definition~\eqref{eq:bn_joint}) as a~product of conditional probabilities of all variables in given BN. This explains the name of this inference method\,--\,we effectively compute many products of conditional probabilities and sum over variables $\vars{Y}$.
+Every item of the sum in the numerator, ie. probability of every possible assignment to variables $\vars{Y}$, can be written, according to the joint probability distribution represented by a~BN (definition~\eqref{eq:bn_joint}), as a~product of conditional probabilities of all variables in given BN. This explains the name of this inference method\,--\,we effectively compute many products of conditional probabilities and sum over variables $\vars{Y}$.
 
 Sum-product inference algorithm has, by its nature, exponential running time in the number of variables because it effectively generates the whole joint probability distribution encoded by a given Bayesian network and the size of a table representing any joint probability distribution has been earlier shown to be exponential in the number of variables. Because of this quality, the sum-product method is suitable only for inference in considerably small networks.
 
-\begin{comment}
-\uncertain{
-Formally, exact number of operations carried out in the nominator sum during the sum-product inference can be determined as follows. Let $m$ be the number of all variables, let $n$~be the number of non-query and non-evidence variables $\vars{Y}$ and let $k$~be the number of possible assignments to a variable. The numerator summation unrolls to $k^n$ items, each item being a product of all $m$ factors which means $k^n (m-1)$ multiplications and $k^n - 1$ additions. Therefore the overall running time is roughly $O(m k^n)$.}
-\end{comment}
 
 
 \subsection{Variable elimination}
 Variable elimination algorithm can be seen as a somewhat smarter implementation of the sum-product algorithm explained above. Again, we answer the given query by multiplying all factors of the BN and summing out $\vars{Y}$ variables. The innovative ideas behind variable elimination are:
 \begin{itemize}
-	\item Suppose we sum over many variables in a product of factors, say one of these variables is $V$. Then factors whose scopes don't contain $V$ are irrelevant for the summation over~$V$ and hence these factors can be factored out in front of the summation over~$V$. This way we can push all summations as far to the right as possible, so that each summation is done only over product of factors containing the variable $V$ being summed out. What is the benefit for us? It can be shown~\cite{pgm} that running time of variable elimination depends on the size of the largest immediate factor during the summing-out process. When we sum only over product of factors containing variable $V$, the resulting immediate factor is the smallest possible. Because problem of determining the optimal order of elimination is NP-hard, greedy heuristics are usually used instead~\cite{pgm}.
-	\item By definition of a conditional probability distribution, it holds for any instantiation of parent variables that $\sum_V P(v \mid Parents(V)) = 1$. So, when computing posterior probability distribution $P(\vars{X} \mid \vars{e})$, any node (factor) $V$ that is not an ancestor of a~query or evidence variable can be omitted because, thanks to the order of elimination of variables, the term $\sum_V P(v \mid Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Implementation can be recursively done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
+	\item Suppose we sum over many variables in a product of factors, say one of these variables is $V$. Then factors whose scopes don't contain $V$ are irrelevant for the summation over~$V$ and hence these factors can be factored out in front of the summation over~$V$. This way we can push all summations \uv{as far to the right as possible}, so that each summation is ideally done only over product of factors containing the variable $V$ which is being summed out. What is the benefit for us? It can be shown~\cite{pgm} that running time of variable elimination depends on the size of the largest immediate factor during the summing-out process. When we sum only over product of factors containing variable $V$, the resulting immediate factor is the smallest possible. Because problem of determining the optimal order of elimination is NP-hard, greedy heuristics are usually used instead~\cite{pgm}.
+	\item By definition of a conditional probability distribution it holds for any instantiation of parent variables that $\sum_V P(v \mid Parents(V)) = 1$. So, when computing posterior probability distribution $P(\vars{X} \mid \vars{e})$, any node (factor) $V$ that is not an ancestor of a~query or evidence variable can be omitted because, thanks to the order of elimination of variables, the term $\sum_V P(v \mid Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Recursive implementation of this process could be done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
 \end{itemize}
 
 %\todo{řeči kolem, algoritmus, časová složitost, kliky}
 
 Running time of the variable elimination algorithm in polytrees is $O(n)$~\cite[p.~510]{russell_norvig_ed2}, therefore it is a good method for answering individual queries $P(X \mid \vars{e})$ where $X$ is a single variable. Analogically, we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i \mid \vars{e})$ for all $X_i \in \vars{X}$ and returning $P(\vars{X} \mid \vars{e}) = \prod_i P(X_i \mid \vars{e})$.
 
-Running time in multiply connected networks is exponential in general but it can be coped with by clustering algorithms that transform multiply connected network into a~polytree which can be processed in linear time.
+Running time in multiply connected networks is exponential in general but it can be coped with by clustering algorithms that transform multiply connected network into a~polytree which can be processed in linear time~\cite{russell_norvig_ed2}.
+
 
 \subsection{Belief propagation}
-Belief propagation~\cite{pgm} is an approximate inference algorithm from the family of so called \term{message passing algorithms}. The main idea is that nodes in the BN exchange information about their believes (probability distributions affected by evidence) and the whole network converges to some solution close to true posterior probability. As methods from this family are far from trivial and they are not the aim of this thesis, we will not pay deeper attention to them.
-\begin{comment}
-\note{Cluster graphs and \term{running intersection property}: Nodes $C_i \subseteq \lbrace X_1, \dots, X_n \rbrace$ and sepsets $S_{i,j} \subseteq C_i \cup C_j$ such that for each factor $\phi$ exists $C_i$: $scope(\phi) \subseteq C_i$.
-For each variable $X$ the nodes $C_i$ and sepsets containing $X$ form a tree (ie. no cycle and single unbroken component)\,--\,cycle would mean that a node would get information about variable $X$ twice and the probabilities would go up and up. If some node with $X$ would be isolated from others, it would not get the belief updates. Bethe cluster automatically satisfies the running intersection property.}
-\end{comment}
-
+Belief propagation~\cite{pgm} is an approximate inference algorithm from the family of so called \term{message passing algorithms}. The main idea is that nodes in the BN exchange information about their believes (probability distributions affected by evidence) and the whole network converges to some result close to true posterior probability. As methods from this family are far from trivial and they are not the aim of this thesis, we will not pay deeper attention to them.
 
 \subsection{Sampling methods}
-Monte Carlo methods (or particle methods) are stochastic methods of inference based on sampling the probability distribution induced by a BN. There are three main sampling methods: \term{direct sampling}, \term{rejection sampling} and \term{likelihood weighting}. All these methods basically generate a sufficient number of independent samples and then compute simple statistics over these samples. In general, relative precision of Monte Carlo methods is proportional to $1/\sqrt{N}$, where $N$ is the number of samples.
+Monte Carlo methods (or particle methods) are stochastic methods of inference based on sampling the probability distribution induced by a BN. There are three main sampling methods: \term{direct sampling}, \term{rejection sampling} and \term{likelihood weighting}. All these methods basically generate a sufficient number of mutually independent samples and then compute simple statistics over these samples.
 
 \subsubsection{Direct sampling}
-Direct sampling is a method for computing probability distribution in the form $P(\vars{U} \mid \vars{V})$, ie. without any known evidence. Of course must hold that $\vars{U} \neq \emptyset \wedge \vars{U} \cap \vars{V} = \emptyset$. For the sake of clarity of formulas we will consider $\vars{X} = \vars{U} \cup \vars{V}$ and compute the probability distribution $P(\vars{X})$ from which the conditional distribution $P(\vars{U} \mid \vars{V})$ can be easily obtained using Bayes' rule. This simplification is applied to all sampling methods further described. 
+Direct sampling is a method for computing probability distribution in the form $P(\vars{U} \mid \vars{V})$, ie. without any observed evidence. Of course must hold that $\vars{U} \neq \emptyset \wedge \vars{U} \cap \vars{V} = \emptyset$. For the sake of clarity of formulas we will consider $\vars{X} = \vars{U} \cup \vars{V}$ and compute the probability distribution $P(\vars{X})$ from which the conditional distribution $P(\vars{U} \mid \vars{V})$ can be easily obtained using Bayes' rule. This simplification is applied to all sampling methods further described. 
 
-Direct sampling produces a number of samples, ie. of concrete events according to the probability distribution induced by the given BN and then for every assignment $\vars{x}$ computes its probability as $P(\vars{x}) = N_\vars{x} / N$, where $N_\vars{x}$ is the number of samples in which variables $\vars{X}$ have the values $\vars{x}$ and $N$ is the number of all samples generated.
+Direct sampling produces a number of samples, ie. of concrete events according to the probability distribution induced by the given BN, and then for every assignment $\vars{x}$ computes its probability as $P(\vars{x}) = N_\vars{x} / N$, where $N_\vars{x}$ is the number of samples in which variables $\vars{X}$ have the value $\vars{x}$ and $N$ is the number of all samples generated.
 
-A single sample is generated as follows. First randomly assign values to variables with no parents according to their probability distributions. Then choose a variable $V$ such that all of its parents have already been instantiated and randomly assign a value to $V$ according to the probability distribution $P(V \mid parents(V))$ where $parents(V)$ are the concrete values of its parents in current sample. Repeat this step until all variables have been instantiated, thereby obtaining a~sample. The process can easily be done if we first compute topological sort of the BN and then sample variables in ascending order.
+A single sample is generated as follows. First, randomly assign values to variables with no parents according to their probability distributions. Then choose a variable $V$ such that all of its parents have already been instantiated and randomly assign a value to $V$ according to the probability distribution $P(V \mid parents(V))$ where $parents(V)$ are the concrete values of the variables $Parents(V)$ in the current sample. Repeat this step until all variables have been instantiated, thereby obtaining a~sample. The process be done efficiently if we first compute topological sort of the BN and then sample variables in ascending order.
 
 It can be shown~\cite[p.~491]{pgm} that to obtain an estimate with error bounded by $\epsilon$ with probability at least $1-\delta$ we need to generate $M$ samples:
 \begin{equation*}%\label{eq:sampling_accuracy}
 M \geq \frac{\ln(2 / \delta)}{2 \epsilon ^ 2}
 \end{equation*}
-Problem is that for a very unlikely event we may not generate a single sample and therefore the obtained probability distribution would indicate that this event is impossible (its probability equals to zero). Still it would be a sound result within the error estimate $(\epsilon, \delta)$.
+Problem is that for a very unlikely event we may not generate a single sample and therefore the obtained probability distribution would indicate that this event is impossible (its probability equals to zero). Still, it would be a sound result within the error estimate $(\epsilon, \delta)$.
 
 \subsubsection{Rejection sampling}
-Direct sampling presented earlier doesn't allow for any evidence. Rejection sampling could be viewed as a simple extension of direct sampling for computing posterior probability distribution with evidence $\vars{E} = \vars{e}$, ie. distribution in the form $P(\vars{X} \mid \vars{e})$. The idea is to exclude samples inconsistent with evidence $\vars{e}$ meaning that when an evidence variable is instantiated during the production of a sample, the sample is discarded unless the randomly assigned value corresponds with the observed value. The desired distribution is determined by computing $P(\vars{x} \mid \vars{e}) = N_{\vars{x}, \vars{e}} / N_\vars{e}$ for every instantiation of $\vars{X}$.
+Direct sampling presented earlier doesn't allow for any evidence. Rejection sampling could be viewed as a simple extension of direct sampling for computing posterior probability distribution with evidence $\vars{E} = \vars{e}$, ie. distribution in the form $P(\vars{X} \mid \vars{e})$. The idea is to exclude samples inconsistent with evidence $\vars{e}$ meaning that when an evidence variable is instantiated during the production of a sample, the sample is discarded unless the randomly assigned value corresponds with the observed value in $\vars{e}$. The desired distribution is determined by computing $P(\vars{x} \mid \vars{e}) = N_{\vars{x}, \vars{e}} / N_\vars{e}$ for every instantiation of $\vars{X}$ where $N_\vars{e}$ basically is the number of all generated samples that haven't been discarded.
 
 This simple approach bears the disadvantage that if the observed evidence is very unlikely then many samples get discarded and hence a lot of computational time is wasted because rejected samples don't contribute to the final probability distribution estimate. Unfortunately, when considering somewhat uniform distribution, the probability $P(\vars{e})$ decreases exponentially with the number of observed variables (eg. with symptoms of a~patient) and by the same rationale the number of samples that are not rejected decreases just as rapidly.
 
 \subsubsection{Likelihood weighting}
-Rejection sampling described earlier can theoretically be used for answering queries of the form $P(\vars{X} \mid \vars{e})$ but the number of rejected samples may be unbearable in practice. Likelihood weighting method copes with this problem by forcing every sample to be consistent with observed evidence, ie. by artificially setting variables $\vars{E}$ to $\vars{e}$. Then, of course, not every sample is equally likely, so we cannot determine $P(\vars{x} \mid \vars{e})$ by simply dividing number of samples $N_{\vars{x},\vars{e}}$ by $N_\vars{e}$. For each sample we need some additional information which is the probability of assigning values $\vars{e}$ to evidence variables given values of other variables in the current sample~\cite[p.~514]{russell_norvig_ed2}. Let $\vars{Y}$ denote set of all variables in a BN other than the variables $\vars{X} \cup \vars{E}$. Then we can state that weight of a sample $\vars{x},\vars{e}, \vars{y}$ is $w_{\vars{x},\vars{e}, \vars{y}} = \prod_\vars{E} P(e \mid parents(E))$ where $parents(E_i)$ denotes assignment to variables $Parents(E_i)$ according to the given sample $\vars{x},\vars{e}, \vars{y}$.
+Rejection sampling described earlier can theoretically be used for answering queries of the form $P(\vars{X} \mid \vars{e})$ but the number of rejected samples may be unbearable in practice. The likelihood weighting copes with this problem by forcing every sample to be consistent with observed evidence, ie. by artificially setting variables $\vars{E}$ to $\vars{e}$. Then, of course, not every sample is equally likely, so we cannot determine $P(\vars{x} \mid \vars{e})$ by simply dividing number of samples $N_{\vars{x},\vars{e}}$ by $N_\vars{e}$. For each sample we need some additional information which is the probability of assigning values $\vars{e}$ to evidence variables given values of other variables in the current sample~\cite[p.~514]{russell_norvig_ed2}. Let $\vars{Y}$ denote set of all variables in a BN other than the variables $\vars{X} \cup \vars{E}$. Then we can state that weight of a sample $\vars{x},\vars{e}, \vars{y}$ is $w_{\vars{x},\vars{e}, \vars{y}} = \prod_\vars{E} P(e \mid parents(E))$ where $parents(E_i)$ denotes assignment to variables $Parents(E_i)$ in the given sample $\vars{x},\vars{e}, \vars{y}$.
 
-The sampling algorithm needs to be changed in the following way. First of all, the counters of samples won't be integral but real. Also, when generating a~new sample we will keep not only the values of variables but also weight of the sample. When generating a new sample, first we set the weight of the current sample to 1. Then we sample all variables in topological order. For a non-evidence variable $X_i$ we proceed as in the case of direct sampling\,--\,randomly assign a value $x_i$ according to the probability distribution $P(X_i \mid parents(X_i))$ which is governed by the current instantiation of $X_i$'s parents. When we encounter an evidence variable $E_i$, we set it to value $e_i$ according to the given evidence $\vars{e}$ and multiply weight of the current sample by $P(e_i \mid parents(E_i))$. When a sample is completed we increase the counter $C_{\vars{x},\vars{e}}$ by the weight of the generated sample. The final probability distribution is computed as follows:
-
-\begin{comment}
-\begin{equation}\label{eq:weighted_sampling}
-    P(\vars{x} \mid \vars{e})
-    = \frac
-        {w_{\vars{x},\vars{e}} \cdot N_{\vars{x},\vars{e}}}
-        {\sum_\vars{X} (w_{\vars{x},\vars{e}} \cdot N_{\vars{x},\vars{e}})}
-\end{equation}
-\end{comment}
+The algorithm of direct sampling needs to be changed in the following way. First of all, the counters of samples won't be integral but real as we don't count mere number of occurrences of a sample but its weighted number of occurrences. Also, when generating a~new sample we will keep not only the values of variables but also weight of the sample. When generating a new sample, first we set the weight of the current sample to 1. Then we sample all variables in topological order. For a non-evidence variable $X_i$ we proceed as in the case of direct sampling\,--\,randomly assign a value $x_i$ according to the probability distribution $P(X_i \mid parents(X_i))$ which is governed by the current instantiation of $X_i$'s parents. When we encounter an evidence variable $E_i$, we set it to value $e_i$ according to the given evidence $\vars{e}$ and multiply weight of the current sample by $P(e_i \mid parents(E_i))$. When a sample is completed we increase the counter $C_{\vars{x},\vars{e}}$ by the weight of the generated sample. The final probability distribution is computed for every $\vars{x} \in Val(\vars{X})$ as follows:
 
 \begin{equation}\label{eq:weighted_sampling}
     P(\vars{x} \mid \vars{e})
     = \frac{C_{\vars{x},\vars{e}}}{C_{\vars{e}}}
 \end{equation}
 
-Because weighted sampling might not be as obvious as direct and rejection sampling, I will try to elaborate and provide some insight. The key difference to previous sampling methods is that we want each sample to contribute to the final probability distribution estimate but then each generated sample cannot be accounted for by the same amount. Therefore the weight of a sample is used which literally bears the information how likely is the observed evidence $\vars{e}$ in that sample (for direct and rejection sampling the weight would be always one).
+Because the principle of weighted sampling might not be as obvious as in the cases of direct and rejection sampling I will try to elaborate and provide some insight. The key difference to previous sampling methods is that we want each sample to contribute to the final probability distribution estimate but then each generated sample cannot be accounted for by the same amount. Therefore the weight of a sample is used which literally bears the information how likely is the observed evidence $\vars{e}$ in that sample (for direct and rejection sampling the weight would be always one).
 To understand weighted sampling better I have devised  a formal derivation of the formula~\eqref{eq:weighted_sampling}. Let $\vars{Y}$ denote set of all variables in a BN other than the variables $\vars{X} \cup \vars{E}$. First we will derive an alternative expression for $P(\vars{x}, \vars{e})$ which will be useful later.
 
 \begin{eqnarray}
@@ -504,12 +485,12 @@ To understand weighted sampling better I have devised  a formal derivation of th
         = \frac{1}{N_\vars{e}} \cdot \sum_\vars{Y} \Bigl( w_{\vars{x},\vars{e},\vars{y}} \cdot N_{\vars{x},\vars{e},\vars{y}}\Bigr) \label{eq:weighted_sampling_P_x_e}
 \end{eqnarray}
 
-Lets go through the derivation step by step. The first line merely states we have to marginalize over all the remaining variables $\vars{Y}$ in the network.
+Let's go through the derivation step by step. The first line merely states we have to marginalize over all the remaining variables $\vars{Y}$ in the network.
 On the second line we just rewrote the joint probability according to the definition of a~Bayesian network.
-On the third line we replaced exact probabilities by their sampled equivalents (therefore the approximation symbol instead of equality). Namely weight of the sample $w_{\vars{x},\vars{e},\vars{y}}$ is equal to the probability $P(\vars{e} \mid \vars{x},\vars{y})$ and ratio $N_{\vars{x},\vars{e},\vars{y}} / N_{\vars{e},\vars{y}}$ approximately equals to $P(\vars{x} \mid \vars{e},\vars{y})$.
+On the third line we replaced exact probabilities by their sampled equivalents (therefore the approximation symbol instead of equality). Namely, weight of the sample $w_{\vars{x},\vars{e},\vars{y}}$ is equal to the probability $P(\vars{e} \mid \vars{x},\vars{y})$ and ratio $N_{\vars{x},\vars{e},\vars{y}} / N_{\vars{e},\vars{y}}$ approximately equals to $P(\vars{x} \mid \vars{e},\vars{y})$.
 On the forth line we needed to express the number $N_{\vars{e},\vars{y}}$ of samples with concrete values $\vars{e},\vars{y}$ using the probability $P(\vars{y} \mid \vars{x},\vars{e})$ and the total number of samples generated $N_\vars{e}$ (remember that in weighted sampling all samples are consistent with the evidence, so $N_\vars{e}$ really is the total number of samples).
 Finally, on the fifth line the big products over $\vars{Y}$ cancel out and we obtain the final expression for $P(\vars{x},\vars{e})$.
-Now lets make some use of it:
+Now let's make use of it:
 
 \begin{eqnarray*}
     P(\vars{x} \mid \vars{e})
@@ -535,14 +516,14 @@ To understand the third line we need to revisit how the weighted sampling works,
 
 \medskip
 
-I believe that the sampling process can furthermore be accelerated by omitting a set of variables, denoted $\vars{Z}$, from the network being sampled where $\vars{Z}$ is maximal set of variables satisfying the following two conditions: (1) $\vars{Z} \cap (\vars{X} \cup \vars{E}) = \emptyset$, (2) no direct or indirect child of any variable from $\vars{Z}$ is in $\vars{X} \cup \vars{E}$. Rationale behind this is the same as in the variable elimination algorithm\,--\,when computing the final probability distribution, we effectively sum out variables $\vars{Z}$ and it is irrelevant what random values they are assigned because if two samples differ only in the values of $\vars{Z}$ then these samples contribute to the same counter $C_{\vars{x},\vars{e}}$ and also $\vars{Z}$ don't affect weights of the samples as $\vars{Z} \cap \vars{E} = \emptyset$. This observation is applicable to direct and rejection sampling as well.
+I believe that the sampling process can furthermore be accelerated by omitting a set of variables, denoted $\vars{Z}$, from the network being sampled where $\vars{Z}$ is maximal set of variables satisfying the following two conditions: (1) $\vars{Z} \cap (\vars{X} \cup \vars{E}) = \emptyset$, (2) no direct or indirect child of any variable from $\vars{Z}$ is in $\vars{X} \cup \vars{E}$. Rationale behind this is the same as in the variable elimination algorithm\,--\,when computing the final probability distribution, we effectively sum out variables $\vars{Z}$ and it is irrelevant what random values they are assigned because if two samples differ only in the values of $\vars{Z}$ then these samples contribute to the same counter $C_{\vars{x},\vars{e}}$ by the same weight because $\vars{Z} \cap \vars{E} = \emptyset$. This observation is applicable to direct and rejection sampling as well.
 
-Important drawback of likelihood weighting is that it doesn't account well for evidence in leaf nodes or near to them. This is because in that case we effectively sample the prior probability distribution and finally we modify weight of the generated sample by evidence but the sampling process is most of the time unaffected by the evidence and virtually only weights of samples take evidence into account. So, for a very rare instantiation of evidence variables (eg. for some rare and/or big set of symptoms) all of the generated samples might have very small weight and, in case of medical diagnosis, no sample representing the \uv{real cause} of observed evidence might be generated at all. Once again, this is because we sample prior probability distribution rather than posterior and these two distributions may be very different~\cite[p.~503]{pgm}.
+Important drawback of likelihood weighting is that it doesn't account well for evidence in leaf nodes or near to them. This is because in that case we effectively sample the prior probability distribution and finally we modify weight of the generated sample by evidence but the sampling process is most of the time unaffected by the evidence and virtually only weights of samples take evidence into account. So, for a very rare instantiation of evidence variables (eg. for some rare and/or big set of medical symptoms) all of the generated samples might have very small weight and, in case of medical diagnosis, no sample representing the \uv{real cause} of observed evidence might actually get generated at all. Once again, this is because we sample prior probability distribution rather than posterior and these two distributions may be very different~\cite[p.~503]{pgm}.
 
 \subsection{Markov Chain Monte Carlo}
-The likelihood weighting method presented earlier doesn't account well for evidence near leaf nodes, ie. for so called \term{evidential reasoning}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way, the information about all evidence variables propagates through the network and with time we get closer to the true posterior probability distribution $P(\vars{X} \mid \vars{e})$.
+The likelihood weighting method presented earlier doesn't account well for evidence near leaf nodes, ie. for so called \term{evidential reasoning}. Markov Chain Monte Carlo (MCMC) is also a stochastic method that generates samples but rather than generating each sample completely from scratch it modifies the last sample by resampling one of the non-evidence variables. This way, the information about all evidence variables propagates through the network and, with time, we get closer to the true posterior probability distribution $P(\vars{X} \mid \vars{e})$.
 
-To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (also see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is the minimal set of variables other than $X$ such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i \in Children(X)$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket could be defined as follows:
+To explain how the MCMC algorithm works we first need to introduce so called \term{Markov blanket} of a~variable $X$ (also see Figure~\ref{fig:bn-markov-blanket}), denoted $MB(X)$. The Markov blanket of $X$ is the minimal set of variables not including $X$ such that $X$ is conditionally independent of all other variables in the BN given $MB(X)$. It is fairly obvious that the Markov blanket includes variables $Parents(X)$ and direct children of $X$, denoted $Children(X)$, because there is a direct connection between these variables and $X$. Furthermore, $MB(X)$ also needs to include parents of every variable in $Children(X)$ because observing any of the children $C_i \in Children(X)$ activates a V-structure and $X$ becomes conditionally dependent on $Parents(C_i)$ given $C_i$. Formally the Markov blanket could be defined as follows:
 \begin{equation*}
 MB(X) = Parents(X) \cup Children(X) \cup \!\!\!\!\!\!\!\! \bigcup_{C_i \in Children(X)} \!\!\!\!\!\!\!\!\!\!\!\! Parents(C_i) \setminus \lbrace X \rbrace
 \end{equation*}
@@ -563,7 +544,7 @@ The MCMC algorithm~\cite[p.~516]{russell_norvig_ed2} starts by producing one sam
 \begin{equation*}
     P(v \mid mb(V)) = \alpha \cdot P(v \mid parents(V)) \!\!\!\!\!\!\!\! \prod_{C_i \in Children(V)} \!\!\!\!\!\!\!\!\!\!\!\! P(c_i \mid parents(C_i))
 \end{equation*}
-where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of variables $MB(\cdot)$ and $Parents(\cdot)$ in the current sample. As we can see, when computing the probability distribution $P(V \mid mb(V))$ we only need to account for probabilities of variables $V$ and $Children(X)$ not of the whole Markov blanket. This is because when we set $V$ to concrete value $v$, only probabilities in nodes $\lbrace V \rbrace \cup Children(X)$ are affected due to the definition of a Bayesian network where probability at a node depends purely on its parents.
+where $\alpha$ is a normalizing constant. Note that $mb(\cdot)$ and $parents(\cdot)$ denote concrete instantiation of variables $MB(\cdot)$ and $Parents(\cdot)$ in the current sample. As we can see, when computing the probability distribution $P(V \mid mb(V))$ we only need to account for probabilities of variables $V$ and $Children(X)$, not of the whole Markov blanket. This is because when we set $V$ to concrete value $v$, only probabilities in nodes $\lbrace V \rbrace \cup Children(X)$ are affected due to the definition of a Bayesian network where probability at a node depends purely on its parents.
 
 Intuition behind the MCMC algorithm is that the sampling process will reach a dynamic equilibrium in which time spent with each instantiation of non-evidence variables (ie. the counter of samples $N_{\vars{x},\vars{e}}$) is proportional to the probability of this instantiation. More formally, MCMC is based on state space induced by a BN represented by a Markov model~\cite[p.~516]{russell_norvig_ed2} but this theory is not necessary for understanding the MCMC inference method.
 
@@ -631,7 +612,7 @@ In context of Bayesian estimation, besides the real dataset $\mathcal{D}$ contai
     \end{array}
 \end{equation*}
 
-Lets take a closer look at the hyperparameters. It is easy to see from formulas above that the relative difference between $\alpha$ and $N$ terms determines strength of the prior distribution $P(\Theta)$, ie. how many real samples accounted for in the $N$ counters does it take to significantly deviate from the prior distribution defined purely by hyperparameters $\alpha$.
+Let's take a closer look at the hyperparameters. It is easy to see from formulas above that the relative difference between $\alpha$ and $N$ terms determines strength of the prior distribution $P(\Theta)$, ie. how many real samples accounted for in the $N$ counters does it take to significantly deviate from the prior distribution defined purely by hyperparameters $\alpha$.
 We have already encountered two special cases of hyperparameters\,--\,$(0,\dots,0)$ is the pure maximum likelihood estimation when we compute the CPDs based just on the dataset $\mathcal{D}$; hyperparameters $(1,\dots,1)$ correspond the maximum likelihood estimation with Laplace's correction.
 It is clear that the maximum likelihood estimation and the Bayesian estimation are asymptotically the same for large datasets. However, Bayesian estimation generalizes better with sparse datasets and exhibits lower sensitivity to noise in the data~\cite[p.~749]{pgm}. In addition, we can quite simply enforce that each possible instantiation of variables in a~network occurs with non-zero probability.
 
@@ -756,7 +737,7 @@ The integral expression~\eqref{eq:bayesian_score_marginal} is hard to deal with 
 \end{equation}
 where $\mathcal{D} = \lbrace \xi^{(1)}, \dots, \xi^{(m)} \rbrace$ is a dataset. If you think about the equation~\eqref{eq:bayesian_score_chain_rule}, we could view each of the product terms as making a prediction of how likely is the data instance $\xi^{(i)}$ given the previous instances and the structure $\mathcal{G}$, ie. as if we were predicting probability of an unseen instance $\xi^{(i)}$ based on a model learnt using the previous instances. In other words, we measure predictive power the network structure for the whole dataset, only without making any explicit testing or validation.
 
-Before we get to the general expression for $P(\mathcal{D} \mid \mathcal{G})$ in context of Bayesian networks lets consider a simple coin flipping example, ie. a binomial distribution over values $\lbrace H, T \rbrace$. Say our dataset is $\mathcal{D} = \lbrace H,H,T,H,T\rbrace$ and the prior distribution is a Dirichlet distribution with hyperparameters $\alpha_H, \alpha_T$ and $\alpha = \alpha_H + \alpha_T$. Also, in this simple example there is really no structure $\mathcal{G}$ to talk about, therefore we can write $P(\mathcal{D} \mid \mathcal{G}) = P(\mathcal{D})$ in the following form (explanation follows immediately):
+Before we get to the general expression for $P(\mathcal{D} \mid \mathcal{G})$ in context of Bayesian networks let's consider a simple coin flipping example, ie. a binomial distribution over values $\lbrace H, T \rbrace$. Say our dataset is $\mathcal{D} = \lbrace H,H,T,H,T\rbrace$ and the prior distribution is a Dirichlet distribution with hyperparameters $\alpha_H, \alpha_T$ and $\alpha = \alpha_H + \alpha_T$. Also, in this simple example there is really no structure $\mathcal{G}$ to talk about, therefore we can write $P(\mathcal{D} \mid \mathcal{G}) = P(\mathcal{D})$ in the following form (explanation follows immediately):
 \begin{eqnarray*}
     P(\mathcal{D})
      & = & P(\xi^{(1)})
@@ -855,7 +836,7 @@ general graphs
 \subsection{Method for finding all possible alterations of a network}
 During structure learning, at some point we always need to determine the set of all possible alterations of a concrete network, ie. which edges may be added, removed or reversed. Method of determining this set should be time-efficient as well as mathematically plausible. With these criteria in mind I have devised the following approach.
 
-The main problem we have to face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ denotes transitive closure of the relation $r$. Lets now inspect the three possible cases of structure alteration\,--\,edge removal, addition and reversal. In the following text we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
+The main problem we have to face is that an alteration mustn't introduce a directed cycle into the network because Bayesian networks are purely DAGs. Let $r$ be binary relation over the set of all nodes such that $\forall X,Y: XrY \Leftrightarrow X \in Parents(Y)$. By convention, $r^+$ denotes transitive closure of the relation $r$. Let's now inspect the three possible cases of structure alteration\,--\,edge removal, addition and reversal. In the following text we always assume arbitrary variables $X,Y$ such that $X \neq Y$.
 
 
 \subsubsection{Removing an edge}
@@ -1242,7 +1223,7 @@ To make structure learning bearable in terms of time requirements we need to emp
              \Biggr]
       + log P(\mathcal{G})
 \end{eqnarray*}
-Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some structural complexity penalty term. Lets rewrite the scores in a unified format (suggested in~\cite[p.~818]{pgm}):
+Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some structural complexity penalty term. Let's rewrite the scores in a unified format (suggested in~\cite[p.~818]{pgm}):
 \begin{eqnarray*}
     score(\mathcal{G} : \mathcal{D})
     & = & \sum_{X_i \in Nodes} \!\!\!\!\!\! FamScore(X_i, Parents(X_i))
@@ -1257,7 +1238,7 @@ To achieve the correct dropping behavior we need to understand how the delta fam
 	\item For reversal of edge $(X,Y)$ the delta family score is the increase of two terms: $FamScore(X,Parents(X))$ and $FamScore(Y,Parents(Y))$ because the two variables' sets of parents are affected. In this case, whenever the alteration action currently taken changes either of the sets $Parents(X)$ or $Parents(Y)$, all cached delta family score values for action reverse $(X,Y)$ have to be dropped.
 \end{itemize}
 
-Size of the delta family score cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why lets consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be violated. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any concrete BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the complementary edges allowed by the topological ordering but not currently present can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
+Size of the delta family score cache is upper-bounded by the number of possible alterations. For a network with $n$ nodes I determined the upper bound of possible alterations to be $n(n-1)$. To see why let's consider a general BN and let $v_1, \dots, v_n$ be topological ordering of the network that cannot be violated. Then, from any node $v_i$ there may be edges only to nodes $v_j$ where $i < j$, which allows up to $n(n-1)/2$ edges. For any concrete BN the sum of possible edge additions and removals is upper-bounded by $n(n-1)/2$ since edges that are present in the network can be removed and the complementary edges allowed by the topological ordering but not currently present can be added. For edge reversal there probably is an even better upper bound but it is surely at most $n(n-1)/2$ since that is the number edges in a DAG with maximum connectivity and we may reverse only an edge already present in the network (only in this simple consideration we don't address the question of introducing a cycle). Thereby we obtain an upper bound for the overall count of alterations as $2 \cdot n(n-1)/2$.
 
 
 \subsection{Implementation notes}
@@ -1300,7 +1281,7 @@ For a network with $n$ variables and for BIC or Bayesian score the minimal cache
 The functionality of caching dataset queries is implemented in the \srccode{CachedDataset} class by caching proxy design pattern.
 
 \medskip
-The last thing is to derive the upper bound of possible dataset queries during a single step of local search. As with the upper bound for size of delta family score cache, suppose we can make up to $n(n-1)/2$ additions and removals total and up to $n(n-1)/2$ edge reversals. Now lets analyze how the delta family scores are affected by edge addition, removal and reversal (for reference see the definition of BIC or Bayesian score above):
+The last thing is to derive the upper bound of possible dataset queries during a single step of local search. As with the upper bound for size of delta family score cache, suppose we can make up to $n(n-1)/2$ additions and removals total and up to $n(n-1)/2$ edge reversals. Now let's analyze how the delta family scores are affected by edge addition, removal and reversal (for reference see the definition of BIC or Bayesian score above):
 \begin{itemize}
 	\item For addition or removal of edge $(X,Y)$ the delta family score is the increase or decrease in the family score of $Y$, ie. $FamScore(Y,Pa(Y)^{+}) - FamScore(Y,Pa(Y))$ in case of edge addition or $FamScore(Y,Pa(Y)^{-}) - FamScore(Y,Pa(Y))$ in case of edge removal. $Pa(\cdot)$ is a shorthand for $Parents(X)$.
 	\item For reversal of edge $(X,Y)$ both families of $X$ and $Y$ are affected by this structural change, so the delta family score is effectively given as $FamScore(X,Pa(X)^+) + FamScore(Y,Pa(Y)^-) - FamScore(X,Pa(X)) - FamScore(Y,Pa(Y))$.
@@ -1308,7 +1289,7 @@ The last thing is to derive the upper bound of possible dataset queries during a
 Now we need to recognize how many different family scores we may need to evaluate in a single step of local search, hence how many dataset queries we may need to perform.
 Clearly, we need $FamScore(X,Pa(X))$ for every node $X$, which means $n$ dataset queries.
 The need for the same value $FamScore(X,Pa(X)^-)$ is shared between edge removal and reversal actions and, both the number of edge removals and edge reversals is upper bounded by $n(n-1)/2$.
-The value of $FamScore(X,Pa(X)^+)$ may be needed by edge addition or by edge reversal. Lets observe that only one of the actions add/reverse, which would result in extending $Pa(X)$ to $Pa(X)^+$, at a time might be possible. Upper bound of the sum of possible edge additions and reversals is the same as for the sum of edge additions and removals, $n(n-1)/2$. Thereby we obtain the total upper bound of dataset queries in a single step of local search as $n + 2n(n-1)/2 = n + n(n-1)$.
+The value of $FamScore(X,Pa(X)^+)$ may be needed by edge addition or by edge reversal. Let's observe that only one of the actions add/reverse, which would result in extending $Pa(X)$ to $Pa(X)^+$, at a time might be possible. Upper bound of the sum of possible edge additions and reversals is the same as for the sum of edge additions and removals, $n(n-1)/2$. Thereby we obtain the total upper bound of dataset queries in a single step of local search as $n + 2n(n-1)/2 = n + n(n-1)$.
 
 
 
@@ -1323,7 +1304,7 @@ To improve the user experience the GUI saves last state of its components to an 
 \subsection{Network layout}
 Specific task that needs to be addressed when presenting a BN in graphical user interface is generating graphical layout of given BN so that it would be esthetically pleasing. Under this vague criteria we could imagine, for example, minimizing the number of crossing edges, minimizing edges lengths or forcing the graph or its parts to be symmetric. To generate such layout I used a~modification of hierarchical approach described in~\cite[p.~22]{graph_drawing}. The basic outline of my method is as follows:
 \begin{itemize}
-	\item For a given DAG assign nodes to layers. Lets denote $l(n)$ label of the layer the node $n$ is assigned to. Initially, for nodes without any parents $l(n)=0$, for the other nodes $l(n) = 1 + max \lbrace l(p) \mid p \in Parents(n)\rbrace$. After the initial layer assignment is complete I move nodes without parents from layer 0 to layer $min \lbrace l(p) \mid p \in Children(n)\rbrace - 1$.
+	\item For a given DAG assign nodes to layers. Let's denote $l(n)$ label of the layer the node $n$ is assigned to. Initially, for nodes without any parents $l(n)=0$, for the other nodes $l(n) = 1 + max \lbrace l(p) \mid p \in Parents(n)\rbrace$. After the initial layer assignment is complete I move nodes without parents from layer 0 to layer $min \lbrace l(p) \mid p \in Children(n)\rbrace - 1$.
 	\item Break down edges connecting nodes from layers that are not adjacent by inserting a~dummy node on every layer in-between. This way we achieve that any edge is from layer $i$ to layer $i+1$.
 	\item Optimize the permutation of nodes on each layer so that there would be minimum of crossed edges. At this point we take full advantage of the graph structure from previous step. Note that we don't need to work with absolute positioning of nodes to determine the number of crossed edges. As optimization procedure I use simulated annealing with operators \uv{swap two nodes on the same layer} and \uv{remove a node and reinsert on random position within the same layer}.
     \item Determine the absolute positioning within layers, ie. $x$-coordinate of each node. I~use a grid-like coordinate system with integral scale where $x$-distance of any two nodes within layer has to be at least 2. This way we elegantly achieve for a node with two children that $x$ position of the parent is between $x$ positions of the children while the sum of edge lengths is the smallest possible. Absolute positioning is an optimization task which I address, again, by simulated annealing with single operator \uv{shift a~random node left/right}. The operator shifts also other adjacent nodes as needed to maintain the $x$ distance of any two nodes at the value of at least 2. To allow for larger changes the shift magnitude is randomly selected from normal distribution with parameters $\mu=0, \sigma = 1$ over the set $\lbrace -3, -2, -1, 1, 2, 3\rbrace$. The score being optimized during the absolute positioning step is sum of the following terms: squared length of every edge, number of different edge-lengths for each node and for each layer and squared size of the largest gap between nodes in each layer.
@@ -1659,38 +1640,58 @@ Based on the experiments regarding structure we can make some general observatio
 
 
 
-\section{Crime prediction (knowledge discovery)}
-We are given a dataset\footnote{The dataset \emph{Communities and crime} is available at \url{http://archive.ics.uci.edu/ml/datasets/Communities+and+Crime}.} containing records for various communities across the United States. A single record contains features such as racial representation, income, family completeness, housing etc. and the number of violent crimes. The goal is to find a structure of a BN that will hopefully provide us with better insight into causal dependencies between features and that can potentially help us identify the root causes of crime.
+\section{Crime, its causes and countermeasures}
+This application will take advantage of the fact that Bayesian networks are intuitive visual models that capture dependencies among random variables. With these ideas in mind BNs can be used to visualize the structure of a given domain in order to better understand the underlaying dynamics and relations within that domain. \todo{protein signaling networks citation?}
 
-Similar task has been previously inspected as a school project for the \uv{Knowledge Discovery in Databases (2012/2013)} class at BUT FIT by me and Petr Beňas. We learned that transforming each continuous value to membership degrees to three fuzzy sets (low, medium, high) preserves variance of the data which might be useful because the data could be discretized and the learning process would be relatively simple. Knowledge discovery techniques used in the project did not include any probabilistic model.
+In our particular problem we are given a dataset called \term{Communities and Crime}\footnote{The dataset \emph{Communities and crime} is available at \url{http://archive.ics.uci.edu/ml/datasets/Communities+and+Crime}.} containing records that describe various communities across the United States. A single record contains features such as racial representation, income, family completeness attributes, housing etc. and the relative number of violent crimes in this community. Our goal is to find a BN that describes given data the best and that will hopefully provide us with better insight into causal dependencies among features. Understanding of dependencies among features can help us to identify the main causes of crime and, based on these findings, to propose well-justified precautions.
+
+The course of our experiments will be the following. First we will learn a big network using all features in the dataset which will provide us with a general overview of the whole domain. Then we will choose subset of variables that are topologically closest to the $ViolentCrimesPerPop$ variable and verify that we obtain the same substructure or, maybe, a set of I-equivalent networks with this subset. At this point we will inspect what dependencies the learnt networks encode and what useful information could be extracted based on these findings. However, there is a big potential problem called \term{latent variables} which means that if there is an edge $X \rightarrow Y$ it doesn't necessarily mean that $X$ causes $Y$, it is a mere indicator of $X$ and $Y$ being correlated in the input dataset. Such correlation may, indeed, be caused by a real and justified direct causal effect of $X$ on $Y$ but the other option is that $X$ and $Y$ share a common cause which isn't present in the network (hence the name latent variable).
+
+\todo{intervention is setting a variable to a value, observe the effect}
+
+\todo{Great number of latent variables~\cite[p.~1012]{pgm} which we don't observe or even are not aware of can make two variables appear somewhat directly correlated, while they just have an unknown common cause. Identifying latent variables in one of the currently active research domains of Bayesian networks. Nice example for stomach ulcer on page 1013}
+
 
 \todo{Graphically display family score for edges (color red to purple)}
 
-\todo{Maybe remove dummy nodes in graphical representation}
+\todo{Causal Markov condition: variable is independent of its non-descendants given immediate predecessors}
 
-\todo{Discretize with k-means.}
+\todo{Active paths and d-separation tell us about the dependencies an independencies. In there is an active path between $X$ and $Y$ then manipulation of $X$ causes change of distribution of $Y$ (Neapolitan)}
+
+\todo{via sampling verify interventions}
 
 
 
 \subsection{Data preprocessing}
-Discretization by three equidepth bins (0.33-quantile, 0.66-quantile)
+Because the used dataset contains continuous features and because this thesis considers strictly discrete Bayesian networks we need to perform some kind of discretization. I have used binning with three equidepth bins labeled as low, medium and high. Such discretization seems reasonable wrt. to the relatively small dataset and especially because the values are, for a human, easily interpreted. Only three attributes \todo{xxx} are uneven (one bin is entirely empty) but these aren't significantly correlated with crime and will be omitted.
 
 
 \subsection{Experiments}
+
 General notes
 \begin{itemize}
     \item Methodology: Start with attributes most strongly correlated with crime\,--\,will give us a chance for finding stable structures.
+    \item With full dataset there is no isolated variable, potentially all are useful.
+    \item Discretization is good because it makes the evaluation of results intuitive (low, medium, high and you know what you need to know)
+    \item Goal: Find such attributes that are topologically close to crime in the learnt network
+    \item shows very nicely intuitive conclusions (divorce variables are the same etc.)\,--\,sanity check, hopefully the not obvious conclusions are valid as well
+    \item for parameters maybe the MLE is more suitable because it shows us exactly what the data is like (is there even a single occurence of a particular instantiation?)
+    \item dataset 01: The three $divorce$ variables always form a line $FemalePctDiv, TotalPctDiv, MalePctDiv$, so we use only one of them (the others don't bring additional information).
+    \item V-structure $pctWPubAsst \rightarrow PctNotHSGrad \leftarrow PctUnemployed$
 \end{itemize}
 
-BIC score
+\medskip
+Learning with all variables:
 \begin{itemize}
-    \item for the full dataset there is no isolated variable
+    \item $ViolentCrimesPerPop$ has two parents $racePctWhite$ and $PctKids2Par$, no child. It's a V-structure (so, stable)
 \end{itemize}
 
-Bayesian score
-\begin{itemize}
-    \item for the full dataset there is no isolated variable
-\end{itemize}
+
+
+
+
+
+
 
 
 \section{Spam filtering}
