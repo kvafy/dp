@@ -51,6 +51,20 @@
 \newcommand{\uncertain}[1]{{\color{blue} #1}}
 \newcommand{\note}[1]{{\color{green} #1}}
 
+% prostredi pro vlozeni prilohy na strance velikosti A3
+\usepackage{afterpage}
+\newenvironment{hugepage}
+  {\clearpage
+   %\pagestyle{empty}  % turn off display of page numbers, headers, ...
+   %\changepage{247mm}{370mm}{25mm}{25mm}{}{}{}{}{}} % switch to A3
+   \changepage{}{210mm}{}{}{-8cm}{}{}{}{}
+  }
+  {%\addtocounter{page}{-1} % decrement "page" counter variable by 1
+   \clearpage
+   %\changepage{160mm}{247mm}{25mm}{25mm}{}{}{}{}{}} % back to A4
+   \changepage{}{-210mm}{}{}{8cm}{}{}{}{}
+  }
+
 % =======================================================================
 % balíček "hyperref" vytváří klikací odkazy v pdf, pokud tedy použijeme pdflatex
 % problém je, že balíček hyperref musí být uveden jako poslední, takže nemůže

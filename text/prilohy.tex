@@ -11,7 +11,7 @@ This chapter presents listing of the mathematical notation used in this thesis:
 	&\\
 	$\vars{x}$ & Lowercase bold letter denotes an instantiation of all variables in the set $\vars{X}$.\\
 	&\\
-	$Val(\vars{X})$ & Set of all possible instantiations of variables $\vars{X}$.\\
+	$val(\vars{X})$ & Set of all possible instantiations of variables $\vars{X}$.\\
 	&\\
 	$Parents(X)$ & Set of parent variables of variable $X$ in a Bayesian network.\\
 	&\\
@@ -46,13 +46,53 @@ This chapter presents listing of the mathematical notation used in this thesis:
 
 
 \chapter{CD Content}
-\todo{directory structure with bried explanations}
+Content of the enclosed CD is organized as follows:
+\begin{itemize}
+    \item \todo{directory structure with brief explanations}
+\end{itemize} 
 
 
 
 
-%\chapter{Manual}
-%\chapter{Konfigracní soubor}
-%\chapter{RelaxNG Schema konfiguracniho soboru}
-%\chapter{Plakat}
+
+\chapter{Crime analysis\,--\,final networks}\label{ch:appendix_crime_net}
+This chapter contains the three networks that are result of the crime analysis in Section~\ref{ch:practical_crime}.
+
+
+\begin{hugepage}
+\pdfpagewidth=2\pdfpagewidth
+\begin{figure}[h]
+    \centering
+    \vspace*{-2.5cm}
+    \includegraphics[scale=0.834]{fig/top-40_intersection_tolerance-1}
+    \caption{Bayesian network for crime containing top 40 attributes with the highest crime impact factor.
+    \\Legend: Green variables influence the $ViolentCrimesPerPop$ the same way as in the network with all 100 features. Influence of red variables is significantly different and therefore these variables shouldn't be considered.}
+    \label{fig:crime_net_top40}
+\end{figure}
+\end{hugepage}
+
+\begin{hugepage}
+\pdfpagewidth=2\pdfpagewidth
+\begin{figure}[h]
+    \centering
+    \vspace*{-2.5cm}
+    \includegraphics[scale=0.83]{fig/round-3_intersection_tolerance-1}
+    \caption{Final Bayesian network for crime after three rounds of iterative elimination of similar variables.
+    \\Legend: Green variables influence the $ViolentCrimesPerPop$ the same way as in the network with all 100 features. Influence of red variables is significantly different and therefore these variables shouldn't be considered.}
+    \label{fig:crime_net_round3}
+\end{figure}
+\end{hugepage}
+
+\begin{hugepage}
+\pdfpagewidth=2\pdfpagewidth
+\begin{figure}[h]
+    \centering
+    \vspace*{-2.5cm}
+    \includegraphics[scale=0.83]{fig/round-4_intersection_tolerance-1}
+    \caption{Final Bayesian network for crime after three rounds of iterative elimination of similar variables and additional removal of variables whose crime impact factor is less than 0.07.
+    \\Legend: Green variables influence the $ViolentCrimesPerPop$ the same way as in the network with all 100 features. Influence of red variables is significantly different and therefore these variables shouldn't be considered.}
+    \label{fig:crime_net_round4}
+\end{figure}
+\end{hugepage}
+
 

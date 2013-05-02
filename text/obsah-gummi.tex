@@ -48,6 +48,18 @@
 \newcommand{\uncertain}[1]{{\color{magenta}#1}}
 \newcommand{\note}[1]{{\color{green}#1}}
 
+% prostredi pro vlozeni prilohy na strance velikosti A3
+\usepackage{afterpage}
+\newenvironment{hugepage}
+  {\clearpage
+   %\pagestyle{empty}  % turn off display of page numbers, headers, ...
+   %\changepage{247mm}{370mm}{25mm}{25mm}{}{}{}{}{}} % switch to A3
+   \changepage{}{210mm}{}{}{}{}{}{}{}}
+  {%\addtocounter{page}{-1} % decrement "page" counter variable by 1
+   \clearpage
+   %\changepage{160mm}{247mm}{25mm}{25mm}{}{}{}{}{}} % back to A4
+   \changepage{}{-210mm}{}{}{}{}{}{}{}}
+
 % SP komentar co se hodi zohlednit ve finalni diplomce
 
 
@@ -1318,12 +1330,12 @@ The implementation relies on the following third party products:
 
 
 \chapter{Selected applications}\label{ch:practical}
-This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, reason why it is interesting, approach to its solution and the achieved results. \todo{This chapter is expected to be 10-15 pages.}
+This chapter will present collection of selected applications suitable for Bayesian network learning. We will always examine the problem itself, the reason why it is interesting, approach to its solution and the achieved results.
 
 \section{Learning of a known model}\label{ch:practical-learning-benchmarks}
-In this chapter I will perform a series of benchmarks of the parameter and structure learning methods presented in this thesis. We will use a collection of well known networks and attempt to relearn them based on artificial datasets sampled from these networks. The goal is to get a feel for optimal learning parameters for networks of various sizes as well as for the quality of obtained results depending of the size of our dataset. These findings will be referred to provide justification for conclusions stated in the subsequent sections in this chapter.
+The first application will be performing a series of benchmarks of the parameter and structure learning methods presented in this thesis. We will use a collection of well known networks and attempt to relearn them based on artificial datasets sampled from these networks. The goal is to get a feel for optimal learning parameters for networks of various sizes as well as for the quality of obtained results depending of the size of our dataset. These findings will be referred to to provide justification for conclusions stated in the subsequent sections in this chapter.
 
-We will examine two classes of problems, concretely learning parameters for a known network structure and learning both structure and parameters. The following networks will be used\footnote{The networks used are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html}, as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}. They are also on the enclosed CD in \srccode{networks/} directory.}:
+We will examine two classes of problems, concretely learning parameters for a known network structure and learning both structure and parameters. The following networks will be used\footnote{The used networks are freely available in on-line repositories at The Hebrew University of Jerusalem at \url{http://www.cs.huji.ac.il/site/labs/compbio/Repository/networks.html} or as a part of an R package for Bayesian networks at \url{http://www.bnlearn.com/bnrepository/}. They are also on the enclosed CD in \srccode{networks/} directory. \todo{ensure this}}:
 \begin{itemize}
 	\item \uv{Cancer} network (5 variables, 4 edges, 10 CPD entries)
 	\item \uv{Asia} network (8 variables, 8 edges, 18 CPD entries)
@@ -1333,25 +1345,24 @@ We will examine two classes of problems, concretely learning parameters for a kn
 
 
 \subsection{Learning parameters}
-The first step will be to inspect how well maximum likelihood and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a~dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior distribution is considered).
+The first step will be to inspect how well maximum likelihood estimation and Bayesian parameter estimation methods work for networks and datasets of various sizes. In this case, inputs of the parameter learning algorithms are the original network structure without CPDs and a~dataset; in the case of Bayesian estimation we also need to specify the equivalent sample size $\alpha$ (only uniform prior distribution is considered).
 
-To measure how closely the original and the learnt networks match (respectively probability distributions they induce) I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is the expected value of expression $\log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}$ in $P$, ie.:
+To measure how closely the original and the learnt networks match (respectively probability distributions they induce) I use so called \term{KL-divergence} (a.k.a. relative entropy)~\cite{pgm}. KL-divergence of two probability distributions $P$ and $Q$ (both over the same set of variables), denoted $D_{KL}(P \parallel Q)$, is defined as follows:
 \begin{equation*}
-D_{KL}(P \parallel Q) = \sum_{x_1,\dots,x_m} P(x_1,\dots,x_m) \log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}
+D_{KL}(P \parallel Q) = \sum_{X_1,\dots,X_m} P(x_1,\dots,x_m) \log \frac{P(x_1,\dots,x_m)}{Q(x_1,\dots,x_m)}
 \end{equation*}
-which can be in context of Bayesian networks rewritten to the following form ($P$ is distribution induced by the original network, $Q$ is induced by the learnt network):
+which can be in context of Bayesian networks rewritten to the following form ($P$ is distribution induced by the original network, $Q$ is induced by the learnt network)~\cite[p.~273]{pgm}:
 \begin{equation*}
 D_{KL}(P \parallel Q) = \sum_{X \in Nodes} \sum_{\vars{pa} \in val(Par(X))} P(\vars{pa}) \sum_{x_i \in val(X)} \log \frac{P(x_i \mid \vars{pa})}{Q(x_i \mid \vars{pa})}
 \end{equation*}
-As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than exhaustively inspecting probabilities of all atomic events $x_1, \dots, x_m$ which would take $O(2^m)$ time. However, probability for parents assignment $P(\vars{pa})$ needs to be inferred. In accordance with the requirements of this thesis I use a stochastic inference method, namely weighted sampling, with such number of samples that leads to reasonably accurate results in the KL-divergence analysis\footnote{I use $10^8$ samples to approximate the probability distribution $P(Parents(X))$ when computing the KL-divergence. This number has been chosen because the KL-divergence graphs have been empirically proved to converge (for the ICU alarm network with 37 variables) when approximating probability distributions $P(Parents(X))$ from $10^7$, $10^8$ and $10^9$ samples.}.
+As we can see, KL-divergence nicely decomposes over a BN so that we make use of plain CPD entries rather than exhaustively inspecting probabilities of all atomic events $x_1, \dots, x_m$ which would take $O(2^m)$ time. However, probability for parents' assignment $P(\vars{pa})$ needs to be inferred. In accordance with the requirements of this thesis I use a stochastic inference method, namely weighted sampling, with such number of samples that leads to reasonably accurate results in the KL-divergence analysis\footnote{I use $10^8$ samples to approximate the probability distribution $P(Parents(X))$ when computing the KL-divergence. This number has been chosen because the KL-divergence graphs have been empirically proved to converge (for the ICU alarm network with 37 variables) when approximating probability distributions $P(Parents(X))$ from $10^7$, $10^8$ and $10^9$ samples.}.
 
 Strictly speaking, the KL-divergence is not a metric as $D_{KL}(P \parallel Q) \neq D_{KL}(Q \parallel P)$ but it is commonly used for evaluation of how closely two probability distributions match because the true metrics for probability distributions don't decompose over structure of a~Bayesian network and therefore are impractical, for larger networks even unfeasible.
 
-From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with equivalent sample size $\alpha > 0$ is not penalized (in fact, in my experiments doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always capture certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify.
+From mathematical point of view, the KL-divergence is defined only if for any $x_i$ and any $\vars{pa}$ always holds that $\bigl( Q(x_i \mid \vars{pa}) = 0 \bigr) \Rightarrow \bigl( P(x_i \mid \vars{pa}) = 0 \bigr)$, ie. we can't have non-zero $P$ probability and zero $Q$ probability at the same time. However, in practice this is impossible to guarantee when computing network parameters using the maximum likelihood estimation with a small dataset. According to~\cite{kl_divergence_wifi,kl_divergence_noisy_max}, this problem is addressed by artificially setting a small positive lower bound for $Q(\cdot)$ probabilities when $P(\cdot)$ is nonzero. The suggested value is $10^{-6}$ and its contribution to the KL-divergence can be interpreted as a penalty for probability $Q(\cdot) = 0$ being incorrectly inferred by maximum likelihood estimation. On the other hand, when some of the CPDs in the original network contains a zero, the case of $P(\vars{x}) = 0 \land Q(\vars{x}) \neq 0$ produced by Bayesian estimation with equivalent sample size $\alpha > 0$ is not penalized (in fact, in my experiments doesn't affect the KL-divergence value at all) because the prior for Bayesian estimation can always selectively capture for certain events to be impossible but we select to work with uniform priors as these are orders of magnitude easier to specify.
 
-Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{cancer} or \uv{asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in the case of \uv{cancer} and \uv{asia} networks, we can see rapid drops in the relative entropy. Cause of such a drop is a newly added sample that erases a zero entry from some CPD and thereby reduces the penalty imposed on network as discussed earlier in this section.
+Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{Cancer} or \uv{Asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in the case of \uv{Cancer} and \uv{Asia} networks, we can notice rapid instant drops of the relative entropy. Cause of such a drop is a newly added sample that erases a zero entry from some CPD and thereby reduces the penalty imposed on the network as discussed earlier in this section.
 
-\begin{center}
 \begin{figure}[h]
     \begin{subfigure}[b]{0.55\linewidth}
         \hspace{-3.2cm}\includegraphics[scale=0.95]{fig/kl-cancer}
@@ -1377,24 +1388,22 @@ Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of paramet
     \caption{Performance analysis of parameter estimation methods for networks and datasets of various sizes using KL-divergence.}
     \label{fig:kl_div_benchmark}
 \end{figure}
-\end{center}
 
-Also, according to the tests performed, MLE might seem to be steadily outperformed. Of course, if we had an excessive amount of training data, which is usually not the case in practice, then MLE would actually be more suitable than Bayesian estimation because the pseudosamples representing prior distribution would be a hard-to-overcome source of inaccuracy.
+Also, according to the tests performed, MLE might seem to be steadily outperformed. Of course, if we had an excessive amount of training data, which is usually not the case in practice, then MLE would actually be more suitable than Bayesian estimation because the pseudosamples representing prior distribution for Bayesian estimation would turn into a hard-to-overcome source of inaccuracy.
 
-If a concrete application demands estimated network parameters to be as close to the \uv{real ones} as possible, similar analysis as I just performed is a~sensible thing to do\,--\,pick a network of similar complexity, plot the learning curves for this network and determine what is the best parameter estimation method for dataset of given size.
+If a concrete application demands estimated network parameters to be as close to the \uv{real ones} as possible, similar analysis, as I just performed, is a~sensible thing to do\,--\,pick a network of similar complexity, plot the learning curves for this network and determine what is the best parameter estimation method for dataset of given size.
 
-%\todo{PGM course 18-9, 14:00\,--\,graph for MLE and Bayes estimation with different equivalent sample size $\alpha$ and uniform prior for the ICU network}
 
 
 \subsection{Learning structure}
 Evaluation of structure learning proved to be a little problematic. We cannot directly use KL-divergence because the network structures aren't identical (although~\cite{heckerman95_learning} suggests a way of computing the KL-divergence) and other metrics for measuring distance of two probability distributions aren't suitable as they are based on exhaustive enumeration of atomic events and don't decompose over the network structure as KL-divergence does. Instead, I rely on manual inspection of the best-scoring network structures found over multiple runs of the learning algorithm. This approach is perfectly legal as I want to demonstrate usage of Bayesian networks in the field of data-mining which is a largely human-assisted discipline.
 
-Because of I-equivalence there usually are multiple network structures sharing the same highest score and being, in a sense, equal. On the contrary, there may be a whole set of I-equivalent networks which differ only by direction of some edges. For such edges there is no clear causality between variables they connect, at least none that could be derived mathematically based on the dataset at hand, however, an expert may be able to decide the causality quite easily. So, not only we cannot tell whether any of the I-equivalent structures is better in terms of causality or in terms of explaining the data at hand, the learning algorithm driven by maximizing a scoring function cannot tell either. As we don't know the \uv{true} network structure, we need to inspect all the best-scoring structures. To ease the manual evaluation of structure learning I also maintain statistics for each pair of variables $U, V$ how often the final learnt structure contains the edge $U \rightarrow V$. This statistics is presented by a table in GUI.
+Because of I-equivalence there usually are multiple network structures sharing the same highest score and being, in a sense, equal. So, as a result of structure learning we might get a whole set of I-equivalent networks which differ only by direction of some edges. For such edges there is no clear causality between variables they connect, at least none that could be derived mathematically based on the dataset at hand, however, an expert may be able to decide the causality quite easily. So, not only we cannot tell whether any of the I-equivalent structures is better in terms of causality or in terms of explaining the data at hand, the learning algorithm driven by maximizing a scoring function cannot tell either. As we don't know the \uv{true} network structure, we need to inspect all the best-scoring structures. To ease the manual evaluation of structure learning I also maintain statistics for each pair of variables $U, V$ how often the final learnt structure contains the edge $U \rightarrow V$. This statistics is presented by a table in GUI.
 
-As it turned out during my experiments, in context of Bayesian score the property whether or not two I-equivalent structures have the same score depends on the parameter prior we use. The simple K2 prior doesn't satisfy this property, the BDe prior does~\cite[p.~807]{pgm}. It is unfortunate because the K2 prior is easy to specify whereas a general BDe prior needs to be specified by creating a prior network (both network structure and its parameters). As a compromise I came up with a simple solution\,--\,I use BDe prior as if it were represented by a BN and as if the hyperparameters were inferred as $\alpha_{x \mid \vars{p}} = \alpha \cdot P'(x, \vars{p})$ where $P'$ is distribution induced by our prior BN. The trick is to make the prior BN discrete (without any edges) and to make prior distribution over each variable in the prior BN uniform. This way we get $\alpha_{x \mid \vars{p}} = \alpha / \bigl | val(\lbrace X \rbrace \cup Parents(X)) \bigr |$ quite elegantly without need to perform any inference or to keep inner representation of the prior BN. Thereby the BDe prior is both easy to specify (only the value of $\alpha$ is needed) as well as it satisfies the property of I-equivalent structures having the same score.
+As it turned out during my experiments, in context of Bayesian score the property whether or not two I-equivalent structures have the same score depends on the parameter prior we use. The simple K2 prior doesn't satisfy this property, the BDe prior does~\cite[p.~807]{pgm}. It is unfortunate because the K2 prior is easy to specify whereas a general BDe prior needs to be specified by creating a prior network (both network structure and its parameters). As a compromise I came up with a simple solution\,--\,I use BDe prior as if it were represented by a BN and as if the hyperparameters were inferred as $\alpha_{x \mid \vars{p}} = \alpha \cdot P'(x, \vars{p})$ where $P'$ is distribution induced by our prior BN. The trick is to make the prior BN discrete (without any edges) and to make prior distribution over each variable in the prior BN uniform. This way we get $\alpha_{x \mid \vars{p}} = \alpha / \bigl | val(\lbrace X \rbrace \cup Parents(X)) \bigr |$ quite elegantly without the need to perform any inference or to keep inner representation of the prior BN. Thereby the BDe prior is both easy to specify (only the value of $\alpha$ is needed) as well as it satisfies the property of I-equivalent structures having the same score.
 
 \medskip
-In my experiments I have found two I-equivalent structures to occur frequently. The first kind of structure a call a \term{chain}. A chain $X_1 - \dots - X_n$ is a structure in which variables $X_1, \dots, X_n$ are connected in a linear fashion in specified order $1,\dots,n$ with no V-structure and with no incoming edges to any of the variables; outcoming edges are unrestricted. At this point I introduce my own graphical notation for chains in Figure~\ref{fig:structure_learning_chain} (not to be confused with graphical notation of \term{plate models}~\cite{pgm}). Another set of I-equivalent structures, that sometimes arises, I call \term{central variable structure}, meaning there is a \uv{central} variable $X$ and a set of variables $Y_1,\dots,Y_n$, all directly connected to $X$. At most one $Y$ variable may be parent of $X$ while all the other $Y$ variables are children of $X$. There are no other edges among the variables and also no incoming edges to the whole structure. All such central node structures are I-equivalent. Please see graphical notation of the central variable structure in Figure~\ref{fig:structure_learning_central_variable}.
+In my experiments I have found two I-equivalent structures to occur frequently. The first kind of structure a call a \term{chain}. A chain $X_1 - \dots - X_n$ is a structure in which variables $X_1, \dots, X_n$ are connected in a linear fashion in specified order $1,\dots,n$ with no V-structure and with no incoming edges to any of the variables; outcoming edges are unrestricted. At this point I introduce my own graphical notation for chains in Figure~\ref{fig:structure_learning_chain} (not to be confused with graphical notation of \term{plate models}~\cite{pgm}). Another set of I-equivalent structures, that also arises, I call \term{central variable structure}, meaning there is a \uv{central} variable $X$ and a set of variables $Y_1,\dots,Y_n$, all directly connected to $X$. At most one $Y$ variable may be parent of $X$ while all the other $Y$ variables are children of $X$. There are no other edges among the variables and also no incoming edges to the whole structure. All such central node structures are I-equivalent. Please see graphical notation of the central variable structure in Figure~\ref{fig:structure_learning_central_variable}.
 
 \begin{figure}[ht]
     \centering
@@ -1405,24 +1414,25 @@ In my experiments I have found two I-equivalent structures to occur frequently. 
 \begin{figure}[ht]
     \centering
     \includegraphics[scale=0.4]{fig/structure-learning-central-variable}
-    \caption{Central variable structure $X,Y_1,\dots,Y_n$ is a set of I-equivalent structures where the $X$ variable is central in the sense that at most one $Y_i$ variable is parent of $X$ and all the other $Y_i$ variables are children of $X$. There also may not be an incoming edge to any of the variables $X$ or $Y_i$ as that would potentially introduce a V-structure in some of the networks.
+    \caption{Central variable structure $X,Y_1,\dots,Y_n$ is a set of I-equivalent structures where the $X$ variable is central in the sense that is connected with all $Y_i$ variables, at most one $Y_i$ variable is parent of $X$ and all the other $Y_i$ variables are children of $X$. There also may not be an incoming edge to any of the variables $X$ or $Y_i$ as that would potentially introduce a V-structure in some of the networks.
 Structures without a bounding box represent the whole set of $n+1$ central variable structures and on the right side of this figure you can see my own graphical notation for the whole set of central variable structures.}
     \label{fig:structure_learning_central_variable}
 \end{figure}
 
-Before we proceed to the experiments with structure learning please note that outcome of the experiments relies on the concrete dataset we sample before learning. So, for two datasets of equal size we quite frequently obtain different sets of best-scoring structures, especially when the number of samples is small (hundreds or thousands of samples depending on the network).
+Results of the following experiments have been obtained primarily using the BIC score. The Bayesian score leads often to the same best-scoring structures and differences will be pointed out explicitly. \todo{The datasets I have used are available on the enclosed CD}.
 
-\todo{Results of the following experiments have been obtained primarily using the BIC score. The Bayesian score leads often to the same best-scoring structures and differences are explicitly pointed out. \todo{The exact datasets used are available on the enclosed CD}.}
+Before we proceed to the experiments with structure learning please note that outcome of the experiments relies on the concrete dataset we sample before learning. So, for two datasets of equal size we quite frequently obtain different sets of best-scoring structures, especially when the number of samples is small (hundreds or thousands of samples, depending on the network).
 
 
-\subsubsection{Experiments with Cancer network}
+
+\subsubsection{Experiments with the Cancer network}
 The Cancer network with five variables is the simplest network I consider in my experiments. With a dataset of 300 samples the structure learning with BIC score discovers only a~chain $Xray - Cancer - Dyspnoea$, respectively its three I-equivalent variants, the variables $Smoker$ and $Pollution$ are isolated (see Figure~\ref{fig:structure-learning-cancer-300}).
 
-With a dataset of 1\,000 samples the structure learning algorithm discovers only dependency among four variables in form of a central variable structure (see Figure~\ref{fig:structure-learning-cancer-1000}). The choice of central variable to be $Cancer$ is consistent with the original network. The variable $Smoker$ is isolated in the found structures as $P(Cancer \mid Smoker)$ differs only by the value $0.02$ for different assignments of $Smoker$ and the potential edge $Smoker \rightarrow Cancer$ is in the score more penalized by the increase of structure complexity than it is favored for its contribution to mutual information sum.
+With a dataset of 1\,000 samples the structure learning algorithm discovers only dependency among four variables in form of a central variable structure (see Figure~\ref{fig:structure-learning-cancer-1000}). The choice of central variable to be the $Cancer$ variable is consistent with the original network. The variable $Smoker$ is isolated in the found structures as $P(Cancer \mid Smoker)$ differs only by the value $0.02$ at maximum for different assignments of $Smoker$ and the potential edge $Smoker \rightarrow Cancer$ is in the score more penalized by the increase of structure complexity than it is favored for its contribution to the sum of family scores.
 
-For a dataset with 5\,000 samples and the BIC score we finally obtain a connected graph, only there is similar situation as we had with 1000 samples\,--\,we obtain a central variable structure with $Cancer$ being the central variable (see Figure~\ref{fig:structure-learning-cancer-5000}). The results of this and of the previous test suggest that V-structures need to be strongly implied by the dataset, otherwise the learning algorithm will avoid introducing a V-structure. With Bayesian score the $Pollution$ variable remains isolated with this dataset.
+For a dataset with 5\,000 samples and the BIC score we finally obtain a connected graph, only there is similar situation as we had with 1000 samples\,--\,we obtain a central variable structure with $Cancer$ being the central variable (see Figure~\ref{fig:structure-learning-cancer-5000}). The results of this and of the previous test suggest that V-structures need to be strongly implied by the dataset, otherwise the learning algorithm will avoid introducing a V-structure.
 
-Finally, with a dataset of 20\,000 samples the learning process with the BIC score yields the exact original structure of cancer network and no others (see Figure~\ref{fig:structure-learning-cancer-20000}). The original structure is unique as it contains a V-structure in $Cancer$ variable which spoils any possibility for there being a chain of variables that could be somehow rearranged. With the Bayesian score and $\alpha=0.1$ we still obtain the central variable structure as in Figure~\ref{fig:structure-learning-cancer-5000} even with a~dataset this size. The exact original structure is found with a dataset of 30\,000 samples. With $\alpha = 1$ or $\alpha=10$ the exact structure is found also with 20\,000 samples.
+Finally, with a dataset of 20\,000 samples the learning process with the BIC score yields the exact original structure of cancer network and no others (see Figure~\ref{fig:structure-learning-cancer-20000}). The original structure is unique as it contains a V-structure in $Cancer$ variable which spoils any possibility for there being a chain of variables that could be somehow rearranged. With the Bayesian score and $\alpha=0.1$ we still obtain the central variable structure as in Figure~\ref{fig:structure-learning-cancer-5000} even with a~dataset this big. The exact original structure is found with a dataset of 30\,000 samples. With $\alpha \in [1, 10]$ the exact structure is found also with 20\,000 samples.
 
 \begin{figure}[ht]
     \centering
@@ -1450,22 +1460,24 @@ Finally, with a dataset of 20\,000 samples the learning process with the BIC sco
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
         \includegraphics[scale=0.4]{fig/structure-learning-cancer-20000}
-        \caption{Dataset of 20\,000 samples, single structure (exactly the original cancer network).}
+        \caption{Dataset of 20\,000 samples, single structure (exactly the original Cancer network).}
         \label{fig:structure-learning-cancer-20000}
     \end{subfigure}
-    \caption{Best-scoring I-equivalent network structures found for the cancer network with datasets of various sizes using the BIC score.}
+    \caption{Best-scoring I-equivalent network structures found for the Cancer network with datasets of various sizes using the BIC score.}
     \label{fig:structure-learning-cancer}
 \end{figure}
 
-Parameters of the experiments: 200 runs, 200 iterations per run, 15 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha=0.1 - 10$.
+Parameters of the experiments: 200 runs, 200 iterations per run, 15 random restart steps, 0.15 relative size of tabu-list, maximum of 3 parents, $\alpha \in [0.1, 10]$.
 
 
-\subsubsection{Experiments with Asia network}
-The Asia network contains 8 variables and a single V-structure $Either \rightarrow Dysp \leftarrow Bronc$. The CPD for $Dysp$ variable suggest strong dependency on both its parents\,--\,the distribution $P(Dysp \mid Either, Bronc)$ changes by up to $0.7$ for different assignments of $Either$ and by up to $0.6$ for different assignments of $Bronc$. Therefore for as little as 100 samples the found networks contain the V-structure at $Dysp$ variable. Furthermore, $Dysp$ has always the same set of parent variables but that can be accounted to the strong dependency in the original network.
+\subsubsection{Experiments with the Asia network}
+The Asia network contains 8 variables and a single V-structure $Either \rightarrow Dysp \leftarrow Bronc$. The CPD for $Dysp$ variable suggest strong dependency on both its parents\,--\,the distribution $P(Dysp \mid Either, Bronc)$ changes by up to $0.7$ for different assignments of $Either$ and by up to $0.6$ for different assignments of $Bronc$. Therefore for as little as 100 samples the found networks contain the V-structure at the $Dysp$ variable. Furthermore, $Dysp$ has always the same set of parent variables but that can be accounted to the strong dependency in the original network.
 
-With a dataset of 1000 samples we almost get I-equivalent structures of the original network (see Figure~\ref{fig:structure-learning-asia-1000}), only the variable $Asia$ is isolated thanks to a weak dependency $Asia - Tub$. There are three I-equivalent structures because variables $Smoke - Bronc - Lung$ form a chain, structure of the other variables is the same as in the original network. 
+With a dataset of 1\,000 samples we almost get structures I-equivalent to the original network (see Figure~\ref{fig:structure-learning-asia-1000}), only the variable $Asia$ is isolated thanks to a weak dependency $Asia - Tub$. There are three I-equivalent structures because variables $Smoke - Bronc - Lung$ form a chain, structure of the other variables is the same as in the original network. 
 
-For a dataset of 15000 samples we obtain the complete structure of the asia network, respectively six I-equivalent variants of the original network (see Figure~\ref{fig:structure-learning-asia-15000}) thanks to the two chains $Lung - Smoke - Bronc$ and $Asia - Tub$.
+For a dataset of 15\,000 samples we obtain the complete structure of the Asia network, respectively six I-equivalent variants of the original network (see Figure~\ref{fig:structure-learning-asia-15000}) thanks to two chains $Lung - Smoke - Bronc$ and $Asia - Tub$ which are present in the original network.
+
+In the case of the Asia network the Bayesian score worked best with $\alpha=1$. With higher values of $\alpha$ (eg. 5 or 10) the learnt networks contained additional edges and V-structures that aren't present in the original network.
 
 \begin{figure}[ht]
     \centering
@@ -1481,7 +1493,7 @@ For a dataset of 15000 samples we obtain the complete structure of the asia netw
         \caption{Dataset of 15000 samples, 6 structures I-equivalent with the original network.}
         \label{fig:structure-learning-asia-15000}
     \end{subfigure}
-    \caption{Best-scoring I-equivalent network structures found for the asia network with datasets of various sizes (same results for the BIC score and the Bayesian score).}
+    \caption{Best-scoring I-equivalent network structures found for the Asia network with datasets of various sizes (same results for the BIC score and the Bayesian score).}
     \label{fig:structure-learning-asia}
 \end{figure}
 
@@ -1489,12 +1501,12 @@ Parameters of the experiments: 200 runs, 200 iterations per run, 15 random resta
 
 
 
-\subsubsection{Experiments with Child network}
+\subsubsection{Experiments with the Child network}
 The Child network is a bit larger, contains 20 variables, 6 V-structures and one variable with high number of children (the $Disease$ variable with 7 children). At first we will inspect the best structures found with datasets of different sizes (best in the sense of minimal differences from the original network) and explore what inconsistencies they have. Then we will discuss how to proceed when attempting to find the best structure when the original structure is unknown.
 
-With a dataset of 500 samples and the BIC score the structure learning yields a structure with two isolated variables $Age$ and $BirthAsphyxia$, the rest of the network is to an almost surprisingly high degree consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4 out of 25 connections present in the original network and from the remaining 21 edges up to three may be reversed due to chain structures. There is one obvious chain structure $Disease - LVH - LVHreport$ causing three I-equivalent variants of the learnt network. Notice that when the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively becomes a chain structure (edges that might be reversed are painted in gray). In either case, only those variants of the chain structures are allowed such that they don't introduce a V-structure in the $Disease$ variable as this would imply conditional dependencies and marginal independencies that aren't supported by the data. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network.
+With a dataset of 500 samples and the BIC score the structure learning yields a structure with two isolated variables ($Age$ and $BirthAsphyxia$), the rest of the network is to an almost surprisingly high degree consistent with the original network, considering how little samples we have (see Figure~\ref{fig:structure-learning-child-500-bic}). The best-scoring networks contain four V-structures out of the six which are present in the original network, again suggesting that once a V-structure is learnt, it is a fairly stable feature of the network unlike a chain or a central variable structure. When not considering edge directions, the learnt network is missing 4~out of 25 connections present in the original network and from the remaining 21 edges up to three may be reversed due to chain structures. There is one obvious chain structure $Disease - LVH - LVHreport$ causing three I-equivalent variants of the learnt network. Notice that when the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively becomes another chain structure because then there are no incoming edges to any of these variables (edges that might be reversed are painted in gray). In either case, only those variants of the chain structures are allowed such that they don't introduce a V-structure in the $Disease$ variable as this would imply conditional dependencies and marginal independencies that aren't supported by the data. Furthermore, in the learnt network there isn't any redundant connection that wouldn't be in the original network.
 
-With the Bayesian score and 500 samples the best result is similar to those of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}). The only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$. I believe this difference may be caused by a local maximum in the Bayesian scoring function which makes it for the optimization algorithm difficult to find the I-equivalent structures which the BIC score does find.
+With the Bayesian score and 500 samples the best result is similar to that of the BIC score (achieved using $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-500-bayes-2_5}). The only difference is that the edge $Disease - DuctFlow$ is reversed instead of allowing for variations of the chain structure $Disease - LVH - LVHreport$. I believe this difference may be caused by a local maximum in the Bayesian scoring function which makes it for the optimization algorithm difficult to find the I-equivalent structures which the BIC score does find.
 
 \begin{figure}[ht]
     \centering
@@ -1510,13 +1522,13 @@ With the Bayesian score and 500 samples the best result is similar to those of t
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-500-bayes-2_5}
     \end{subfigure}
-    \caption{Best-scoring network structure found for the child network with a dataset of 500 samples.
-    \\Legend: Red dotted edges are missing, red edges are reversed, gray edges may be reversed (under certain conditions).}
+    \caption{Best-scoring network structure found for the Child network with a dataset of 500 samples.
+    \\Legend: Red dotted edges are missing, red edges are reversed, gray edges may be reversed (under conditions stated in the text).}
 \end{figure}
 
-With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and one or two of many edges may be reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are many chain structures involving the $Disease$ variable (one with three variables, expressed by the boxed graphical notation, and seven chain structures with two variables, expressed with a gray edge). Legal variants of the chain structures are only those that don't introduce a V-structure in the $Disease$ variable, eg. if $Age$ were parent of $Disease$ then no other variable of the other chain structures may be a parent of $Disease$. Furthermore, if the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively become a chain structure with three I-equivalent variants.
+With a dataset of 2\,000 samples and the BIC score we get a connected graph in which only the edge $Sick - Age$ is missing and one or two of many edges may be reversed (see Figure~\ref{fig:structure-learning-child-2000-bic}). There are many chain structures involving the $Disease$ variable (one with three variables, expressed by the boxed graphical notation, and seven chain structures with two variables, expressed with a gray edge instead). Legal variants of the chain structures are only those that don't introduce a V-structure in the $Disease$ variable, eg. if $Age$ were parent of $Disease$ then no other variable of the other chain structures may be a~parent of $Disease$. Furthermore, if the edge $Disease - LungParench$ is reversed then $LungParench - CO2 - CO2Report$ effectively become a chain because then there is no incoming edge to any of those variables.
 
-With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-2_5}) and 2\,000 samples the resulting graph is connected but its missing one $Sick - Age$, just as with the BIC score, and two edges are reversed which is a particularly nice result.
+With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\ref{fig:structure-learning-child-2000-bayes-2_5}) and 2\,000 samples the learnt structure has no isolated variable, it is missing the edge $Sick - Age$, just as with the BIC score, and only two edges are reversed which is a particularly nice result.
 
 \begin{figure}[ht]
     \centering
@@ -1532,11 +1544,11 @@ With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\re
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-2000-bayes-2_5}
     \end{subfigure}
-    \caption{Best-scoring network structure found for the child network with a dataset of 2\,000 samples.
-    \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in the $Disease$ variable wrt. concrete variants of the other chain structures in the $Disease$ variable}
+    \caption{Best-scoring network structure found for the Child network with a dataset of 2\,000 samples.
+    \\Legend: Red dotted edges are missing, red edges are reversed. One of the gray edges may be reversed if it doesn't introduce a V-structure in the $Disease$ variable wrt. concrete variants of the other chain structures in the $Disease$ variable.}
 \end{figure}
 
-Dataset of 5\,000 samples and the BIC score get us as close to the original network as no missing connections, three reversed edges and one redundant edge. The mistake introduced by the redundant edge is somewhat local, involving a closed structure of three nodes $LungParench$, $CO2$ and $CO2Report$ (see Figure~\ref{fig:structure-learning-child-5000-bic}) and no other variables are involved. Curious thing is that there has actually been formed a V-structure in the $CO2$ variable.
+Dataset of 5\,000 samples and the BIC score get us as close to the original network as no missing connections, three reversed edges and one redundant edge. The mistake introduced by the redundant edge is somewhat local, involving a closed structure of three nodes $LungParench$, $CO2$ and $CO2Report$ (see Figure~\ref{fig:structure-learning-child-5000-bic}) and no other variables are involved. Curious thing is that there has actually been formed a V-structure in the $CO2$ variable which might be caused by noise in the used dataset.
 
 The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning-child-5000-bayes-3_0}) in this particular test did significantly better than the BIC did. They both agree on the reversed edge $Disease - BithAsphyxia$ and, other than that, with the Bayesian score there is only one reversed edge and no redundant edges.
 
@@ -1554,14 +1566,14 @@ The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning
         \caption{Using the Bayesian score with $\alpha = 3$.}
         \label{fig:structure-learning-child-5000-bayes-3_0}
     \end{subfigure}
-    \caption{Best-scoring network structure found for the child network with a dataset of 5\,000 samples.
+    \caption{Best-scoring network structure found for the Child network with a dataset of 5\,000 samples.
     \\Legend: Red dotted edges are missing, red edges are reversed, blue edges are redundant.}
 \end{figure}
 
 \medskip
-In a situation when our goal is to discover the original structure the question is how to pick the right equivalent sample size $\alpha$ for the Bayesian score so that the learnt structure would be as close as possible to the correct one. For a range of $\alpha$ values I have inspected the relation between Bayesian score of a learnt structure and how closely this structure matches the original one and I have found out that within the approximate range $\alpha \in [1,4]$ structure with the highest score is also the closest. 
+In a situation when our goal is to discover the original structure the question is how to pick the right equivalent sample size $\alpha$ for the Bayesian score so that the learnt structure would be as close as possible to the correct one. For a range of $\alpha$ values I have inspected the relation between Bayesian score of a learnt structure and how closely the learnt structure matches the original one. I have found out that within the approximate range $\alpha \in [1,4]$ structure with the highest score is also the closest. 
 I have made the observation that higher value of $\alpha$ means higher chance of the learnt network having an extra edge and also doesn't improve the number of reversed edges. So, $\alpha$ should be kept at a small value.
-It is true that with higher values of $\alpha$ we can discover a structure with even better Bayesian score but, in my experience, this structure typically has some redundant edges that aren't present in the original network and also the number of other deviations isn't pleasing. So, when attempting to learn the best possible structure (and the number of variables is comparable with the child network) we should try the learning procedure for $\alpha \in [1,4]$ with a step $0.5$ and pick the structure and $\alpha$ such that its Bayesian score is the highest.
+It is true that with higher values of $\alpha$ we can discover a structure with even better Bayesian score but, in my experience, this structure typically has some redundant edges that aren't present in the original network and also the number of other deviations isn't pleasing. So, when attempting to learn the best possible structure (and the number of variables is comparable with the child network) we should try the learning procedure for $\alpha \in [1,4]$ with a step $0.5$ and pick the $\alpha$ such that the Bayesian score of the learnt structures is the highest.
 
 \begin{comment}
 \begin{figure}[p]
@@ -1591,7 +1603,7 @@ It is true that with higher values of $\alpha$ we can discover a structure with 
 
 
 \medskip
-Parameters of the learning procedure: 1\,000 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 4 parents, $\alpha=1.5-3$.
+Parameters of the learning procedure: 1\,000 runs, 600 iterations per run, 50 random restart steps, 0.15 relative size of tabu-list, maximum of 4 parents, $\alpha \in [1.5, 3]$.
 
 
 
@@ -1599,10 +1611,10 @@ Parameters of the learning procedure: 1\,000 runs, 600 iterations per run, 50 ra
 \subsubsection{Conclusion of the the experiments}
 Based on the experiments regarding structure we can make some general observations:
 \begin{itemize}
-    \item There are often more than one best-scoring structures due to I-equivalence and, with training, chain structures and central variable structures are actually easy to spot. Other than these two types of structures we sometimes observe swapping two variables $B,C$ in a cascade of the form $A-B-C$ while preserving edge $A \rightarrow B$ and introducing an edge $A \rightarrow C$. The experiments suggest that the mistakes are just local and don't involve other variables.
-    \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data and incorrect V-structures are rare.
-    \item Best value of $\alpha$ for the Bayesian score is usually relatively small\,--\,for the used datasets the best values of $\alpha$ were from the interval $[1,3]$ in all cases. Also, structures with better Bayesian score were generally closer to the original network. This provides us with a powerful rule of thumb on how to determine the right $\alpha$ when learning a~network structure whose original structure is unknown to us\,--\,look for a local maximum in the best score within a range, say $\alpha \in [1,4]$.
-    \item Bayesian score is more conservative, BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although with a tuned value of $\alpha$ results with the Bayesian score may be the same or even better than those of the BIC score.
+    \item There are often more than one best-scoring structures due to I-equivalence and, with some practice, chain structures and central variable structures are actually relatively easy to spot. Other than these two types of structures we sometimes observe swapping two variables $B,C$ in a cascade of the form $A-B-C$ while preserving edge $A \rightarrow B$ and introducing an edge $A \rightarrow C$. The experiments suggest that such mistakes are just local and don't involve other variables.
+    \item V-structures introduce conditional dependencies and marginal independencies, therefore a V-structure is not learnt unless it is strongly implied by the data and incorrect V-structures are rare (for reasonable values of $\alpha$ of Bayesian score).
+    \item Best value of $\alpha$ for the Bayesian score is usually relatively small\,--\,for the used networks and datasets the best values of $\alpha$ were from the interval $[1,3]$ in all cases. Also, for $\alpha \in [1,3]$ learnt structures with higher Bayesian score were generally closer to the original network. This provides us with a powerful rule of thumb on how to determine the right $\alpha$ when learning a~network structure whose original structure is unknown to us\,--\,look for a local maximum in the scores of learnt networks for $\alpha$ within the range about $[1,4]$.
+    \item The Bayesian score is more conservative, the BIC score often leads to a specific structure close to the original one faster (with a smaller dataset) whereas the Bayesian score requires a larger dataset. Although with a tuned value of $\alpha$, results with the Bayesian score may be the same or even better than those of the BIC score.
 \end{itemize}
 
 
@@ -1614,31 +1626,78 @@ Based on the experiments regarding structure we can make some general observatio
 
 
 
-\section{Crime, its causes and countermeasures}
+\section{Crime, its causes and countermeasures}\label{ch:practical_crime}
 This application will take advantage of the fact that Bayesian networks are intuitive visual models that capture dependencies among random variables. With these ideas in mind BNs can be used to visualize the structure of a given domain in order to better understand the underlaying dynamics and relations within that domain.
 
-In our particular problem we are given a dataset called \term{Communities and Crime}\footnote{The dataset \emph{Communities and crime} is available at \url{http://archive.ics.uci.edu/ml/datasets/Communities+and+Crime}.} containing records that describe various communities across the United States. A single record contains features such as racial representation, income, family completeness attributes, housing etc. and the relative number of violent crimes in this community. Our goal is to find a BN that describes given data the best and that will hopefully provide us with better insight into causal dependencies. Understanding of dependencies among features can help us identify the main causes of crime and, based on these findings, to propose justified precautions.
+In our particular problem we are given a dataset called \term{Communities and Crime}\footnote{The dataset \emph{Communities and crime} is available at \url{http://archive.ics.uci.edu/ml/datasets/Communities+and+Crime}.} containing records that describe various communities across the United States. A single record contains features such as racial representation, income, family completeness attributes, housing etc. and the relative number of violent crimes in this community. Our goal is to find a BN that describes given data the best and that will hopefully provide us with better insight into causal dependencies. Understanding dependencies among features can help us identify the main causes of crime, their relations and, based on these findings, to propose justified precautions.
 
 \subsection{Data preprocessing}
-Because the used dataset contains continuous features and because this thesis considers strictly discrete Bayesian networks we need to perform some kind of discretization. I~have used binning to three equi-depth bins labeled as $low$, $medium$ and $high$. Such discretization seems reasonable wrt. to the relatively small dataset and especially because the new values are, for a human, easily interpretable. After discretization the four attributes $LemasPctOfficDrugUn$, $NumStreet$, $MedNumBR$, $pctUrban$ are uneven (one bin is almost or entirely empty). So we will keep in mind to primarily discard those attributes if some of them is member of a set of similar variables (will be explained later).
+Because the used dataset contains continuous features and because this thesis considers strictly discrete Bayesian networks we need to perform some kind of discretization. I~have applied binning to three equi-depth bins labeled $low$, $medium$ and $high$. Such discretization seems reasonable wrt. to the relatively small dataset and especially because the new values are, for a human, easily interpretable. After discretization the four attributes $LemasPctOfficDrugUn$, $NumStreet$, $MedNumBR$, $pctUrban$\footnote{I use original names of attributes as they are in the Communities and crime dataset. Please see \srccode{.names} file on the enclosed CD for detailed description of all attributes.} are uneven (one of the bins is almost or entirely empty). So, we will keep in mind to primarily discard those attributes if some of them is member of a set of similar variables (will be explained later).
 
 
 \subsection{Experiments}
+I have tried to approach this data-mining task in several ways because the obtained results weren't as good as I had hoped. When using the complete dataset there were too many variables to see anything useful in the learnt network structure and when I attempted to somehow reduce the feature set, effect of many variables on the target variable $ViolentCrimesPerPop$ changed radically. Nevertheless, I believe that at least some useful information can be read from the models I have created.
+
+To briefly elaborate, I have tried the following three approaches:
+\begin{enumerate}
+    \item[a)] Start with a collection of networks learnt using the Bayesian score with $\alpha_P \in [1, 15]$ and full feature set. Then, iteratively identify sets of variables that are in all the learnt structures topologically close, have similar effect on the target variable (stimulating or suppressing) and their semantics is similar (eg. divorce rate of males vs. divorce rate of females or percentage of employed people vs. percentage of unemployed). Each such set of similar or antagonistic variables has been replaced by just one representative variable. This way I have managed to reduce the network from 100 variables to 67~variables.
+    
+     To be more formal, variable $X$ and its representative $R$ influence the crime variable $C$ approximately the same way when $P(C \mid X) \approx P(C \mid R)$ or the opposite way when $P(C \mid X = low) \approx P(C \mid R = high)$, $P(C \mid X = medium) \approx P(C \mid R = medium)$ and $P(C \mid X = high) \approx P(C \mid R = low)$.
+    These probability distributions will are inferred by sampling after the network parameters are learnt using Bayesian estimation with $\alpha_P = 30$. The value of $\alpha_P$ has been chosen based on the KL-divergence analysis of parameter learning with the Hepar-II network\,--\,this network is the most similar I~could find to the learnt networks and also gives us a~good breathing space while the learnt networks get simpler through gradual elimination of attributes. In Figure~\ref{fig:kl_div_hepar2} we can see that the Hepar-II network and 2\,000 samples, which is the size of our dataset, the value $\alpha_P = 30$ gets us closest to the original probability distribution.
+    
+    If its the case that $P(C \mid X) \approx P(C \mid R)$ then mutual information of $X$ and $R$ has to be relatively high. To make the manual search of similar variables easier, mutual information of a pair of directly connected variables $X,R$ is visually represented in the program by color of the edge $X - R$ on \uv{cold-to-hot} color scale, ie. blue to red\footnote{In order to display mutual information between pairs of directly connected variables the current dataset has to be compatible with the current network and the option \srccode{Network -> Display edge weights} in the main menu needs to be checked.}.
+    
+    \item[b)] Start when the case~(a) ended. We cannot further apply the iterative elimination of similar attributes and 67 is still a large number of attributes. At this point, using the network structures learnt with the 67 attributes left, I analyzed what attributes influence the target variable $ViolentCrimesPerPop$ the most, drop those attributes with least influence and finally, learn new network structures based on the surviving 52 attributes.
+    
+    To express the degree of influence some variable $X$ has on the target variable I~determine how significantly the target variable deviates from its prior distribution, which is the uniform distribution $(\frac{1}{3}, \frac{1}{3}, \frac{1}{3})$ due to binning, when $X$ is given, ie. for variable $X$ find the maximal value of $\Bigl\lvert 1/3 - P(ViolentCrimesPerPop \mid X = x) \Bigr\rvert$ over all the networks learnt with various values of $\alpha_S$ and over all $x \in val(X)$. I will refer to this particular analysis as \term{crime impact factor}. The probability distributions needed in order to determine the crime impact factor are, again, inferred by weighted sampling of the evaluated networks while their parameters have been learnt using Bayesian estimation with $\alpha_P = 30$.
+    
+    \item[c)] Initially use the collection of networks learnt from the full feature set with various values of $\alpha_S$, as in the (a)~case. Then analyze what attributes $X$ influence the target variable the most (using the crime impact factor introduced in~(b)), pick the top 40 most influential attributes and finally learn new network structures based on just the top 40 attributes.
+\end{enumerate}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[scale=1.2]{fig/kl-hepar2}
+    \caption{Performance analysis of parameter estimation methods for the Hepar-II network (70 variables, 1453 CPD entries). For a dataset of 2\,000 samples we can see that the Bayesian estimation with $\alpha=30$ is the best option.}
+    \label{fig:kl_div_hepar2}
+\end{figure}
+
+Because we don't know the right parameter $\alpha_S$ of the Bayesian score for networks of this size and because the learnt networks differ in some edges, for each set of final networks we determine their structural intersection. In this context, by intersection I mean identifying those directed edges that are present in majority of the networks while tolerating a missing edge at most once (with 0 tolerance the networks contain too many isolated variables and with tolerance higher than one the networks become too dense). For the intersection network we compute crime impact factors of all nodes, compare with crime impact factors in the original network and highlight nodes that preserve the crime impact factor and those that have become totally misleading. This way we can easily spot clusters of nodes that are relevant and ignore those that aren't.
+
+\medskip
+Now is the time to inspect the final networks for the cases (a), (b) and (c). In the first case we have in three iterations eliminated attributes that were, to some degree, duplicates and we have obtained the final network with 67~nodes shown in Figure~\ref{fig:crime_net_round3}. This network is still very big and in the printed version the variable names might not even be readable. This network is included only for the sake of completeness. Other than that it is hard, thanks to its structure, to read some useful information out of it. The target variable is significantly dependent only on the attributes capturing family completeness, illegal immigrants, racial representation and housing (variables whose crime impact factor is correct are highlighted in green, other than green are not considered as the results of analysis wouldn't be correct). How exactly those variables affect the target variable $ViolentCrimesPerPop$ (further also denoted simply $Crime$) can be easily determined by probabilistic queries which converge very fast. Generally, high divorce rate means high criminality and the other way around. It can be seen that the illegal immigrants variable $PctIlleg$ and the $racepctblack$ variable are particularly negatively correlated with $PctFam2Par$. The key variable $PctPersDenseHous$ (suggesting ghettos or questionable city quarters) is positively influenced by the $PctIlleg$ variable and not so much with the $racepctblack$ variable which is a little surprising. Implications for attributes other than the family completeness are the same as in the network of case (b) where we will inspect the situation in detail.
+
+The (b)~case takes the attributes that survived filtering in the (a)~case, determines crime impact factors of all variables and eliminates those with crime impact factor less than 0.07 which leads to a network with 53 nodes shown in Figure~\ref{fig:crime_net_round4}. Before we get into analyzing the network itself it is important to say that among other variables, that were eliminated because of low crime impact factor, was the $racePctAsian$ variable. This fact suggests that the percentage of Asians is not very discriminative in terms of the target variable $Crime$. This means that Asians in general don't significantly contribute to crime, not in the positive nor in the negative sense. Now to the learnt network. The variables, whose crime impact factors are correct, can be divided into two groups. The group of variables on the left from $Crime$ describes negative factors like illegal immigrants, dense housing, number of black people and people living on the street; most influential are $PctIlleg$, $racepctblack$ and $PctPersDenseHous$. There is also the variable reflecting the number of white people which is in very negative relation with all the other variables including $Crime$ (in other words, when speaking about crime, white people are generally well-behaved). The group of variables on the right from $Crime$ captures family completeness and wealth ($PctHousLess3BR$, $pctWWage$). The family completeness variables influence the $Crime$ variable heavily, the wealth variables aren't so powerful but there is noticeable tendency of increased crime with lower wealth.
+
+In the (c)~case we have analyzed crime impact factors of all variables right in the networks learnt using all 100 features and we have selected top 40 attributes to obtain the network shown in Figure~\ref{fig:crime_net_top40}. This network is probably the nicest of all three because it contains a single cluster of variables whose crime impact factor is correct and those variables are relatively densely connected, so we can expect that many of the real dependencies are actually present in the network. As opposed to the other two networks, in this network most of the family completeness variable, except for $PctKids2Par$, have incorrect crime impact factors. We can observe four smaller clusters of nodes describing mutually similar traits: (1)~the green cluster right above $Crime$ describing illegal immigrants, black and white people, people living on the streets or in shelters (this cluster has been present in the previous two networks); (2)~the green cluster forming a vertical belt on the left from $Crime$ capturing erudition, job quality and wealth; (3)~red cluster below $Crime$ with family completeness and wealth variables; (4)~red cluster on the far left with additional wealth and poverty variables. From cluster (1)~the most influential variables are in descending order $PctKids2Par$, $PctIlleg$, $racePctWhite$, $racepctblack$. The $NumInShelters$ variable is influenced mostly by the $NumIlleg$ variable meaning that illegal immigrants often seek refuge in shelters where they live from money of the government and contribute to higher criminality. The variable $PctPersDenseHous$ is positively influenced by $racepctblack$ which partly suggests the presence of ghettos. Variables from cluster (2)~aren't by far as powerful as variables of the first cluster but there is still a steady influence on $Crime$.
+
+
+\medskip
+Parameters of the learning procedure: 500 runs, 1\,500 iterations per run, 50 random restart steps, 0.1 relative size of tabu-list, maximum of 4 parents, $\alpha \in [1, 15]$.
+
+
+
+\subsection{Conclusion}
+This particular application of Bayesian networks turned out difficult and I found myself repeatedly in a dead end. Nevertheless, I believe that I have managed to find networks that correctly describe at least some aspects of the data. Maybe the most convincing argument is that in the learnt networks can be identified clusters of variables that capture similar traits (eg. family completeness, erudition combined with type of jobs etc.).
+
+Conclusions supported by the learnt networks will be summarized in this paragraph.
+When speaking about racial representation, high percentage of white people greatly suppresses criminality, Asians don't appear to be extreme in any direction and high percentage of black people means also high criminality. There cannot be said anything about Hispanics. The number of black people also heightens dense housing, in this case, ghettos. Logical proposition is to fight against forming of such closed communities and to somehow blend the whole population.
+Illegal immigrants contribute strongly to criminality and also, according to the networks, often live in homeless shelters where they just live from the money of productive society. It seems that a sensible thing to do is to enforce strict immigration policy and to let into the country only those that will presumably be good citizens.
+Family completeness has major impact on criminality and is sign of healthy society. However, low divorce rate is about mentality, not about forcing people to stay married, and it is hard, from my point of view, to offer any suggestion.
+The need of public assistance income, lack of education and bad jobs also contribute to criminality but not as significantly as one might think. Again, in this case it is about mentality and introduces a grand challenge for sociology to \uv{make} people think the right way without actually making them do it.
+
+The overall results aren't as conclusive as I had hoped for. Perhaps with a bigger dataset containing less features the results would be better.
+
+
+\ignore{
+\clearpage
 The course of our experiments will be the following. First we will learn a big network using all 100 features of the dataset which will give us a general overview of the whole domain. Then we will repeatedly identify a set of variables that are very similar by their semantics, dependencies and are topologically close (directly connected one to the other); such a set of variables will be reduced to only one representative variable for two reasons: (1)~to obtain a~more readable network while hopefully preserving the key characteristics and (2)~to reduce the state-space of possible structures.
 To determine whether an attribute $X$ can be removed I~propose to use three pieces of information:
 \begin{enumerate}
     \item The eliminated variable $X$ has to have an equivalent representative $R$ such that $X$ and $R$ are topologically close in the network and also are semantically similar.
-    \item The variable $X$ and its representative $R$ have to influence the crime variable $C$ either the same way or the opposite way, of course, with some tolerance. To put it formally, either $P(C \mid X) \approx P(C \mid R)$, ie. $X$ and $R$ are considered synonyms, or $P(C \mid X = low) \approx P(C \mid R = high) \land P(C \mid X = medium) \approx P(C \mid R = medium) \land P(C \mid X = high) \approx P(C \mid R = low)$, ie. $X$ and $R$ are considered antonyms.
+    \item The variable $X$ and its representative $R$ have to influence the crime variable $C$ approximately either the same way or the opposite way, of course, with some tolerance. To put it formally, either $P(C \mid X) \approx P(C \mid R)$, ie. $X$ and $R$ are considered synonyms, or $P(C \mid X = low) \approx P(C \mid R = high) \land P(C \mid X = medium) \approx P(C \mid R = medium) \land P(C \mid X = high) \approx P(C \mid R = low)$, ie. $X$ and $R$ are considered antonyms.
     These probability distributions will be inferred by sampling after the network parameters are learnt using Bayesian estimation with $\alpha_P = 30$. The value of $\alpha_P$ has been chosen based on the KL-divergence analysis of parameter learning with the Hepar-II network\,--\,this network is the most similar I could find to the learnt networks and also gives us a~good breathing space while the learnt networks get simpler through gradual elimination of attributes. In Figure~\ref{fig:kl_div_hepar2} we can see that for 2\,000 samples, which is the size of our dataset, the value $\alpha_P = 30$ gets us closest to the original probability distribution.
-    \item If its the case that $P(C \mid X) \approx P(C \mid R)$ then mutual information of $X$ and $R$ has to be relatively high. This information is visually represented in the program by color of the edge $X - R$ on a \uv{cold-to-hot} color scale, ie. blue to red\footnote{In order to display mutual information between pairs of directly connected variables the current dataset has to be compatible with the current network and the option \srccode{Network -> Display edge weights} in the main menu needs to be checked.}.
+    \item If its the case that $P(C \mid X) \approx P(C \mid R)$ then mutual information of $X$ and $R$ has to be relatively high. To make the manual search of similar variables easier, mutual information of a pair of directly connected variables $X,R$ is visually represented in the program by color of the edge $X - R$ on \uv{cold-to-hot} color scale, ie. blue to red\footnote{In order to display mutual information between pairs of directly connected variables the current dataset has to be compatible with the current network and the option \srccode{Network -> Display edge weights} in the main menu needs to be checked.}.
 \end{enumerate}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[scale=1.2]{fig/kl-hepar2}
-    \caption{Performance analysis of parameter estimation methods for the network Hepar-II (70 variables, 1453 CPD entries). For a dataset of 2\,000 samples we can see that the Bayesian estimation with $\alpha=30$ is the best option.}
-    \label{fig:kl_div_hepar2}
-\end{figure}
 
 
 \medskip
@@ -1674,44 +1733,34 @@ In the second round I identified the following sets (last three are sets of anto
     \item $PctHousLess3BR, MedNumBR$ (number of bedrooms)
     \item $PctUnemployed, PctEmploy$
 \end{itemize}
-Maximum tolerance for differences of $P(ViolentCrimesPerPop \mid X)$ is, again, 0.05 with the exception for attributes $MedNumBR$ and $pctUrban$ which are unevenly distributed because of binning (maximal differences for these attributes 0.12) and it is reasonable to remove them.
+Maximum tolerance for differences of $P(ViolentCrimesPerPop \mid X)$ is, again, 0.05 with the exception for attributes $MedNumBR$ and $pctUrban$ which are unevenly distributed because of binning (maximal differences for these attributes is 0.12) and it is reasonable to remove them.
 
-
-
-
-
-\medskip
-General notes
+In the third round I identified just four sets of similar variables that are, once more, reduced:
 \begin{itemize}
-    \item Methodology: Start with attributes most strongly correlated with crime\,--\,will give us a chance for finding stable structures.
-    \item With full dataset there is no isolated variable, potentially all are useful.
-    \item Discretization is good because it makes the evaluation of results intuitive (low, medium, high and you know what you need to know)
-    \item Goal: Find such attributes that are topologically close to crime in the learnt network
-    \item shows very nicely intuitive conclusions (divorce variables are the same etc.)\,--\,sanity check, hopefully the not obvious conclusions are valid as well
-    \item for parameters maybe the MLE is more suitable because it shows us exactly what the data is like (is there even a single occurence of a particular instantiation?)
-    \item dataset 01: The three $divorce$ variables always form a line $FemalePctDiv, TotalPctDiv, MalePctDiv$, so we use only one of them (the others don't bring additional information).
-    \item V-structure $pctWPubAsst \rightarrow PctNotHSGrad \leftarrow PctUnemployed$
+    \item $PctWorkMom, PctWorkMomYoungKids$
+    \item $population, PopDens, LandArea$
+    \item $PctPopUnderPov, NumUnderPov$
+    \item $MedOwnCostPctInc, MedOwnCostPctIncNoMtg$
 \end{itemize}
 
-\medskip
-Learning with all variables:
-\begin{itemize}
-    \item $ViolentCrimesPerPop$ has two parents $racePctWhite$ and $PctKids2Par$, no child. It's a V-structure (so, stable)
-\end{itemize}
+At this point we are left with 67 variables and no more variables that would meet the similarity criteria we have been using so far. Unfortunately, it turns out that 67 variables is too big a~number to visually see some relevant information in the structure of the resulting network. I have tried several approaches, including starting over and attempting to identify common substructures in the initial networks with 100 variables or exploring the closest neighborhood of the target variable and looking for some patterns; the results were always inconclusive.
 
+After a series of experiments I believe the best course of action is to perform sensitivity analysis of how strongly the remaining attributes influence the target variable and remove those attributes whose impact is rather minor. Concretely, I learn a collection of networks with $\alpha_S \in \lbrace 1, 5, 7.5, 10, 12.5, 15 \rbrace$ using the remaining attributes and for each variable $X$ find $\max_x \lbrace | 1/3 - P(ViolentCrimesPerPop \mid X = x) |\rbrace$, ie. how significantly distribution of the target variable deviates from the uniform distribution $(1/3, 1/3, 1/3)$ when the value of $X$ is given. Finding maximal deviation for $X$ over all learnt networks and setting a threshold 0.07 lets us eliminate additional 14 attributes that don't significantly affect criminality: $MedYrHousBuilt$, $PctVacMore6Mos$, $PctSameState85$, $pctWFarmSelf$, $PctEmplProfServ$, $racePctAsian$, $PctUsePubTrans$, $PctEmplManu$, $PctBornSameState$, $MedOwnCostPctInc$, $PersPerOccupHous$, $pctWSocSec$, $pctWRetire$ and $PctForeignBorn$. We can see that among those attributes is the relative number of Asians in the community, suggesting that Asian people are well-behaved. On the other hand, it can be seen from the original dataset that even with $racePctAsian = high$ the relative number of Asians is rather small. So, even though Asians don't commit crimes, the fact that there are relatively many Asians in a community doesn't significantly limit the number of other ethnic groups or, in other words, there is no community in which Asians would be a majority.
 
-\todo{Then we will choose subset of variables that are topologically closest to the $ViolentCrimesPerPop$ variable and verify that we obtain the same substructure or, maybe, a set of I-equivalent networks with this subset. At this point we will inspect what dependencies the learnt networks encode and what useful information could be extracted based on these findings. However, there is a big potential problem called \term{latent variables} which means that if there is an edge $X \rightarrow Y$ it doesn't necessarily mean that $X$ causes $Y$, it is a mere indicator of $X$ and $Y$ being correlated in the input dataset. Such correlation may, indeed, be caused by a real and justified direct causal effect of $X$ on $Y$ but the other option is that $X$ and $Y$ share a common cause which isn't present in the network (hence the name latent variable).}
+So far we have successfully obtained a dataset with reduced number of attributes such that it should still capture the key characteristics and relations of the target domain. Our final step is to take the networks learnt with different $\alpha_S$ after the last elimination round and combining them. Concretely, by combination of networks I~mean extraction of oriented edges that are contained within majority of the learnt networks while tolerating an absence at most once (tolerating no absences lead to a sparser network with too many isolated variables and tolerating more than two absences yielded densely connected networks which we prefer to avoid). The final network is shown in the Figure~\ref{fig:crime_final_net} in Appendix~\ref{ch:appendix_crime_net}. \todo{at je to fakt v appendixu}
 
-\todo{intervention is setting a variable to a value, observe the effect}
+\todo{comment what we can see there...}
+
+\todo{However, there is a big potential problem called \term{latent variables} which means that if there is an edge $X \rightarrow Y$ it doesn't necessarily mean that $X$ causes $Y$, it is a mere indicator of $X$ and $Y$ being correlated in the input dataset. Such correlation may, indeed, be caused by a real and justified direct causal effect of $X$ on $Y$ but the other option is that $X$ and $Y$ share a common cause which isn't present in the network (hence the name latent variable).}
 
 \todo{Great number of latent variables~\cite[p.~1012]{pgm} which we don't observe or even are not aware of can make two variables appear somewhat directly correlated, while they just have an unknown common cause. Identifying latent variables in one of the currently active research domains of Bayesian networks. Nice example for stomach ulcer on page 1013}
-
 
 \todo{Causal Markov condition: variable is independent of its non-descendants given immediate predecessors}
 
 \todo{Active paths and d-separation tell us about the dependencies an independencies. In there is an active path between $X$ and $Y$ then manipulation of $X$ causes change of distribution of $Y$ (Neapolitan)}
 
 \todo{via sampling verify interventions}
+}
 
 
 
@@ -1720,14 +1769,14 @@ Learning with all variables:
 
 
 \section{Spam filtering}
-Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam, as a stand-alone class of malware, has many subtypes distinguished by their content and purpose, for example advertisement, virus spreading or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may even pose a serious threat to a careless or trustful user.
+Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam, as a stand-alone class of malware, has many subtypes distinguished by their content and purpose, for example advertisement, virus spreading or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may also pose a serious threat to a careless or trustful user.
 
 If not stated otherwise, all technical knowledge regarding data-mining in this section has been drawn from a university course based on~\cite{han_datamining}.
 
 \subsection{Overview of document classification}
-The problem of spam detection falls into the area of general document classification with two classes\,--\,spam and ham (term used for an email that is not spam). General classification methods work with data representation in the form of feature vectors which typically contain polynomial or continuous values, each carrying information regarding presence of a specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification a complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a~document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of terms and finally creating feature representation of the document. Because document preprocessing and feature extraction is not the subject of this thesis I~will rely on a publicly accessible spam dataset whose emails have already been preprocessed and converted into vector feature representation.
+The problem of spam detection falls into the area of general document classification with two classes\,--\,spam and ham (term used for an email that is not spam). General classification methods work with data representation in the form of feature vectors which typically contain polynomial or continuous values, each carrying information regarding presence of a~specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification a complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a~document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of terms and finally creating feature representation of the document. Because document preprocessing and feature extraction is not the subject of this thesis I~choose to rely on a publicly accessible spam dataset whose emails have already been preprocessed and converted into vector feature representation. Another clear advantage of using such dataset is the fact that obtained results are easily comparable with other papers. On the other hand, if someone benchmarks a new spam detector using a dataset containing raw emails then the reported classification accuracy is not necessarily that relevant for the sake of comparing two classification methods because quality of the result relies heavily on the feature extraction step which is usually documented just briefly.
 
-According to the papers I have studied, probabilistic approaches to spam filtering are very successful and the Naïve Bayes model is among the most popular spam detector even among commercial solutions~\cite{blanzieri09}. Probabilistic techniques have been applied to the problem of spam detection in many forms: a simple Bayesian framework~\cite{isaac09}, raw Naïve Bayes model~\cite{heckerman98_spam} (with impressive results) or Naïve Bayes with an SVD-like input preprocessing so that the strong independency among features holds true~\cite{renuka11}. In context of Bayesian networks naturally arises the question whether the assumption of independency between feature variables given the class variable in Naïve Bayes model isn't too limiting and whether a properly trained Bayesian network can perform better. Goal of this section is simple\,--\,compare the best performance achievable with a Naïve Bayes model and with a~more general Bayesian network.
+According to the papers I have studied, probabilistic approaches to spam filtering are very successful and, in fact, the Naïve Bayes model is among the most popular spam detectors even among commercial solutions~\cite{blanzieri09}. Probabilistic techniques have been applied to the problem of spam detection in many forms: a simple Bayesian framework~\cite{isaac09}, raw Naïve Bayes model~\cite{heckerman98_spam} (with impressive results) or Naïve Bayes with an SVD-like input preprocessing so that the strong independency among features holds true~\cite{renuka11}. In context of Bayesian networks naturally arises the question whether the assumption of independency between feature variables given the class variable in Naïve Bayes model isn't too limiting and whether a properly trained Bayesian network can perform better. Goal which we will pursue in this section is simple\,--\,compare the best performance achievable with a Naïve Bayes model and with a~more general Bayesian network.
 
 
 \subsection{Dataset and data preprocessing}
@@ -1737,15 +1786,15 @@ Because this thesis considers strictly discrete Bayesian networks and because th
 
 
 \subsection{Experiments}
-As the Bayesian score for structure learning and the Bayesian estimation for parameter estimation are both parametrized we need to undertake a great number of time costly experiments to find the optimal parameter setting. That is why I will initially use a simple holdout testing with 80:20 split (produced by stratified sampling) to get a broader view of the classification accuracy over space of reasonable parameter settings. Then, accuracy in the region of the best settings will be thoroughly validated once more using 5-fold cross-validation, each fold having the same ratio of spam to ham.
+As the Bayesian score for structure learning and the Bayesian estimation for parameter estimation are both parametrized, we need to undertake a great number of time costly experiments to find the optimal parameter setting. That is why I will initially use a simple holdout testing with 80:20 split (produced by stratified sampling) to get a broader view of the classification accuracy over space of reasonable parameter settings. Then, accuracy in the region of the best settings will be thoroughly validated once more using 5-fold cross-validation, each fold having the same ratio of spam to ham.
 
 The metric used for evaluating  classification capabilities of our models will be accuracy which is computed from the test set as follows:
 $$accuracy = \frac{\# \text{ of correctly classified samples}}{\# \text{ of all samples}}$$
 In context of spam filtering there is the fact that penalties for false positives and false negatives are asymmetric because placing a ham email to the spam folder (or even automatically deleting it) is considered very undesirable. Therefore metrics such as precision, recall or their combination is often used. To ensure higher precision, and thereby to reduce the amount of false positives, a~threshold $\tau$ is employed. Semantics of the threshold $\tau$ is that an email is classified as ham unless our model predicts $P(Spam = true \mid email) \geq \tau$.
-A study~\cite{androutsopoulos00_spam} inspecting the impact of selection of $\tau$ on the overall performance suggests that $\tau$ merely regulates the trade-off between precision and recall and that accuracy can be used as a~metric for evaluating quality of classifiers just as correctly. That is why I use accuracy as the metric and set $\tau = 0.5$.
+A study~\cite{androutsopoulos00_spam} inspecting the impact of selection of $\tau$ on the overall performance suggests that $\tau$ merely regulates the trade-off between precision and recall and that accuracy can be used as a~metric for evaluating quality of classifiers just as correctly. That is why I use accuracy as the main and only metric and set $\tau = 0.5$.
 
 \medskip
-Crucial step in answering the question whether a general Bayesian network can beat the Naïve Bayes model is to explore the space of possible parameter settings of parameter learning and of structure learning. Let $\alpha_S$ denote equivalent sample size used for structure learning using the Bayesian score and let $\alpha_P$ denote equivalent sample size used for parameter learning using the Bayesian estimation. I have manually inspected all combinations of $\alpha_S \in \lbrace 1, 2, 5, 7.5, 10, 12.5, 15, 20, 30\rbrace$ and $\alpha_P \in \lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$; unparameterized methods (maximum likelihood estimation for parameters and the BIC score for structure) were also considered but outperformed in each case. Results of these experiments shows the Figure~\ref{fig:spam-holdout-whole-space}. As we can see, the best performance was achieved around the point ($\alpha_S, \alpha_P) = (10, 12.5)$, so this point and its close neighborhood will together with the Naïve Bayes model be subjects to thorough 5-fold cross-validation tests.
+Crucial step in answering the question whether a general Bayesian network can beat the Naïve Bayes model is to explore the space of possible parameter settings of parameter learning and of structure learning. Let $\alpha_S$ denote equivalent sample size used for structure learning using the Bayesian score and let $\alpha_P$ denote equivalent sample size used for parameter learning using the Bayesian estimation. I have manually inspected all combinations of $(\alpha_S, \alpha_P) \in \lbrace 1, 2, 5, 7.5, 10, 12.5, 15, 20, 30\rbrace \times \lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$; unparameterized methods (maximum likelihood estimation for parameters and the BIC score for structure) were also considered but outperformed in each case. Results of these experiments is shown in the Figure~\ref{fig:spam-holdout-whole-space}. As we can see, the best performance was achieved around the point ($\alpha_S, \alpha_P) = (10, 12.5)$, so this point and its close neighborhood will, together with the Naïve Bayes model, be subjects to thorough 5-fold cross-validation tests.
 
 \begin{figure}[ht]
     \centering
@@ -1774,34 +1823,19 @@ Crucial step in answering the question whether a general Bayesian network can be
 Results of the 5-fold cross-validation are the following. Naïve Bayes model (parameters estimated via MLE) has the average accuracy 85.3\,\% which is by 3.7\,\% less than was reported for the Spambase dataset and Naïve Bayes in~\cite{renuka11} (reported 89\,\%). I believe this drop in accuracy is caused by discretization of the dataset and, in fact, it is almost surprising that the loss of variance isn't greater. Performance of the more general Bayesian network model has been inspected for parameter settings $(\alpha_S, \alpha_P) \in \lbrace 7.5, 10, 12.5, 15\rbrace \times \lbrace 7.5, 10, 12.5, 15 \rbrace$.
 The best average accuracy from five-fold cross-validation has been 87.7\,\% with parameters $(\alpha_S, \alpha_P) \in \lbrace (15, 12.5), (15, 15) \rbrace$ which is by 2.4\,\% better than the accuracy of Naïve Bayes model. This result is comparable with the one achieved in~\cite{renuka11} through augmenting the Naïve Bayes model with a SVD-like preprocessing (reported increase of accuracy by 4\,\%).
 
-Considering that the Spambase dataset is relatively small in size and provides only 57 features, it is very likely that better performance can be achieved with a bigger dataset and with a richer and carefully chosen set of features\,--\,the learnt Bayesian networks contained isolated variables suggesting that some of the features aren't correlated with the spam variable nor with any other and therefore are effectively useless.
+Considering that the Spambase dataset is relatively small in size and provides only 57 features, it is very likely that better performance can be achieved with a bigger dataset and with a richer and carefully chosen set of features (the learnt Bayesian networks contained isolated variables suggesting that some of the features aren't correlated with the spam variable nor with any other and therefore are effectively useless).
+
+Another authors have also shown that performance of probabilistic classifiers can be greatly improved by introducing a broader set of features including, for example, sender's domain, reverse DNS lookups, presence of HTML code in the body (also considering coloring, fonts), punctuation, currency characters, run-length of capital letters etc.~\cite{heckerman98_spam}
 
 \medskip
 Parameters of the structure learning procedure: 200 runs, 3\,000 iterations per run, 60 random restart steps, 0.15 relative size of tabu-list, maximum of three parents per variable, no incoming edges into the spam variable.
 
 
 \subsection{Conclusion}
-In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a good bias-variance trade-off depending on the size of our dataset and because we can relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed up to three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
+In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a good bias-variance trade-off depending on the size of our dataset and because we can further relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed up to three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
 
 \todo{There also exists an extension of Naïve Bayes, called Tree Augmented Naïve Bayes (TAM), that has the structure of Naïve Bayes model and furthermore allows for edges among attribute variables, as long as they don't form a V-structure. Advantage of TAM is that the optimal tree structure can be learnt in polynomial time whereas the learning of a more general Bayesian network, which I did, is generally NP-hard and therefore an optimization technique needs to be employed. (add citation, try to find a paper that employs TAM on spam)}
 
-
-\ignore{
-\bigskip
-My notes:
-\begin{itemize}
-    \item Try naive, try naive with dependencies among non-label variables (disallow spam to be a child), totally unrestricted network
-\end{itemize}
-
-
-
-The usefulness of Naïve Bayesian model for spam classification has been studied in~\cite{heckerman98_spam}:
-\begin{itemize}
-    \item Indicators of spam: words (money, free, earn, 100\,\%, only), currency symbols, numbers, run-length of capital letters, send time, resolution of the source IP etc.~\cite{heckerman98_spam}
-    \item can be trained specifically for a user and learn by his/her specific needs
-    \item Heckerman argues that classification accuracy can be greatly improved using also non-textual features (time of sending, source IP address, etc.).
-\end{itemize}
-}
 
 \ignore{
 \bigskip
@@ -1877,15 +1911,10 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
 
 
 
-\begin{comment}
-\todo{
-\begin{itemize}
-	\item Medical diagnosis (from a big dataset of patient records)\,--\,structure and CPDs.
-	\item Pedigrees (BUT structure is known).
-	\item protein networks (how a protein influences another protein)\,--\,lecture \uv{Learning General Graphs: Heuristic Search}, dataset at \url{http://www.causality.inf.ethz.ch/repository.php}
-\end{itemize}
-}
-\end{comment}
+
+
+
+
 
 
 
@@ -1935,5 +1964,5 @@ What I did in the practical part:
   \end{flushleft}
   \appendix
    
-  \input{prilohy} % viz. prilohy.tex
+  %\input{prilohy} % viz. prilohy.tex
 \end{document}
