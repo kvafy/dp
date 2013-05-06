@@ -1,6 +1,6 @@
 // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
 // Author:  David Chaloupka (xchalo09)
-// Created: 2013/04/21
+// Created: 2013/04/28
 
 package bna.bnlib.io;
 
@@ -10,10 +10,10 @@ import java.io.IOException;
 
 
 /**
- * Implementation of Bayesian network file writer for .net files.
+ * Implementation of Bayesian network file writer for graphviz files.
  */
-public class BayesianNetworkNetFileWriter extends BayesianNetworkFileWriter {
-    public BayesianNetworkNetFileWriter(String filename) {
+public class BayesianNetworkGraphvizFileWriter extends BayesianNetworkFileWriter {
+    public BayesianNetworkGraphvizFileWriter(String filename) {
         super(filename);
     }
     
@@ -25,54 +25,16 @@ public class BayesianNetworkNetFileWriter extends BayesianNetworkFileWriter {
         
         try {
             writer = new FileWriter(this.filename);
-            // "net" section
-            writer.write("net" + NL + "{" + NL + "}" + NL);
+            writer.write("digraph bn {" + NL);
             
-            // variables specification
-            for(Variable var : bn.getVariables()) {
-                writer.write("node " + var.getName() + NL + "{" + NL);
-                writer.write("  states = ( ");
-                for(String value : var.getValues()) {
-                    writer.write("\"" + value + "\"");
-                    writer.write(" ");
-                }
-                writer.write(");" + NL);
-                writer.write("}" + NL);
-            }
-            
-            // structure and CPDs
+            // structure
             for(Node node : bn.getNodes()) {
-                Factor factor = node.getFactor();
-                Variable[] factorScope = factor.getScope();
-                // the "potential" line
-                writer.write("potential ( ");
-                writer.write(factorScope[0].getName());
-                writer.write(" ");
-                if(factorScope.length > 1) {
-                    writer.write("| ");
-                    for(int i = 1 ; i < factorScope.length ; i++)
-                        writer.write(factorScope[i].getName() + " ");
+                Variable parent = node.getVariable();
+                for(Variable child : node.getChildVariables()) {
+                    writer.write(String.format("    \"%s\" -> \"%s\";" + NL, parent.getName(), child.getName()));
                 }
-                 writer.write(")" + NL);
-                // the CPD representation
-                writer.write("{" + NL);
-                writer.write("  data = ");
-                boolean justBegun = true;
-                for(int[] assignment : factor) {
-                    int leadingZeros = this.countLeadingZeros(assignment);
-                    if(!justBegun)
-                        this.writeNTimes(")", leadingZeros, writer); // close what overflowed
-                    this.writeNTimes("(", leadingZeros, writer); // openers for new values
-                    // probability value itself
-                    if(leadingZeros == 0)
-                        writer.write(" ");
-                    writer.write(String.format("%f", factor.getProbability(assignment)).replace(',', '.'));
-                    justBegun = false;
-                }
-                this.writeNTimes(")", factorScope.length, writer); // final closing
-                writer.write(" ;" + NL);
-                writer.write("}" + NL);
             }
+            writer.write("}" + NL);
         }
         catch(IOException ex) {
             throw new BNLibIOException("The following IO exception occured: " + ex.getMessage());
@@ -89,22 +51,5 @@ public class BayesianNetworkNetFileWriter extends BayesianNetworkFileWriter {
     private void validateNetwork(BayesianNetwork bn) throws BNLibIOException {
         if(bn == null)
             throw new BNLibIOException("The network may not be null.");
-        if(!bn.hasValidCPDs())
-            throw new BNLibIOException("The network doesn't have valid CPDs.");
-    }
-    
-    private int countLeadingZeros(int[] values) {
-        int zeros = 0;
-        for(int v : values) {
-            if(v != 0)
-                break;
-            zeros++;
-        }
-        return zeros;
-    }
-    
-    private void writeNTimes(String what, int n, FileWriter writer) throws IOException {
-        for(int i = 0 ; i < n ; i++)
-            writer.write(what);
     }
 }

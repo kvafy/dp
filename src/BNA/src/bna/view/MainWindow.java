@@ -6,8 +6,8 @@ package bna.view;
 
 import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
-import bna.bnlib.Variable;
 import bna.bnlib.io.BayesianNetworkFileWriter;
+import bna.bnlib.io.BayesianNetworkGraphvizFileWriter;
 import bna.bnlib.io.BayesianNetworkNetFileWriter;
 import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
@@ -20,11 +20,12 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ToolTipManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.ini4j.Ini;
 
 
 /**
- * The main window of the whole application.
+ * The main window of the whole application (singleton).
  */
 public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObserver, ActiveNetworkObserver {
     // singleton
@@ -32,7 +33,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     // application configuration
     private static final String CONFIG_FILENAME = "config.ini";
     private Ini configuration = null;
-
+    
     
     private MainWindow() {
         initComponents();
@@ -145,6 +146,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     @Override
     public void notifyNewActiveNetwork(GBayesianNetwork gbn) {
         this.enableComponentsByState();
+        this.tabbedPane.repaint(); // to repaint the scrollers
     }
     
     void loadWindowBounds(java.awt.Window window, String id) {
@@ -196,6 +198,8 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         menuItemNetworkStatistics = new javax.swing.JMenuItem();
         menuItemShowEdgeWeights = new javax.swing.JCheckBoxMenuItem();
         menuItemTestPredictionAccuracy = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
         menuDataset = new javax.swing.JMenu();
         menuItemImportDataset = new javax.swing.JMenuItem();
         menuItemExportDataset = new javax.swing.JMenuItem();
@@ -204,9 +208,11 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         menuItemLearnParameters = new javax.swing.JMenuItem();
         menuItemLearnStructure = new javax.swing.JMenuItem();
         menuAbout = new javax.swing.JMenu();
+        menuItemCrimeImpact = new javax.swing.JMenuItem();
+        menuItemStructuresIntersection = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Bayesian networks applications");
+        setTitle("Bayesian networks applications (Master's thesis)");
         setName("frameMainWindow");
         setPreferredSize(new java.awt.Dimension(800, 600));
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -260,7 +266,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         });
         menuNetwork.add(menuItemSaveNetwork);
 
-        menuItemQuery.setText("Query");
+        menuItemQuery.setText("Probabilistic query");
         menuItemQuery.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuItemQueryActionPerformed(evt);
@@ -292,6 +298,12 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
             }
         });
         menuNetwork.add(menuItemTestPredictionAccuracy);
+
+        jMenuItem1.setText("Compare structure");
+        menuNetwork.add(jMenuItem1);
+
+        jMenuItem2.setText("Structural intersection");
+        menuNetwork.add(jMenuItem2);
 
         jMenuBar1.add(menuNetwork);
 
@@ -333,7 +345,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         });
         menuLearning.add(menuItemLearnParameters);
 
-        menuItemLearnStructure.setText("Structure learning (tabu search)");
+        menuItemLearnStructure.setText("Structure learning");
         menuItemLearnStructure.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuItemLearnStructureActionPerformed(evt);
@@ -344,6 +356,23 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         jMenuBar1.add(menuLearning);
 
         menuAbout.setText("About");
+
+        menuItemCrimeImpact.setText("Magic (crime impact factor)");
+        menuItemCrimeImpact.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemCrimeImpactActionPerformed(evt);
+            }
+        });
+        menuAbout.add(menuItemCrimeImpact);
+
+        menuItemStructuresIntersection.setText("Structures intersection");
+        menuItemStructuresIntersection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemStructuresIntersectionActionPerformed(evt);
+            }
+        });
+        menuAbout.add(menuItemStructuresIntersection);
+
         jMenuBar1.add(menuAbout);
 
         setJMenuBar(jMenuBar1);
@@ -361,7 +390,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 420, Short.MAX_VALUE)
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(14, 14, 14))
         );
 
@@ -377,6 +406,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         if(lastNetworkDirectory == null)
             lastNetworkDirectory = ".";
         JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
+        networkFileChooser.setFileFilter(new FileNameExtensionFilter("Net file", "net"));
         networkFileChooser.setDialogTitle("Load a Bayesian network from file");
         networkFileChooser.showOpenDialog(this);
         if(networkFileChooser.getSelectedFile() == null)
@@ -487,14 +517,22 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         if(lastNetworkDirectory == null)
             lastNetworkDirectory = ".";
         JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
+        networkFileChooser.setFileFilter(new FileNameExtensionFilter("Net file", "net"));
+        networkFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Graphviz file", "gv"));
         networkFileChooser.setDialogTitle("Save the current network to file");
         networkFileChooser.showSaveDialog(this);
-        if(networkFileChooser.getSelectedFile() == null)
+        File selectedFile = networkFileChooser.getSelectedFile();
+        if(selectedFile == null)
             return;
-        this.setConfiguration("Network", "directory", networkFileChooser.getSelectedFile().getParent());
+        this.setConfiguration("Network", "directory", selectedFile.getParent());
         try {
+            
             BayesianNetwork bnCurrent = this.panelNetworkView.getNetwork();
-            BayesianNetworkFileWriter writer = new BayesianNetworkNetFileWriter(networkFileChooser.getSelectedFile().getPath());
+            BayesianNetworkFileWriter writer;
+            if(selectedFile.getName().endsWith(".gv"))
+                writer = new BayesianNetworkGraphvizFileWriter(selectedFile.getPath());
+            else
+                writer = new BayesianNetworkNetFileWriter(selectedFile.getPath());
             writer.save(bnCurrent);
         }
         catch(BNLibIOException ex) {
@@ -506,6 +544,101 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
         boolean showEdgeWeights = this.menuItemShowEdgeWeights.isSelected();
         this.panelNetworkView.setShowEdgeWeights(showEdgeWeights);
     }//GEN-LAST:event_menuItemShowEdgeWeightsActionPerformed
+
+    private void menuItemCrimeImpactActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemCrimeImpactActionPerformed
+        class VariableDeviation implements Comparable {
+            String variable;
+            double deviation;
+            public VariableDeviation(String variable, double deviation) {
+                this.variable = variable;
+                this.deviation = deviation;
+            }
+            @Override
+            public int compareTo(Object o) {
+                return (int)Math.signum(this.deviation - ((VariableDeviation)o).deviation);
+            }
+        }
+        
+        final long SAMPLE_COUNT = 1 * 1000 * 1000;
+        final int THREAD_COUNT = 6;
+        final String TARGET_VAR = "ViolentCrimesPerPop";
+        BayesianNetwork bn = (this.panelNetworkView).getNetwork();
+        bna.bnlib.sampling.SamplingController controller = new bna.bnlib.sampling.SamplingController(SAMPLE_COUNT);
+        java.util.List<VariableDeviation> deviations = new java.util.ArrayList<VariableDeviation>();
+        System.out.print(String.format("sensitivity analysis %2d/%2d", 0, bn.getVariablesCount()));
+        int i = 0;
+        for(bna.bnlib.Variable var : bn.getVariables()) {
+            if(var.getName().equals(TARGET_VAR))
+                continue;
+            String queryStr = String.format("P(%s | %s)", TARGET_VAR, var.getName());
+            bna.bnlib.sampling.SampleProducer producer = new bna.bnlib.sampling.WeightedSampleProducer(bn, queryStr);
+            bna.bnlib.sampling.QuerySamplerMultithreaded sampler = new bna.bnlib.sampling.QuerySamplerMultithreaded(producer, THREAD_COUNT);
+            sampler.sample(controller);
+            // determine the maximal deviation
+            bna.bnlib.Factor cpd = sampler.getSamplesCounterNormalized();
+            double maxDeviation = 0;
+            for(int[] assignment : cpd) {
+                maxDeviation = Math.max(maxDeviation, Math.abs(1.0 / 3.0 - cpd.getProbability(assignment)));
+            }
+            deviations.add(new VariableDeviation(var.getName(), maxDeviation));
+            System.out.print(String.format("\rsensitivity analysis %2d/%2d", ++i, bn.getVariablesCount()));
+        }
+        System.out.println("");
+        java.util.Collections.sort(deviations);
+        System.out.println("Variable deviations from " + TARGET_VAR);
+        i = 0;
+        for(VariableDeviation varDev : deviations) {
+            System.out.printf("%2d) %s - %.3f\n", ++i, varDev.variable, varDev.deviation);
+        }
+    }//GEN-LAST:event_menuItemCrimeImpactActionPerformed
+
+    private void menuItemStructuresIntersectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemStructuresIntersectionActionPerformed
+        File directory = new File("/home/kvafy/skola/dp/2-crime/round-4");
+        java.util.LinkedList<File> networkFiles = new java.util.LinkedList<File>();
+        for(File file : directory.listFiles()) {
+            if(file.getName().endsWith(".net")) {
+                networkFiles.addLast(file);
+                System.out.println("considering network " + file.getName());
+            }
+        }
+        
+        /*BayesianNetwork bnIntersection = BayesianNetwork.loadFromFile(networkFiles.removeFirst().getPath());
+        for(File file : networkFiles) {
+            BayesianNetwork bnOther = BayesianNetwork.loadFromFile(file.getPath());
+            for(bna.bnlib.Node node : bnIntersection.getNodes()) {
+                bna.bnlib.Node otherNode = bnOther.getNode(node.getVariable());
+                for(bna.bnlib.Node child : node.getChildNodes()) {
+                    if(!Toolkit.arrayContains(otherNode.getChildVariables(), child.getVariable()))
+                        bnIntersection.removeDependency(node, child);
+                }
+            }
+        }*/
+        
+        final int ABSENCE_TOLERANCE = 1;
+        
+        bna.bnlib.Variable[] varsOrder = BayesianNetwork.loadFromFile(networkFiles.peekFirst().getPath()).getVariables();
+        int edgeCounter[][] = new int[varsOrder.length][varsOrder.length];
+        for(File file : networkFiles) {
+            BayesianNetwork bn = BayesianNetwork.loadFromFile(file.getPath());
+            for(bna.bnlib.Node node : bn.getNodes()) {
+                bna.bnlib.Variable parent = node.getVariable();
+                int parentIndex = Toolkit.indexOf(varsOrder, parent);
+                for(bna.bnlib.Variable child : node.getChildVariables()) {
+                    int childIndex = Toolkit.indexOf(varsOrder, child);
+                    edgeCounter[parentIndex][childIndex]++;
+                }
+            }
+        }
+        BayesianNetwork bnIntersection = new BayesianNetwork(varsOrder);
+        for(int i = 0 ; i < varsOrder.length ; i++) {
+            for(int j = 0 ; j < varsOrder.length ; j++) {
+                if(edgeCounter[i][j] >= networkFiles.size() - ABSENCE_TOLERANCE) // tolerate if the edge is missing ABSENCE_TOLERANCE-times
+                    bnIntersection.addDependency(varsOrder[i], varsOrder[j]);
+            }
+        }
+        
+        this.panelNetworkView.setNetwork(bnIntersection);
+    }//GEN-LAST:event_menuItemStructuresIntersectionActionPerformed
 
     /**
      * @param args the command line arguments
@@ -550,10 +683,13 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable datasetTable;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenu menuAbout;
     private javax.swing.JMenu menuDataset;
     private javax.swing.JMenu menuFile;
+    private javax.swing.JMenuItem menuItemCrimeImpact;
     private javax.swing.JMenuItem menuItemExit;
     private javax.swing.JMenuItem menuItemExportDataset;
     private javax.swing.JMenuItem menuItemImportDataset;
@@ -565,6 +701,7 @@ public class MainWindow extends javax.swing.JFrame implements ActiveDatasetObser
     private javax.swing.JMenuItem menuItemSampleNewDataset;
     private javax.swing.JMenuItem menuItemSaveNetwork;
     private javax.swing.JCheckBoxMenuItem menuItemShowEdgeWeights;
+    private javax.swing.JMenuItem menuItemStructuresIntersection;
     private javax.swing.JMenuItem menuItemTestPredictionAccuracy;
     private javax.swing.JMenu menuLearning;
     private javax.swing.JMenu menuNetwork;

@@ -250,7 +250,7 @@ public class NetworkLayoutGenerator {
         Comparator<LNode> lnodeInlayerComparator = new Comparator<LNode>() {
             @Override
             public int compare(LNode o1, LNode o2) {
-                return Integer.compare(o1.inlayerIndex, o2.inlayerIndex);
+                return o1.inlayerIndex - o2.inlayerIndex;
             }
         };
         for(LNode[] layer : ordering) {

@@ -95,9 +95,15 @@ public class Node {
         int[] assignment = new int[1 + assignmentOfParents.length];
         System.arraycopy(assignmentOfParents, 0, assignment, 1, assignmentOfParents.length);
         // read probability of all possible assignments of the first variable in the factor given others
+        double probabilitiesSum = 0;
         for(int i = 0 ; i < this.variable.getCardinality() ; i++) {
             assignment[0] = i;
             probabilities[i] = this.factor.getProbability(assignment);
+            probabilitiesSum += probabilities[i];
+        }
+        if(probabilitiesSum == 0) {
+            // TODO make uniform or something?
+            java.util.Arrays.fill(probabilities, 1.0 / probabilities.length);
         }
         // sample
         return Toolkit.randomIndex(probabilities, 1.0, random);

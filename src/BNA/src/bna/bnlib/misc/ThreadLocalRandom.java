@@ -4,23 +4,25 @@
 
 package bna.bnlib.misc;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.WeakHashMap;
 
 
 /**
  * Custom implementation of java.util.concurrent.ThreadLocalRandom from Java7.
  */
 public class ThreadLocalRandom {
-    private static HashMap<Long, Random> theadRandomMap = new HashMap<Long, Random>();
+    // weak references ensure that the map doesn't contain entries for dead threads
+    private static Map<Thread, Random> theadRandomMap = new WeakHashMap<Thread, Random>();
     
     public static Random current() {
-        // Java 6 - hand-made ThreadLocalRandom
-        Long threadID = Thread.currentThread().getId();
-        Random rand = theadRandomMap.get(threadID);
+        // Java 6 - hand-made ThreadLocalRandom using weak references
+        Thread currentThread = Thread.currentThread();
+        Random rand = theadRandomMap.get(currentThread);
         if(rand == null) {
             rand = new Random();
-            theadRandomMap.put(threadID, rand);
+            theadRandomMap.put(currentThread, rand);
         }
         return rand;
         

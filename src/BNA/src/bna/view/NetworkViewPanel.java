@@ -10,7 +10,6 @@ import bna.bnlib.misc.LRUCache;
 import bna.bnlib.misc.Toolkit;
 import java.awt.*;
 import java.util.ArrayList;
-import javax.swing.JColorChooser;
 
 
 /**
@@ -22,6 +21,9 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
     private boolean showEdgeWeightsFlag = false;
     private final LRUCache<BayesianNetwork, GBayesianNetwork> layoutCache = new LRUCache<BayesianNetwork, GBayesianNetwork>(10);
     private ArrayList<ActiveNetworkObserver> observers = new ArrayList<ActiveNetworkObserver>();
+    // when currently we are generating layout of a network
+    private boolean generatingLayout = false; // is current layout of a network being generated?
+    private double layoutGenerationProgress;  // [0,1]
     
     
     public NetworkViewPanel() {
@@ -41,23 +43,51 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
             return this.gbn.getNetwork();
     }
 
-    class LayoutGeneratingThread extends Thread {
+    
+    /**
+     * Thread that generates the network layout, notifies about the progress and
+     * sets the final network as the current network when done.
+     */
+    class LayoutGeneratingThread extends Thread implements NetworkLayoutGeneratorObserver {
         private BayesianNetwork bn;
+        private double progress = -1;
         
         public LayoutGeneratingThread(BayesianNetwork bn) {
             this.bn = bn;
+            this.setDaemon(true);
         }
         
         @Override
         public void run() {
             GBayesianNetwork gbn = layoutCache.get(this.bn);
             if(gbn == null) {
-                NetworkLayoutGeneratorObserver observer = null;
+                NetworkLayoutGeneratorObserver observer = this;
                 gbn = NetworkLayoutGenerator.getLayout(this.bn, observer);
+                notifyLayoutGenerationDone();
                 layoutCache.put(this.bn, gbn);
             }
             setNetwork(gbn);
         }
+
+        @Override
+        public void notifyLayoutGeneratorStatus(long iteration, long maxIterations, double score, double scoreBest) {
+            double currentProgress = (double)iteration / maxIterations;
+            if(currentProgress >= this.progress + 0.01) {
+                this.progress = currentProgress;
+                notifyLayoutGenerationProgress(this.progress);
+            }
+        }
+    }
+    
+    private void notifyLayoutGenerationProgress(double progress) {
+        this.generatingLayout = true;
+        this.layoutGenerationProgress = progress;
+        this.repaint();
+    }
+    
+    private void notifyLayoutGenerationDone() {
+        this.generatingLayout = false;
+        this.repaint();
     }
     
     public void setNetwork(BayesianNetwork bn) {
@@ -73,6 +103,7 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
     
     public void setNetwork(GBayesianNetwork bnNew) {
         GBayesianNetwork bnOld = this.gbn;
+        this.generatingLayout = false;
         if(bnNew != bnOld) {
             // network nodes are stand-alone JComponents => remove old ones and add new
             this.removeComponentsOfNetwork(bnOld);
@@ -146,6 +177,9 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
     @Override
     public void paint(java.awt.Graphics gPlain) {
         Graphics2D g2D = (Graphics2D)gPlain;
+        // for nicer result
+        g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
         // nice background
         g2D.setPaint(
                 new GradientPaint(
@@ -172,6 +206,37 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
             g2D.setColor(Color.BLACK);
             g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
             this.paintComponents(gPlain); // aka nodes
+        }
+        else if(this.generatingLayout) {
+            // paint a huge progress bar in the network view panel
+            // informing about the status of layout generation
+            int barHeight = 30,
+                barWidth = (int)(0.7 * this.getWidth()),
+                barX = (this.getWidth() - barWidth) / 2,
+                barY = (this.getHeight() - barHeight) / 2,
+                barWidthDone = (int)(barWidth * this.layoutGenerationProgress);
+            // white background, green progress and all framed in dark gray
+            g2D.setColor(Color.WHITE);
+            g2D.fillRect(barX, barY, barWidth, barHeight);
+            g2D.setColor(Color.GREEN);
+            g2D.setPaint(
+                new GradientPaint(
+                    barX, barY, new Color(0x00aa00),
+                    barX + barWidthDone, barY + barHeight, new Color(0x00ff00))
+            );
+            g2D.fillRect(barX, barY, barWidthDone, barHeight);
+            g2D.setColor(Color.DARK_GRAY);
+            g2D.drawRect(barX, barY, barWidth, barHeight);
+            // centered text "Generating layout" inside the progress bar
+            // (inspired by http://docs.oracle.com/javase/tutorial/2d/text/measuringtext.html)
+            String text = "Generating layout...";
+            FontMetrics metrics = g2D.getFontMetrics();
+            int textHeight = metrics.getHeight() + metrics.getDescent();
+            int textWidth = metrics.stringWidth(text);
+            int textBottomCorner = barY + (barHeight + textHeight) / 2 - metrics.getDescent();
+            int textLeftCorner = barX + (barWidth - textWidth) / 2;
+            g2D.setColor(Color.BLACK);
+            g2D.drawString(text, textLeftCorner, textBottomCorner);
         }
         
         // frame of the whole area
