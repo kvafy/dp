@@ -487,7 +487,7 @@ To understand weighted sampling better I have devised  a formal derivation of th
     P(\vars{x}, \vars{e})
     & = & \sum_\vars{Y} P(\vars{x}, \vars{e}, \vars{y}) \nonumber\\
     & = &
-       \sum_\vars{Y} \Bigl( \prod_{E_i \in \vars{E}} P(e_i \mid parents(E_i)) \prod_{X_i \in \vars{X}} P(x_i \mid parents(X_i)) \prod_{Y_i \in \vars{Y}} P(y_i \mid parents(Y_i)) \Bigr) \nonumber\\
+       \sum_\vars{Y} \Bigl( \prod_{E_i \in \vars{E}} \!\! P(e_i \mid parents(E_i)) \prod_{X_i \in \vars{X}} \!\! P(x_i \mid parents(X_i)) \prod_{Y_i \in \vars{Y}} \!\! P(y_i \mid parents(Y_i)) \Bigr) \nonumber\\
     & \approx &
        \sum_\vars{Y} \Bigl( w_{\vars{x},\vars{e},\vars{y}} \cdot \frac{N_{\vars{x},\vars{e},\vars{y}}}{N_{\vars{e},\vars{y}}} \cdot \prod_{Y_i \in \vars{Y}} P(y_i \mid parents(Y_i)) \Bigr) \nonumber\\
     & \approx &
@@ -672,13 +672,13 @@ where $score_L(\mathcal{G}_1 : \mathcal{D})$ denotes the likelihood score of dat
 Now let's examine the difference between having an edge between variables $X$ and $Y$ or not, how does the likelihood score change? We obtain the following result (derivation inspired by~\cite[p.~791]{pgm}):
 \begin{eqnarray*}
    score_L(\mathcal{G}_2 : \mathcal{D}) - score_L(\mathcal{G}_1 : \mathcal{D}) 
-     & = & \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)} \mid x^{(i)}) - \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)}) \\
-     & = & \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
-     & = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
-     & = & \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
-     & = & N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)}
-       =   N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
-     & = & N \cdot I_{\hat P}(X; Y)
+     & \!\!\! = & \!\!\! \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)} \mid x^{(i)}) - \sum_{i=1}^{|\mathcal{D}|} \log \hat P(y^{(i)}) \\
+     & \!\!\! = & \!\!\! \sum_{X,Y} N_{x,y} \log \hat P(y \mid x) - \sum_{Y} N_y \log \hat P(y) \\
+     & \!\!\! = & \!\!\! \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{Y} N \cdot \hat P(y) \log \hat P(y) \\
+     & \!\!\! = & \!\!\! \sum_{X,Y} N \cdot \hat P(x,y) \log \hat P(y \mid x) - \sum_{X, Y} N \cdot \hat P(x, y) \log \hat P(y) \\
+     & \!\!\! = & \!\!\! N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(y \mid x)}{\hat P(y)}
+       = N \sum_{X,Y} \hat P(x,y) \log \frac{\hat P(x, y)}{\hat P(x) \hat P(y)} \\
+     & \!\!\! = & \!\!\! N \cdot I_{\hat P}(X; Y)
 \end{eqnarray*}
 First, I will explain the derivation step by step and the next paragraph will address the question of usefulness of the derived result. The first step (performed on the second line) is to change the logic of the summation from \uv{over the dataset $\xi^{(1)},\dots,\xi^{(m)}$} to \uv{over possible instantiations of $X,Y$}; such change is legal because each $\hat P(\cdot)$ value will be taken into account just as many times as before.
 On the third line the counts $N_{x,y}$ and $N_y$ are expresses using size of the dataset $N$ and empirical probabilities of respective instantiations $x,y$ and $y$.
@@ -739,19 +739,19 @@ where $\mathcal{D} = \lbrace \xi^{(1)}, \dots, \xi^{(m)} \rbrace$ is a dataset. 
 Before we get to the general expression for $P(\mathcal{D} \mid \mathcal{G})$ in context of Bayesian networks let's consider a simple coin flipping example, ie. a binomial distribution over values $\lbrace H, T \rbrace$. Say our dataset is $\mathcal{D} = \lbrace H,H,T,H,T\rbrace$ and the prior distribution is a Dirichlet distribution with hyperparameters $\alpha_H, \alpha_T$ and $\alpha = \alpha_H + \alpha_T$. Also, in this simple example there is really no structure $\mathcal{G}$ to talk about, therefore we can write $P(\mathcal{D} \mid \mathcal{G}) = P(\mathcal{D})$ in the following form (explanation follows immediately):
 \begin{eqnarray*}
     P(\mathcal{D})
-     & = & P(\xi^{(1)})
+     & \!\!\! = & \! P(\xi^{(1)})
            P(\xi^{(2)} \mid \xi^{(1)})
            P(\xi^{(3)} \mid \xi^{(1)},\xi^{(2)})
            P(\xi^{(4)} \mid \xi^{(1)},\xi^{(2)},\xi^{(3)})
-           P(\xi^{(5)} \mid \xi^{(1)},\xi^{(2)},\xi^{(3)},\xi^{(4)}) \\
-     & = & \frac{\alpha_H}{\alpha} \cdot
+           P(\xi^{(5)} \mid \xi^{(1)},\dots,\xi^{(4)}) \\
+     & \!\!\! = & \! \frac{\alpha_H}{\alpha} \cdot
            \frac{\alpha_H + 1}{\alpha + 1} \cdot
            \frac{\alpha_T}{\alpha + 2} \cdot
            \frac{\alpha_H + 2}{\alpha + 3} \cdot
            \frac{\alpha_T + 1}{\alpha + 4}
        =   \frac{\alpha_H (\alpha_H + 1) (\alpha_H + 2) \cdot \alpha_T (\alpha_T + 1)}{\alpha \dotsm (\alpha + 4)}\\
-     & \Biggl( = & \Bigl \lvert \text{if were } \alpha_H, \alpha_T \in \mathbb{N} \Bigr \rvert = \frac{(\alpha - 1)!}{(\alpha + 4)!} \cdot \frac{(\alpha_H + 2)!}{(\alpha_H - 1)!} \cdot \frac{(\alpha_T + 1)!}{(\alpha_T - 1)!} \Biggr) \\
-     & = & \frac{\Gamma(\alpha)}{\Gamma(\alpha + 5)} \cdot \frac{\Gamma(\alpha_H + 3)}{\Gamma(\alpha_H)} \cdot \frac{\Gamma(\alpha_T + 2)}{\Gamma(\alpha_T)}
+     & \!\!\! \Biggl( = & \! \Bigl \lvert \text{if were } \alpha_H, \alpha_T \in \mathbb{N} \Bigr \rvert = \frac{(\alpha - 1)!}{(\alpha + 4)!} \cdot \frac{(\alpha_H + 2)!}{(\alpha_H - 1)!} \cdot \frac{(\alpha_T + 1)!}{(\alpha_T - 1)!} \Biggr) \\
+     & \!\!\! = & \! \frac{\Gamma(\alpha)}{\Gamma(\alpha + 5)} \cdot \frac{\Gamma(\alpha_H + 3)}{\Gamma(\alpha_H)} \cdot \frac{\Gamma(\alpha_T + 2)}{\Gamma(\alpha_T)}
 \end{eqnarray*}
 As states the equation~\eqref{eq:bayesian_score_chain_rule}, probability of $\xi^{(i)}$ is computed based on samples $\xi^{(j)}$ with index $j < i$ and on the pseudosamples from the prior distribution. The computation is fairly straightforward\,--\,suppose $\xi^{(i)} = H$, then the corresponding probability is given as the number of samples and pseudosamples of heads we have seen before $\xi^{(i)}$ divided by the total number of samples and pseudosamples before $\xi^{(i)}$.
 For the first training example $\xi^{(1)}$, respectively for $P(\xi^{(1)})$, we have only pseudosamples, so $P(\xi^{(1)}) = \alpha_H / \alpha$. For $\xi^{(2)}$ we have already seen one occurrence of heads and also one real sample, so $P(\xi^{(2)}) = (\alpha_H + 1) / (\alpha + 1)$. In case of $\xi^{(3)}$ we have not seen any real tails yet but there already have been two real samples, hence $P(\xi^{(3)}) = \alpha_T / (\alpha + 2)$ a so on. Rest of the work is just to rewrite the expression using \term{gamma function} which is a continuous generalization of factorial for which holds $\Gamma(n) = (n-1)!$ provided $n \in \mathbb{N}$. Notice on the second line of the formula above that we grouped terms concerning the same value of our random variable (values heads or tails)\,--\,the value of $P(\mathcal{D})$ doesn't depend on the ordering of samples in the dataset and the final line tells us that $P(\mathcal{D})$ can be computed purely based on occurrence counts rather than by going through the dataset sample by sample. This observation will apply also in context of Bayesian networks.
@@ -895,7 +895,7 @@ The application and library is decomposed into the following packages:
     \item \srccode{bna.bnlib.io}: Classes for reading/writing \srccode{.net} files with Bayesian network specification, writing \srccode{.gv} files for BN structure visualization using Graphviz and reading/writing \srccode{.csv} files with datasets. Also contains logic for parsing textual probabilistic queries. 
     \item \srccode{bna.bnlib.learning}: Parameter learning and structure learning classes.
     \item \srccode{bna.bnlib.misc}: Classes that are inconvenient to put elsewhere (cache implementation, multipurpose toolkit, a general digraph representation).
-    \item \srccode{bna.bnlib.sampling}: Classes for performing stochastic inference by sampling (weighted samping and Markov chain Monte-Carlo).
+    \item \srccode{bna.bnlib.sampling}: Classes for stochastic inference by sampling (weighted samping and Markov chain Monte-Carlo).
     \item \srccode{bna.bnlib.view}: All the GUI logic; mostly visualization, network layout generation, dialogs, GUI components etc.
 \end{itemize}
 
@@ -978,7 +978,7 @@ List of noteworthy methods of the \srccode{WeightedSampleProducer} class:
 \end{itemize}
 
 
-\subsubsection{MCMC sampling}
+\subsubsection{Markov chain Monte-Carlo sampling}
 MCMC sampling is implemented by the class \srccode{MCMCSampleProducer}. As a subclass of \srccode{SampleProducer} it has to define methods \srccode{initializeSample(...)} and \srccode{produceSample(...)}.
 
 \medskip
@@ -1044,7 +1044,7 @@ Class \srccode{QuerySamplerMultithreaded} is a multi-threaded variant of the cla
 Speedup of the multi-threaded variant has been measured on multiple computers with different processors (see Table~\ref{tbl:sampling_multithread_speedup}). On a multi-processor system the speedup is significant, eg. on a system with 4 physical and 8 logical cores the speedup is according to measurements virtually 2.0 for two threads and about 3.8 for four threads.
 
 \begin{table}[htb]
-    \begin{center}
+    \centering
     \catcode`\-=12
     \begin{adjustwidth}{-0.85cm}{-0.75cm} % table wider than the text column would not be centered
     {\small
@@ -1058,21 +1058,21 @@ Speedup of the multi-threaded variant has been measured on multiple computers wi
             \multicolumn{2}{c|}{} & 1 & 2 & 3 & 4 & 6 & 8\\ % #threads
             % my notebook Samsung 300V
             \hline
-            \textbf{Intel i5-2450M} & \textbf{Samples/second}
+            \textbf{Intel i5-2450M} & \textbf{Samples/sec}
                 & 3.068e6 & 5.564e6 & 6.061e6 & 5.481e6 & 5.537e6 & 5.521e6\\
             \cline{2-8}
             \textbf{(2.5 GHz, 2 cores)} & \textbf{Speedup}
                 & 1.00 & 1.81 & 1.98 & 1.79 & 1.80 & 1.80\\
             % merlin
             \hline \hline
-            \textbf{2x Opteron 2387} & \textbf{Samples/second}
+            \textbf{2x Opteron 2387} & \textbf{Samples/sec}
                 & 2.429e6 & 4.765e6 & 6.911e6 & 9.160e6 & 10.803e6 & 11.672e6\\
             \cline{2-8}
             \textbf{(2.8 GHz, 4 cores)} & \textbf{Speedup}
                 & 1.00 & 1.96 & 2.85 & 3.77 & 4.45 & 4.81\\
             % krok
             \hline \hline
-            \textbf{Xeon E5-2640} & \textbf{Samples/second}
+            \textbf{Xeon E5-2640} & \textbf{Samples/sec}
                 & 1.977e6 & 4.106e6 & 5.867e6 & 7.307e6 & 9.190e6 & 10.739e6\\
             \cline{2-8}
             \textbf{(2.5 GHz, 6 cores)} & \textbf{Speedup}
@@ -1101,21 +1101,21 @@ Speedup of the multi-threaded variant has been measured on multiple computers wi
             \multicolumn{2}{c|}{} & 1 & 2 & 3 & 4 & 6 & 8\\ % #threads
             % my notebook Samsung 300V
             \hline
-            \textbf{Intel i5-2450M} & \textbf{Samples/second}
+            \textbf{Intel i5-2450M} & \textbf{Samples/sec}
                 & 6.807e5 & 10.734e5 & 11.472e5 & 12.447e5 & 12.317e5 & 12.174e5\\
             \cline{2-8}
             \textbf{(2.5 GHz, 2 cores)} & \textbf{Speedup}
                 & 1.00 & 1.57 & 1.69 & 1.83 & 1.81 & 1.79\\
             % merlin
             \hline \hline
-            \textbf{2x Opteron 2387} & \textbf{Samples/second}
+            \textbf{2x Opteron 2387} & \textbf{Samples/sec}
                 & 4.880e5 & 9.786e5 & 13.718e5 & 18.237e5 & 26.643e5 & 32.237e5\\
             \cline{2-8}
             \textbf{(2.8 GHz, 4 cores)} & \textbf{Speedup}
                 & 1.00 & 2.00 & 2.81 & 3.73 & 5.46 & 6.61\\
             % krok
             \hline \hline
-            \textbf{Xeon E5-2640} & \textbf{Samples/second}
+            \textbf{Xeon E5-2640} & \textbf{Samples/sec}
                 & 4.384e5 & 9.398e5 & 13.775e5 & 17.493e5 & 23.337e5 & 27.361e5\\
             \cline{2-8}
             \textbf{(2.5 GHz, 6 cores)} & \textbf{Speedup}
@@ -1139,14 +1139,14 @@ Speedup of the multi-threaded variant has been measured on multiple computers wi
     The first machine is my notebook and the others are student servers merlin (Linux) and krok (SunOS) at the university. We can see that in case of krok the measurements suggest an impossible speedup. I believe this issue may be caused partly by inaccuracy of measurements and, perhaps, by internal optimization of the time-intensive code which could have added some execution time to the single threaded experiment and at the same time accelerate the consequent multi-threaded experiments.
     }
     \label{tbl:sampling_multithread_speedup}
-    \end{center}
 \end{table}
 
 \subsection{Implementation notes}
-In this section I will discuss some of the difficulties I encountered during implementation. Also, the code snippet in Figure~\ref{fig:snippet-sampling} demonstrates the usage of classes described earlier to answer a probabilistic query via sampling
+In this section I will discuss some of the difficulties I encountered during implementation. Also, the code snippet in Figure~\ref{fig:snippet-sampling} demonstrates the usage of classes described earlier to answer a probabilistic query via sampling.
 
 \begin{figure}[ht]
-\begin{center}
+\centering
+{\small
 \begin{verbatim}
 final long SAMPLES_COUNT = 10 * 1000;
 final int THREAD_COUNT = 3;
@@ -1162,7 +1162,7 @@ SamplingController controller = new SamplingController(samplesPerThread);
 sampler.sample(controller);
 Factor result = ((QuerySamplerMultithreaded)sampler).getSamplesCounterNormalized();
 \end{verbatim}
-\end{center}
+}
 \caption{Usage of the BN library classes to perform inference by sampling.}
 \label{fig:snippet-sampling}
 \end{figure}
@@ -1189,23 +1189,24 @@ A general state-spate search algorithm, that explores the space of feasible netw
 A scoring function is the essential ingredient of structure learning. A general scoring method is represented by the abstract \srccode{ScoringMethod} class, if the score is decomposable there is a specialized abstract subclass \srccode{DecomposableScoringMethod} whose direct descendants are \srccode{BICScoringMethod} and \srccode{BayesianScoringMethod}. Any non-abstract subclass of the \srccode{DecomposableScoringMethod} class has to define two methods: \srccode{computeFamilyScore(...)} and \srccode{computeComplexityPenalty(...)}.
 
 To make structure learning bearable in terms of time requirements we need to employ clever caching that takes advantage of score decomposability. This thesis considers two scoring functions\,--\,BIC score and Bayesian score:
-\begin{eqnarray*}
-    score_{BIC}(\mathcal{G} : \mathcal{D})
-    & = & \sum_{X_i \in Nodes} \!\!\!\!\!\! N \cdot I_{\hat P}(X_i;Parents(X_i))
-    %- N \!\!\!\!\!\! \sum_{X_i \in Nodes} \!\!\!\!\!\! H_{\hat P}(X_i)
+\begin{equation*}
+    \begin{aligned}
+    & score_{BIC}(\mathcal{G} : \mathcal{D})
+     =  \sum_{X_i \in Nodes} \!\!\!\!\!\! N \cdot I_{\hat P}(X_i;Parents(X_i))
     - \frac{\log N}{2} Dim[\mathcal{G}]\\
-    score_B(\mathcal{G} : \mathcal{D})
-    & = &
-      \sum_{X_i \in Nodes}
+    & score_B(\mathcal{G} : \mathcal{D})
+     = 
+      \!\!\!\!\!\!\! \sum_{X_i \in Nodes}
              \Biggl[
                 \sum_{\vars{pa}}
                    \Biggl(
                       log \frac{\Gamma(\alpha_{X_i \mid \vars{pa}})}{\Gamma(\alpha_{X_i \mid \vars{pa}} + N_{\vars{pa}})}
-                      + \sum_{x} log \frac{\Gamma(\alpha_{x \mid \vars{pa}} + N_{x, \vars{pa}})}{\Gamma(\alpha_{x \mid \vars{pa}})}
+                      + \!\!\!\!\! \sum_{x \in val(X_i)} \!\!\!\!\!\! log \frac{\Gamma(\alpha_{x \mid \vars{pa}} + N_{x, \vars{pa}})}{\Gamma(\alpha_{x \mid \vars{pa}})}
                    \Biggr)
              \Biggr]
       + log P(\mathcal{G})
-\end{eqnarray*}
+      \end{aligned}
+\end{equation*}
 Both of these scores have the nice quality that they decompose over network structure (over each node $X_i$) and, furthermore, they have the same format of a sum over all nodes plus some term penalizing structural complexity. So, the scores can be rewritten in a unified format (suggested in~\cite[p.~818]{pgm}):
 \begin{eqnarray*}
     score(\mathcal{G} : \mathcal{D})
@@ -1228,7 +1229,8 @@ Size of the delta family score cache is upper-bounded by the number of possible 
 This short section provides a code snippet (see Figure~\ref{fig:snippet-learning}) that demonstrates the usage of classes described earlier to perform structure and parameter learning.
 
 \begin{figure}[ht]
-\begin{center}
+\centering
+{\small
 \begin{verbatim}
 DatasetFileReader datasetReader = new DatasetCSVFileReader(FILENAME, SEPARATOR);
 Dataset dataset = datasetReader.load();
@@ -1249,7 +1251,7 @@ BayesianNetwork bnStructure = learningAlgorithm.learn(
 BayesianNetwork bnComplete = ParameterLearner.learnBayesianEstimationUniform(
         bnStructure, dataset, ALPHA);
 \end{verbatim}
-\end{center}
+}
 \caption{Usage of the BN library classes to perform structure and parameter learning.}
 \label{fig:snippet-learning}
 \end{figure}
@@ -1360,28 +1362,25 @@ From mathematical point of view, the KL-divergence is defined only if for any $x
 
 Graphs in Figure~\ref{fig:kl_div_benchmark} capture benchmark results of parameter estimation methods that are considered in this thesis\,--\,the maximum likelihood estimation (further just MLE) and Bayesian estimation. As expected, MLE is sensitive to random noise in input data whereas learning curve of the Bayesian estimation with a higher equivalent sample size $\alpha$ is considerably smoother. We can see that for a smaller network (\uv{Cancer} or \uv{Asia}) the MLE and Bayesian estimation converge quicker than for larger networks. On the MLE curves, especially in the case of \uv{Cancer} and \uv{Asia} networks, we can notice rapid instant drops of the relative entropy. Cause of such a drop is a newly added sample that erases a zero entry from some CPD and thereby reduces the penalty imposed on the network as discussed earlier in this section.
 
-\begin{figure}[h]
-    \begin{subfigure}[b]{0.55\linewidth}
-        \hspace{-3.2cm}\includegraphics[scale=0.95]{fig/kl-cancer}
+\begin{figure}[ht]
+    \begin{subfigure}[b]{0.5\linewidth}
+        \hspace{-2.6cm}\includegraphics[scale=0.95]{fig/kl-cancer}
         \caption{\uv{Cancer} network (5 variables, 10 parameters)}
     \end{subfigure}
     \quad
-    \begin{subfigure}[b]{0.55\linewidth}
-        \hspace{-2.8cm}\includegraphics[scale=0.95]{fig/kl-asia}
+    \begin{subfigure}[b]{0.48\linewidth}
+        \hspace{-2.4cm}\includegraphics[scale=0.95]{fig/kl-asia}
         \caption{\uv{Asia} network (8 variables, 18 parameters)}
-    \end{subfigure}
-  
-    \vspace{0.7cm}
-    \begin{subfigure}[b]{0.55\linewidth}
-        \hspace{-3.2cm}\includegraphics[scale=0.95]{fig/kl-child}
+    \end{subfigure}\\
+    \begin{subfigure}[b]{0.5\linewidth}
+        \hspace{-2.6cm}\includegraphics[scale=0.95]{fig/kl-child}
         \caption{\uv{Child} network (20 variables, 230 parameters)}
     \end{subfigure}
     \quad
-    \begin{subfigure}[b]{0.55\linewidth}
-        \hspace{-2.8cm}\includegraphics[scale=0.95]{fig/kl-icu}
-        \caption{\uv{ICU alarm} network (37 variable, 509 parameters)}
+    \begin{subfigure}[b]{0.48\linewidth}
+        \hspace{-2.4cm}\includegraphics[scale=0.95]{fig/kl-icu}
+        \caption{\uv{ICU alarm} network (37 variables, 509 parameters)}
     \end{subfigure}
-    
     \caption{Performance analysis of parameter estimation methods for networks and datasets of various sizes using KL-divergence.}
     \label{fig:kl_div_benchmark}
 \end{figure}
@@ -1404,13 +1403,13 @@ In my experiments I have found two I-equivalent structures to occur frequently. 
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[scale=0.4]{fig/structure-learning-chain}
+    \includegraphics[scale=0.39]{fig/structure-learning-chain}
     \caption{A general chain $X_1 - X_2 - \dots - X_n$ of variables $X_1, \dots, X_n$ is a set of network structures where the variables are connected in a linear fashion in the order $1, \dots, n$ and there is no V-structure. Left side of this figure demonstrates the whole set of $n$ structures for the same chain and on the right side of this figure you see my own graphical notation for the whole set of chains (linear structure without edge directions enclosed in a box).}
     \label{fig:structure_learning_chain}
 \end{figure}
 \begin{figure}[ht]
     \centering
-    \includegraphics[scale=0.4]{fig/structure-learning-central-variable}
+    \includegraphics[scale=0.39]{fig/structure-learning-central-variable}
     \caption{Central variable structure $X,Y_1,\dots,Y_n$ is a set of I-equivalent structures where the $X$ variable is central in the sense that is connected with all $Y_i$ variables, at most one $Y_i$ variable is parent of $X$ and all the other $Y_i$ variables are children of $X$. There also may not be an incoming edge to any of the variables $X$ or $Y_i$ as that would potentially introduce a V-structure in some of the networks.
 Structures without a bounding box represent the whole set of $n+1$ central variable structures and on the right side of this figure you can see my own graphical notation for the whole set of central variable structures.}
     \label{fig:structure_learning_central_variable}
@@ -1479,14 +1478,14 @@ In the case of the Asia network the Bayesian score worked best with $\alpha=1$. 
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \includegraphics[scale=0.4]{fig/structure-learning-asia-1000}
+        \includegraphics[scale=0.39]{fig/structure-learning-asia-1000}
         \caption{Dataset of 1000 samples, 3 I-equivalent structures.}
         \label{fig:structure-learning-asia-1000}
     \end{subfigure}
     \qquad
     \begin{subfigure}[b]{0.45\linewidth}
         \centering
-        \includegraphics[scale=0.4]{fig/structure-learning-asia-15000}
+        \includegraphics[scale=0.39]{fig/structure-learning-asia-15000}
         \caption{Dataset of 15000 samples, 6 structures I-equivalent with the original network.}
         \label{fig:structure-learning-asia-15000}
     \end{subfigure}
@@ -1508,14 +1507,14 @@ With the Bayesian score and 500 samples the best result is similar to that of th
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.3cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-500-bic}
+        \hspace{-1.5cm}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-500-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-500-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-0.5cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-500-bayes-2_5}
+        \hspace{-0.6cm}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-500-bayes-2_5}
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-500-bayes-2_5}
     \end{subfigure}
@@ -1530,14 +1529,14 @@ With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\re
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.5cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bic}
+        \hspace{-2.4cm}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-2000-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-2000-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
         \hspace{-0.7cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-2000-bayes-2_5}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-2000-bayes-2_5}
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-2000-bayes-2_5}
     \end{subfigure}
@@ -1552,14 +1551,14 @@ The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.3cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-5000-bic}
+        \hspace{-2.0cm}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-5000-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-5000-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-0.1cm}
-        \includegraphics[scale=0.37]{fig/structure-learning-child-5000-bayes-3_0}
+        \hspace{-0.0cm}
+        \includegraphics[scale=0.36]{fig/structure-learning-child-5000-bayes-3_0}
         \caption{Using the Bayesian score with $\alpha = 3$.}
         \label{fig:structure-learning-child-5000-bayes-3_0}
     \end{subfigure}
@@ -1800,12 +1799,12 @@ Crucial step in answering the question whether a general Bayesian network can be
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.2cm}
+        \hspace{-1.2cm}
         \includegraphics[scale=0.75]{fig/spam-holdout-whole-space-3d}
     \end{subfigure}
-    \qquad
+    \quad
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-1cm}
+        \hspace{-0.55cm}
         \includegraphics[scale=0.75]{fig/spam-holdout-whole-space-map}
     \end{subfigure}
     \caption{Accuracy of a Bayesian network model trained with different values of equivalent sample size $\alpha_S$ for structure learning (with Bayesian score) and for different values of $\alpha_P$ for parameter estimation (with Bayesian estimation).}
