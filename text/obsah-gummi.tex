@@ -439,7 +439,6 @@ Variable elimination algorithm can be seen as a somewhat smarter implementation 
 	\item By definition of a conditional probability distribution it holds for any instantiation of parent variables that $\sum_V P(v \mid Parents(V)) = 1$. So, when computing posterior probability distribution $P(\vars{X} \mid \vars{e})$, any node (factor) $V$ that is not an ancestor of a~query or evidence variable can be omitted because, thanks to the order of elimination of variables, the term $\sum_V P(v \mid Parents(V))$ will be the rightmost summation (the innermost). So summing out $V$ is equivalent to totally excluding variable $V$ from the BN. Recursive implementation of this process could be done in the way of eliminating all leaf nodes that are not in $\vars{X} \cup \vars{E}$ and performing the same operation for as long as some node gets removed~\cite[p.~510]{russell_norvig_ed2}.
 \end{itemize}
 
-%\todo{řeči kolem, algoritmus, časová složitost, kliky}
 
 Running time of the variable elimination algorithm in polytrees is $O(n)$~\cite[p.~510]{russell_norvig_ed2}, therefore it is a good method for answering individual queries $P(X \mid \vars{e})$ where $X$ is a single variable. Analogically, we can effectively compute probability distribution for small number of query variables $\vars{X}$ by computing individual distributions $P(X_i \mid \vars{e})$ for all $X_i \in \vars{X}$ and returning $P(\vars{X} \mid \vars{e}) = \prod_i P(X_i \mid \vars{e})$.
 
@@ -583,10 +582,10 @@ Basically, there are two approaches to creating a BN. First option is to coopera
 
 Complete construction of a BN through cooperation with an expert is problematic because, for a non-trivial BN, the task often requires significant time (several months~\cite{pgm}), the expert might not correctly capture CPDs, especially for nodes with large number of parents, and furthermore there might not even be an expert of the target domain at all. On the other hand, automated techniques of model construction are constrained by limited computational power and, more importantly, by the size of the supplied dataset. As will be shown later, we encounter classical problem of overfitting and bias-variance trade-off present in the whole field of artificial intelligence and machine learning. In practice, these two approaches are often combined in the way that an expert defines structure (all variables and their dependencies) and an automated process determines CPDs from a supplied dataset.
 
-%\todo{maybe include general metrics?} % SP
+
 
 \section{Parameter estimation}
-Goal of parameter estimation methods is to supply CPDs to a BN whose structure is already known. For the estimation to be reasonably correct, we need to have sufficiently large dataset wrt. complexity of the BN structure.
+Goal of parameter estimation methods is to supply CPDs to a BN whose structure is already known. For the estimation to be reasonably correct, we need to have sufficiently large dataset with respect to complexity of the BN structure.
 
 
 \subsection{Maximum likelihood estimation}
@@ -1507,14 +1506,14 @@ With the Bayesian score and 500 samples the best-scoring network is similar to t
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-1.5cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-500-bic}
+        \hspace{-1.3cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-500-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-500-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-0.6cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-500-bayes-2_5}
+        \hspace{-0.4cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-500-bayes-2_5}
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-500-bayes-2_5}
     \end{subfigure}
@@ -1529,14 +1528,14 @@ With the Bayesian score (best results achieved with $\alpha=2.5$, see Figure~\re
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.4cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-2000-bic}
+        \hspace{-1.3cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-2000-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-2000-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-0.7cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-2000-bayes-2_5}
+        \hspace{-0.4cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-2000-bayes-2_5}
         \caption{Using the Bayesian score with $\alpha = 2.5$.}
         \label{fig:structure-learning-child-2000-bayes-2_5}
     \end{subfigure}
@@ -1551,14 +1550,14 @@ The Bayesian score (best with $\alpha=3$, see Figure~\ref{fig:structure-learning
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-2.0cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-5000-bic}
+        \hspace{-1.4cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-5000-bic}
         \caption{Using the BIC score.}
         \label{fig:structure-learning-child-5000-bic}
     \end{subfigure}
     \begin{subfigure}[b]{0.45\linewidth}
-        \hspace{-0.0cm}
-        \includegraphics[scale=0.36]{fig/structure-learning-child-5000-bayes-3_0}
+        \hspace{0.4cm}
+        \includegraphics[scale=0.35]{fig/structure-learning-child-5000-bayes-3_0}
         \caption{Using the Bayesian score with $\alpha = 3$.}
         \label{fig:structure-learning-child-5000-bayes-3_0}
     \end{subfigure}
@@ -1688,8 +1687,7 @@ The need of public assistance income, lack of education and quality of jobs also
 
 \clearpage
 
-\ignore{
-\clearpage
+\begin{comment}
 The course of our experiments will be the following. First we will learn a big network using all 100 features of the dataset which will give us a general overview of the whole domain. Then we will repeatedly identify a set of variables that are very similar by their semantics, dependencies and are topologically close (directly connected one to the other); such a set of variables will be reduced to only one representative variable for two reasons: (1)~to obtain a~more readable network while hopefully preserving the key characteristics and (2)~to reduce the state-space of possible structures.
 To determine whether an attribute $X$ can be removed I~propose to use three pieces of information:
 \begin{enumerate}
@@ -1747,7 +1745,7 @@ At this point we are left with 67 variables and no more variables that would mee
 
 After a series of experiments I believe the best course of action is to perform sensitivity analysis of how strongly the remaining attributes influence the target variable and remove those attributes whose impact is rather minor. Concretely, I learn a collection of networks with $\alpha_S \in \lbrace 1, 5, 7.5, 10, 12.5, 15 \rbrace$ using the remaining attributes and for each variable $X$ find $\max_x \lbrace | 1/3 - P(ViolentCrimesPerPop \mid X = x) |\rbrace$, ie. how significantly distribution of the target variable deviates from the uniform distribution $(1/3, 1/3, 1/3)$ when the value of $X$ is given. Finding maximal deviation for $X$ over all learnt networks and setting a threshold 0.07 lets us eliminate additional 14 attributes that don't significantly affect criminality: $MedYrHousBuilt$, $PctVacMore6Mos$, $PctSameState85$, $pctWFarmSelf$, $PctEmplProfServ$, $racePctAsian$, $PctUsePubTrans$, $PctEmplManu$, $PctBornSameState$, $MedOwnCostPctInc$, $PersPerOccupHous$, $pctWSocSec$, $pctWRetire$ and $PctForeignBorn$. We can see that among those attributes is the relative number of Asians in the community, suggesting that Asian people are well-behaved. On the other hand, it can be seen from the original dataset that even with $racePctAsian = high$ the relative number of Asians is rather small. So, even though Asians don't commit crimes, the fact that there are relatively many Asians in a community doesn't significantly limit the number of other ethnic groups or, in other words, there is no community in which Asians would be a majority.
 
-So far we have successfully obtained a dataset with reduced number of attributes such that it should still capture the key characteristics and relations of the target domain. Our final step is to take the networks learnt with different $\alpha_S$ after the last elimination round and combining them. Concretely, by combination of networks I~mean extraction of oriented edges that are contained within majority of the learnt networks while tolerating an absence at most once (tolerating no absences lead to a sparser network with too many isolated variables and tolerating more than two absences yielded densely connected networks which we prefer to avoid). The final network is shown in the Figure~\ref{fig:crime_final_net} in Appendix~\ref{ch:appendix_crime_net}. \todo{at je to fakt v appendixu}
+So far we have successfully obtained a dataset with reduced number of attributes such that it should still capture the key characteristics and relations of the target domain. Our final step is to take the networks learnt with different $\alpha_S$ after the last elimination round and combining them. Concretely, by combination of networks I~mean extraction of oriented edges that are contained within majority of the learnt networks while tolerating an absence at most once (tolerating no absences lead to a sparser network with too many isolated variables and tolerating more than two absences yielded densely connected networks which we prefer to avoid). The final network is shown in the Figure~\ref{fig:crime_final_net} in Appendix~\ref{ch:appendix_crime_net}. \todo{ensure}
 
 \todo{comment what we can see there...}
 
@@ -1760,7 +1758,7 @@ So far we have successfully obtained a dataset with reduced number of attributes
 \todo{Active paths and d-separation tell us about the dependencies an independencies. In there is an active path between $X$ and $Y$ then manipulation of $X$ causes change of distribution of $Y$ (Neapolitan)}
 
 \todo{via sampling verify interventions}
-}
+\end{comment}
 
 
 
@@ -1771,22 +1769,22 @@ So far we have successfully obtained a dataset with reduced number of attributes
 \section{Spam filtering}
 Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam, as a stand-alone class of malware, has many subtypes distinguished by their content and purpose, for example advertisement, virus spreading or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may also pose a serious threat to a careless or trustful user.
 
-If not stated otherwise, all technical knowledge regarding data-mining in this section has been drawn from a university course based on~\cite{han_datamining}.
+If not stated otherwise, all knowledge regarding data-mining in this section has been drawn from a university course based on~\cite{han_datamining}.
 
 \subsection{Overview of document classification}
-The problem of spam detection falls into the area of general document classification with two classes\,--\,spam and ham (term used for an email that is not spam). General classification methods work with data representation in the form of feature vectors which typically contain polynomial or continuous values, each carrying information regarding presence of a~specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification a complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a~document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of terms and finally creating feature representation of the document. Because document preprocessing and feature extraction is not the subject of this thesis I~choose to rely on a publicly accessible spam dataset whose emails have already been preprocessed and converted into vector feature representation. Another clear advantage of using such dataset is the fact that obtained results are easily comparable with other papers. On the other hand, if someone benchmarks a new spam detector using a dataset containing raw emails then the reported classification accuracy is not necessarily that relevant for the sake of comparing two classification methods because quality of the result relies heavily on the feature extraction step which is usually documented just briefly.
+The problem of spam detection falls into the area of document classification with two classes\,--\,spam and ham (term used for a legitimate email). General classification methods work with data representation in the form of feature vectors which typically contain polynomial or continuous values, each carrying information regarding presence of a~specific predetermined word or term\footnote{More elaborate forms of features don't consider words or terms but so called \term{concepts}. A concept can be viewed as a family of words with the same meaning which has the advantage of compensating for synonyms.}. In context of document classification a complicated preprocessing pipeline needs to be employed to obtain relevant feature representation of a~document\,--\,removal of irrelevant words using a stop list, stemming which reduces morphological variety, selection of the most relevant subset of terms and finally creating feature representation of the document. Because document preprocessing and feature extraction is not the subject of this thesis I~choose to rely on a publicly accessible spam dataset whose emails have already been preprocessed and converted into vector feature representation. Clear advantage of using such dataset is the fact that obtained results are easily comparable with results presented in other papers. On the other hand, if someone benchmarks a~new spam detector using a dataset containing raw emails then the reported classification accuracy is not necessarily that relevant for the sake of comparing two classification methods because quality of the result relies heavily on the preprocessing and feature extraction steps which are usually documented just briefly.
 
-According to the papers I have studied, probabilistic approaches to spam filtering are very successful and, in fact, the Naïve Bayes model is among the most popular spam detectors even among commercial solutions~\cite{blanzieri09}. Probabilistic techniques have been applied to the problem of spam detection in many forms: a simple Bayesian framework~\cite{isaac09}, raw Naïve Bayes model~\cite{heckerman98_spam} (with impressive results) or Naïve Bayes with an SVD-like input preprocessing so that the strong independency among features holds true~\cite{renuka11}. In context of Bayesian networks naturally arises the question whether the assumption of independency between feature variables given the class variable in Naïve Bayes model isn't too limiting and whether a properly trained Bayesian network can perform better. Goal which we will pursue in this section is simple\,--\,compare the best performance achievable with a Naïve Bayes model and with a~more general Bayesian network.
+According to the papers I have studied, probabilistic approaches to spam filtering are very successful and, in fact, the Naïve Bayes model is among the most popular spam detectors even in commercial solutions~\cite{blanzieri09}. Probabilistic techniques have been applied to the problem of spam detection in many forms: a simple Bayesian framework~\cite{isaac09}, raw Naïve Bayes model~\cite{heckerman98_spam} (with impressive results) or Naïve Bayes with a SVD-like input preprocessing so that the strong independency among features holds true~\cite{renuka11}. In context of Bayesian networks naturally arises the question whether the assumption of independency between feature variables given the class variable in Naïve Bayes model isn't too limiting and whether a properly trained Bayesian network can perform better. Goal which we will pursue in this section is simple\,--\,compare the best performance achievable with a Naïve Bayes model and with a~more general Bayesian network.
 
 
 \subsection{Dataset and data preprocessing}
-We will use a standard dataset called \term{Spambase}\footnote{Spambase is a freely spam dataset available at the UCI Machine Learning Repository at \url{http://archive.ics.uci.edu/ml/datasets/Spambase}} which contains 4601 records, each having 57 features and a class label. Other than being used as a benchmark in spam-related papers, another advantage of Spambase is that the emails have already been preprocessed and converted into vector representation. For this dataset we will explore best performance achievable with a more general Bayesian network and compare it to the performance of Naïve Bayes. We will consider Bayesian networks structurally somewhat similar to Naïve Bayes in that regard that the class variable $spam$ stands above all others, ie. cannot be a~child; feature variables have no restrictions except for maximal number of three parents to limit the search space of feasible network structures.
+We will use a standard dataset called \term{Spambase}\footnote{Spambase is a freely available spam dataset accessible at the UCI Machine Learning Repository at \url{http://archive.ics.uci.edu/ml/datasets/Spambase}.} which contains 4601 records, each having 57 features and a class label. Other than being used as a benchmark in spam-related papers, another advantage of Spambase is that the emails have already been preprocessed and converted into vector representation. For this dataset we will explore best performance achievable with a more general Bayesian network and compare it to the performance of Naïve Bayes. We will consider Bayesian networks structurally somewhat similar to Naïve Bayes in that regard that the class variable $spam$ stands above all others, ie. cannot be a~child; feature variables have no restrictions except for the maximal number of three parents to limit the search space of feasible network structures.
 
-Because this thesis considers strictly discrete Bayesian networks and because the Spambase features are continuous we need to perform some kind of discretization. At first I~experimented with partitioning values of each feature by binning to three bins of equal depth but it turned out that many features are distributed very unevenly and therefore the equal depth condition couldn't be met. So, instead of binning I am using k-means clustering with $k=3$ and transform values of each attribute to the discrete set $\lbrace low, medium, high \rbrace$. As other techniques of spam detection work with a continuous feature representation it is to be expected that the discretization step will reduce accuracy of the classifiers I will use.
+Because this thesis considers strictly discrete Bayesian networks and because the Spambase features are continuous we need to perform some kind of discretization. At first I~experimented with partitioning values of each feature by binning into three bins of equal depth but it turned out that many features are distributed very unevenly and therefore the equal depth condition couldn't be met. So, instead of binning I am using k-means clustering with $k=3$ and transform values of each attribute to the discrete set $\lbrace low, medium, high \rbrace$. As other techniques of spam detection work with a continuous feature representation it is to be expected that the discretization step will reduce accuracy of the classifiers I will use.
 
 
 \subsection{Experiments}
-As the Bayesian score for structure learning and the Bayesian estimation for parameter estimation are both parametrized, we need to undertake a great number of time costly experiments to find the optimal parameter setting. That is why I will initially use a simple holdout testing with 80:20 split (produced by stratified sampling) to get a broader view of the classification accuracy over space of reasonable parameter settings. Then, accuracy in the region of the best settings will be thoroughly validated once more using 5-fold cross-validation, each fold having the same ratio of spam to ham.
+As the Bayesian score for structure learning and the Bayesian estimation for parameter estimation are both parametrized, we need to undertake a number of time-costly experiments to find the optimal parameter setting. That is why I will initially use a simple holdout testing with 80:20 split (produced by stratified sampling) to get a broader view of the classification accuracy over space of reasonable parameter settings. Then, accuracy in the region of the best settings will be thoroughly validated once more using 5-fold cross-validation, each fold having the same ratio of spam to ham.
 
 The metric used for evaluating  classification capabilities of our models will be accuracy which is computed from the test set as follows:
 $$accuracy = \frac{\# \text{ of correctly classified samples}}{\# \text{ of all samples}}$$
@@ -1794,7 +1792,7 @@ In context of spam filtering there is the fact that penalties for false positive
 A study~\cite{androutsopoulos00_spam} inspecting the impact of selection of $\tau$ on the overall performance suggests that $\tau$ merely regulates the trade-off between precision and recall and that accuracy can be used as a~metric for evaluating quality of classifiers just as correctly. That is why I use accuracy as the main and only metric and set $\tau = 0.5$.
 
 \medskip
-Crucial step in answering the question whether a general Bayesian network can beat the Naïve Bayes model is to explore the space of possible parameter settings of parameter learning and of structure learning. Let $\alpha_S$ denote equivalent sample size used for structure learning using the Bayesian score and let $\alpha_P$ denote equivalent sample size used for parameter learning using the Bayesian estimation. I have manually inspected all combinations of $(\alpha_S, \alpha_P) \in \lbrace 1, 2, 5, 7.5, 10, 12.5, 15, 20, 30\rbrace \times \lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$; unparameterized methods (maximum likelihood estimation for parameters and the BIC score for structure) were also considered but outperformed in each case. Results of these experiments is shown in the Figure~\ref{fig:spam-holdout-whole-space}. As we can see, the best performance was achieved around the point ($\alpha_S, \alpha_P) = (10, 12.5)$, so this point and its close neighborhood will, together with the Naïve Bayes model, be subjects to thorough 5-fold cross-validation tests.
+Crucial step in answering the question whether a general Bayesian network can beat the Naïve Bayes model is to explore the space of possible parameter settings of parameter learning and of structure learning. Let $\alpha_S$ denote equivalent sample size used for structure learning using the Bayesian score and let $\alpha_P$ denote equivalent sample size used for parameter learning using the Bayesian estimation. I have manually inspected all combinations $(\alpha_S, \alpha_P) \in \lbrace 1, 2, 5, 7.5, 10, 12.5, 15, 20, 30\rbrace \times \lbrace 0.5, 1, 1.5, 2, 3, 5, 7.5, 10, 20, 30, 40, 50, 60 \rbrace$; unparameterized methods (maximum likelihood estimation for parameters and the BIC score for structure) were also considered but outperformed in each case. Results of these experiments is shown in the Figure~\ref{fig:spam-holdout-whole-space}. As we can see, the best performance was achieved around the point ($\alpha_S, \alpha_P) = (10, 12.5)$, so this point and its close neighborhood will, together with the Naïve Bayes model, be subjects to thorough 5-fold cross-validation tests.
 
 \begin{figure}[ht]
     \centering
@@ -1807,7 +1805,7 @@ Crucial step in answering the question whether a general Bayesian network can be
         \hspace{-0.55cm}
         \includegraphics[scale=0.78]{fig/spam-holdout-whole-space-map}
     \end{subfigure}
-    \caption{Accuracy of a Bayesian network model trained with different values of equivalent sample size $\alpha_S$ for structure learning (with Bayesian score) and for different values of $\alpha_P$ for parameter estimation (with Bayesian estimation).}
+    \caption{Accuracy of a Bayesian network model trained with different values of equivalent sample size $\alpha_S$ for structure learning (with the Bayesian score) and for different values of $\alpha_P$ for parameter estimation (with Bayesian estimation).}
     \label{fig:spam-holdout-whole-space}
 \end{figure}
 
@@ -1825,19 +1823,19 @@ The best average accuracy from five-fold cross-validation has been 87.7\,\% with
 
 Considering that the Spambase dataset is relatively small in size and provides only 57 features, it is very likely that better performance can be achieved with a bigger dataset and with a richer and carefully chosen set of features (the learnt Bayesian networks contained isolated variables suggesting that some of the features aren't correlated with the spam variable nor with any other and therefore are effectively useless).
 
-Another authors have also shown that performance of probabilistic classifiers can be greatly improved by introducing a broader set of features including, for example, sender's domain, reverse DNS lookups, presence of HTML code in the body (also considering coloring, fonts), punctuation, currency characters, run-length of capital letters etc.~\cite{heckerman98_spam}
+Other authors have also shown that performance of probabilistic classifiers can be greatly improved by introducing a broader set of features including, for example, sender's domain, reverse DNS lookups, presence of HTML code in the body (also considering coloring, fonts), punctuation, currency characters, run-length of capital letters etc.~\cite{heckerman98_spam}
 
 \medskip
-Parameters of the structure learning procedure: 200 runs, 3\,000 iterations per run, 60 random restart steps, 0.15 relative size of tabu-list, maximum of three parents per variable, no incoming edges into the spam variable.
+Parameters of the structure learning procedure: 200 runs, 3\,000 iterations per run, 60 random restart steps, 0.15 relative size of tabu-list, maximum of three parents per variable, no incoming edges into the $spam$ variable.
 
 
 \subsection{Conclusion}
-In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a good bias-variance trade-off depending on the size of our dataset and because we can further relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed up to three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
+In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a bias-variance trade-off depending on the size of our dataset and because we can further relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed no more than three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
 
 \todo{There also exists an extension of Naïve Bayes, called Tree Augmented Naïve Bayes (TAM), that has the structure of Naïve Bayes model and furthermore allows for edges among attribute variables, as long as they don't form a V-structure. Advantage of TAM is that the optimal tree structure can be learnt in polynomial time whereas the learning of a more general Bayesian network, which I did, is generally NP-hard and therefore an optimization technique needs to be employed. (add citation, try to find a paper that employs TAM on spam)}
 
 
-\ignore{
+\begin{comment}
 \bigskip
 
 Best performance of Naive Bayes:
@@ -1906,7 +1904,7 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
     \item MLE(accuracy, precision, recall): (0., 0., 0.)
     \item Bayesian estimation($\alpha$, accuracy, precision, recall): (0.5, 0., 0., 0.), (1, 0., 0., 0.), (1.5, 0., 0., 0.), (2, 0., 0., 0.), (3, 0., 0., 0.), (5, 0., 0., 0.), (10, 0., 0., 0.), (20, 0., 0., 0.), (30, 0., 0., 0.), (40, 0., 0., 0.), (50, 0., 0., 0.), (60, 0., 0., 0.)
 \end{itemize}
-}
+\end{comment}
 
 
 
