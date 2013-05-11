@@ -35,7 +35,7 @@ public class BICScoringMethod extends DecomposableScoringMethod {
      */
     protected double computeFamilyScore(Node n) {
         int N = this.dataset.getSize();
-        if(n.getParentCount() == 0) // TODO really works like this?
+        if(n.getParentCount() == 0)
             return 0.0;
         Variable[] nSet = {n.getVariable()};
         Variable[] parentsSet = n.getParentVariables();

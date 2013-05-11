@@ -114,7 +114,6 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
                     bestActions.clear();
                     bestActions.add(alteration);
                     bestGain = gain;
-                    // TODO drop all actions not equal (within tolerance) to the new best
                 }
             }
         }

@@ -121,7 +121,7 @@ public class Toolkit {
                                 qXgivenP = MINIMAL_Q_PROB; // correction so that all values are accounted for
                             sumOverX += pXgivenP * Math.log(pXgivenP / qXgivenP);
                         }
-                        else if(pXgivenP < 0 || qXgivenP < 0) // TODO defensive
+                        else if(pXgivenP < 0 || qXgivenP < 0)
                             throw new BNLibInternalException("unexpected probabilities");
                     }
                     double pParents = parentsJointProbabilityFactor.getProbability(scopeParentsAssignment);
@@ -138,7 +138,7 @@ public class Toolkit {
                             qX = MINIMAL_Q_PROB;
                         sumOverX += pX * Math.log(pX / qX);
                     }
-                    else if(pX < 0 || qX < 0) // TODO defensive
+                    else if(pX < 0 || qX < 0)
                         throw new BNLibInternalException("unexpected probabilities");
                 }
                 relativeEntropy += sumOverX;

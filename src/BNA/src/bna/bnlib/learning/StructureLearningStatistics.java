@@ -20,7 +20,7 @@ import java.util.HashMap;
  * This means keeping best-scoring networks, connection matrix etc.
  */
 public class StructureLearningStatistics {
-    // what structures have been found (clustered by equal score and sorted in decreasing order) TODO memory consuming??
+    // what structures have been found (clustered by equal score and sorted in decreasing order)
     private ArrayList<LearningRecord> bnLearntHitparade = new ArrayList<LearningRecord>();
     // for mean score
     private int allNetworksCount = 0;
@@ -197,7 +197,7 @@ public class StructureLearningStatistics {
             }
             else {
                 action.undo(bn);
-                break; // TODO or try other edges?
+                break;
             }
         }
         return bn;

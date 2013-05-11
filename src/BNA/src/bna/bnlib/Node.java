@@ -101,7 +101,7 @@ public class Node {
      *         is not a valid assignment of parent variables of this node.
      */
     public int sampleVariable(int[] assignmentOfParents, Random random) throws BNLibInvalidInstantiationException {
-        if(!Toolkit.validateAssignment(this.getParentVariables(), assignmentOfParents)) // TODO defensive
+        if(!Toolkit.validateAssignment(this.getParentVariables(), assignmentOfParents))
             throw new BNLibInvalidInstantiationException("Invalid assignment of parents.");
         double[] probabilities = new double[this.variable.getCardinality()];
         int[] assignment = new int[1 + assignmentOfParents.length];
@@ -114,7 +114,7 @@ public class Node {
             probabilitiesSum += probabilities[i];
         }
         if(probabilitiesSum == 0) {
-            // TODO make uniform or something?
+            // treat as if the distribution were uniform
             java.util.Arrays.fill(probabilities, 1.0 / probabilities.length);
         }
         // sample
