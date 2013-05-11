@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Action that reverses an edge in an existing Bayesian network.
+ * Concrete action that reverses the edge (parent,child) in an existing Bayesian network.
  */
 public class AlterationActionReverseEdge extends AlterationAction {
     

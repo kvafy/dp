@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Thrown when we ask for a variable value that doesn't exist.
+ * Thrown when a variable value, that doesn't exist, is used.
  */
 public class BNLibNonexistentVariableValueException extends BNLibException {
     public BNLibNonexistentVariableValueException() {

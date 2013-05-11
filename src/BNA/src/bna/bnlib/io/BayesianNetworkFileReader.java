@@ -24,7 +24,11 @@ public abstract class BayesianNetworkFileReader {
         this.patternCache = new LRUCache<String, Pattern>(20);
     }
     
-    /** Template method to load a BN from network. */
+    /**
+     * Template method to load a BN from network.
+     * @throws BNLibIOException When an error occurs (eg. invalid file, Java
+     *         IOException etc.).
+     */
     public final BayesianNetwork load() throws BNLibIOException {
         this.patternCache.clear();
         try {
@@ -63,6 +67,16 @@ public abstract class BayesianNetworkFileReader {
         }
     }
     
+    /**
+     * Expect string matching the given regexp in the given context.
+     * If the prefix in given context doesn't match the regexp then
+     * (a) if canFail == true then the method returns false
+     * (b) else the method throws an BNLibIOException.
+     * This is the core method for parsing.
+     * @throws IOException Thrown by the standard Java IO.
+     * @throws BNLibIOException When the prefix of given context doesn't match
+     *         the regexp and canFail == false.
+     */
     boolean expectInput(ParsingContext context, String regexp, boolean canFail) throws IOException, BNLibIOException {
         final int MAX_TOKEN_LENGTH = 80;
         StringBuilder dataRead = new StringBuilder();

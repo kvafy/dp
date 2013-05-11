@@ -17,7 +17,7 @@ import java.util.List;
 
 
 /**
- * Holds samples for a set of variables.
+ * Holds samples for a set of variables (ie. a multiset of instantiations).
  * Provides counting of occurences for a subset of dataset variables and also
  * computes mutual information.
  */
@@ -26,11 +26,7 @@ public class Dataset implements DatasetInterface {
     List<int[]> records; // package-private for the DatasetIterator
     
     
-    /**
-     * Create a dataset containing
-     * @param variables
-     * @param records 
-     */
+    /** Create a dataset that can contain instantiations of given variables. */
     public Dataset(Variable[] variables) {
         this.variables = Arrays.copyOf(variables, variables.length);
         this.records = new LinkedList<int[]>();

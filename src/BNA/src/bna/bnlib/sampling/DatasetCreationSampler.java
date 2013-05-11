@@ -10,12 +10,14 @@ import bna.bnlib.learning.Dataset;
 
 
 /**
- * Sampler for creating an artificial dataset from given BN and storing it into memory as Dataset instance.
+ * Sampler for creating an artificial dataset from given BN and storing it into
+ * memory as Dataset instance.
  */
 public class DatasetCreationSampler extends Sampler {
     private final Dataset dataset;
 
     
+    /** Create dataset sampler for samples of the given network. */
     public DatasetCreationSampler(BayesianNetwork bn) {
         // generate a weighted sample producer that will sample all variables in the network,
         // ie. for a query P(AllVariables)
@@ -47,6 +49,7 @@ public class DatasetCreationSampler extends Sampler {
         // no need to do anything
     }
     
+    /** Get the sampled dataset. */
     public Dataset getDataset() {
         return this.dataset;
     }

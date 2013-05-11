@@ -10,7 +10,7 @@ import java.util.Collection;
 
 
 /**
- * A discrete variable consisting of its name and array of possible assignments.
+ * A discrete variable consisting of its name and of an array of its possible assignments.
  * Immutable.
  */
 public class Variable {
@@ -80,15 +80,21 @@ public class Variable {
         }
     }
     
+    /** Get the name of this variable. */
     public String getName() {
         return this.name;
     }
     
+    /** Get array of possible assignmnets of this variable. */
     public String[] getValues() {
         return Arrays.copyOf(this.values, this.values.length);
     }
     
-    /** Convert textual assignment to index in this.values array. */
+    /**
+     * Convert textual assignment to index into the array this.values.
+     * @throws BNLibNonexistentVariableValueException When this variable cannot
+     *         have the given value.
+     */
     public int getValueIndex(String value) throws BNLibNonexistentVariableValueException {
         for(int i = 0 ; i < this.values.length ; i++) {
             if(this.values[i].equals(value))
@@ -98,6 +104,7 @@ public class Variable {
         throw new BNLibNonexistentVariableValueException(msg);
     }
     
+    /** Return the number of possible assignments of this variable. */
     public int getCardinality() {
         return this.values.length;
     }

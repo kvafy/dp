@@ -22,6 +22,7 @@ public class CachedDataset implements DatasetInterface {
     private LRUCache<TwoSetsOfVariables, Double> mutualInformationCache;
     
     
+    /** Create an LRU caching proxy encapsulating the given dataset. */
     public CachedDataset(Dataset dataset, int cacheCapacity) {
         this.dataset = dataset;
         this.factorCache = new LRUCache<SetOfVariables, Factor>(cacheCapacity);
@@ -65,6 +66,7 @@ public class CachedDataset implements DatasetInterface {
         return infValue;
     }
     
+    /** Hashable class representing an ordered set of variables. */
     class SetOfVariables {
         Variable[] set;
         public SetOfVariables(Variable[] vars) {

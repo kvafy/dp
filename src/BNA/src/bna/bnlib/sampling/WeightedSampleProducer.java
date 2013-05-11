@@ -32,6 +32,14 @@ import java.util.LinkedList;
 public class WeightedSampleProducer extends SampleProducer {
     private WeightedSamplingAction[] samplingActions;
 
+    
+    /**
+     * Create a sample producer for the query P(X | Y, E = e) using the likelihood-weighting method.
+     * The X,Y,E,e arguments may not be null (use an 0-length array). The X argument
+     * must contain at least one variable. X, Y and E have to be disjoint and
+     * all have to be variables contained in the given network.
+     * @throws BNLibIllegalArgumentException When conditions of valid query aren't met.
+     */
     public WeightedSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         this.generateSamplingActions();

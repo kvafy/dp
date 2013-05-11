@@ -21,7 +21,11 @@ public abstract class DatasetFileReader {
         this.filename = filename;
     }
     
-    /** Template method to load a BN from network. */
+    /**
+     * Template method to load a BN from network.
+     * @throws BNLibIOException When the file is corrupted or a Java
+     *         IOException occurs.
+     */
     public final Dataset load() throws BNLibIOException {
         Dataset dataset = new Dataset(this.readVariables());
         for(int[] row : this.readDataRows())

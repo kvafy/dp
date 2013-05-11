@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Simple structure carrying statistical informatin regarding a BN.
+ * Simple structure (no encapsulation) carrying statistical informatin regarding a BN.
  */
 public class BayesianNetworkStatistics {
     public int inDegreeMin,

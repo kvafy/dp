@@ -10,5 +10,6 @@ package bna.bnlib.sampling;
  */
 public interface SamplerInterface {
 
+    /** Perform sampling that can be stopped given controller. */
     public void sample(SamplingController controller);
 }

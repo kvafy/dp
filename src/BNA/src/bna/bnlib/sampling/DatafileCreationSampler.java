@@ -20,6 +20,10 @@ public class DatafileCreationSampler extends Sampler {
     private FileWriter fileWriter;
 
     
+    /**
+     * Create datafile sampler that samples given network and writes the
+     * samples to the given file.
+     */
     public DatafileCreationSampler(BayesianNetwork bn, String outputFilename) {
         // generate a weighted sample producer that will sample all variables in the network,
         // ie. for a query P(AllVariables)

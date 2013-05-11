@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.Random;
 
 
+/** Implementation of tabu-search algorithm with random restarts. */
 public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
     protected Random rand = new Random();
     // tabu list
@@ -20,14 +21,22 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
     private int randomRestartSteps;
     
 
-    public TabuSearchLearningAlgorithm(DecomposableScoringMethod method, int tabulistSize, int randomRestartSteps) {
+    /**
+     * Create an instance of the tabu-search structure learning algorithm with random restarts.
+     * The tabu-list size and random restart steps are absolute numbers.
+     */
+    public TabuSearchLearningAlgorithm(DecomposableScoringMethod method,
+                                       int tabulistSize,
+                                       int randomRestartSteps) {
         super(method);
         this.tabuListSize = tabulistSize;
         this.randomRestartSteps = randomRestartSteps;
     }
     
     @Override
-    public BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller, StructuralConstraints constraints) { 
+    public BayesianNetwork learn(BayesianNetwork bnInitial,
+                                 LearningController controller,
+                                 StructuralConstraints constraints) { 
         // currently inspected network
         BayesianNetwork bnCurrent = bnInitial.copyStructureWithEmptyCPDs(); // so that the initial network won't be affected
         double bnCurrentScore = this.scoringMethod.absoluteScore(bnCurrent);
@@ -82,7 +91,13 @@ public class TabuSearchLearningAlgorithm extends StructureLearningAlgorithm {
         return bnBest;
     }
     
-    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent, StructuralConstraints constraints) throws BNLibIllegalStructuralModificationException {
+    /**
+     * From the currently feasible structural alterations pick the one with best delta-score.
+     * If there is more than one best alteration, choose randomly one of them.
+     */
+    private AlterationAction getBestAlteration(BayesianNetwork bnCurrent,
+                                              StructuralConstraints constraints)
+                                              throws BNLibIllegalStructuralModificationException {
         // for keeping of the best actions for single step of local search
         ArrayList<AlterationAction> bestActions = new ArrayList<AlterationAction>();
         double bestGain = Double.NEGATIVE_INFINITY;

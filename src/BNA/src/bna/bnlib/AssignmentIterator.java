@@ -7,7 +7,7 @@ package bna.bnlib;
 
 /**
  * Iterate over all possible assignments of given variables.
- * The leftmost variable changes value the most frequently.
+ * The leftmost variable changes value the most rapidly.
  */
 class AssignmentIterator implements java.util.Iterator<int[]> {
     private Variable[] vars;

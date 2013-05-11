@@ -22,6 +22,14 @@ import java.util.ArrayList;
 public class MCMCSampleProducer extends SampleProducer {
     private ArrayList<MCMCResamplingAction> resamplingActions = new ArrayList<MCMCResamplingAction>();
     
+    
+    /**
+     * Create a sample producer for the query P(X | Y, E = e) using the MCMC method.
+     * The X,Y,E,e arguments may not be null (use an 0-length array). The X argument
+     * must contain at least one variable. X, Y and E have to be disjoint and
+     * all have to be variables contained in the given network.
+     * @throws BNLibIllegalArgumentException When conditions of valid query aren't met.
+     */
     public MCMCSampleProducer(BayesianNetwork bn, Variable[] X, Variable[] Y, Variable[] E, int[] e) {
         super(bn, X, Y, E, e);
         this.generateResamplingActions();
@@ -65,8 +73,10 @@ public class MCMCSampleProducer extends SampleProducer {
             int EIndex = Toolkit.indexOf(this.sampledVars, EVar);
             context.sampledVarsAssignment[EIndex] = EVal;
         }
+        // produce a few samples to get the network into a more "normal" state
+        for(int i = 0 ; i < this.resamplingActions.size() * 2 ; i++)
+            this.produceSample(context);
         context.sampleWeight = 1.0;
-        // TODO maybe produce a few samples to get the network into a more "normal" state
 
         /*WeightedSampleProducer weightedSampler = new WeightedSampleProducer(
                 this.bn, this.XVars, this.YVars, this.EVars, this.EVals);

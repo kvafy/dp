@@ -6,9 +6,9 @@ package bna.bnlib;
 
 
 /**
- * Thrown when two sets of variables are inconsistent.
+ * Thrown when two sets of variables are inconsistent ("consistency" depends on context).
  * For example an attempt to learn parameters of a network with dataset
- * containing different variables will result in this exception.
+ * containing different variables will result in this exception being thrown.
  */
 public class BNLibInconsistentVariableSetsException extends BNLibException {
     public BNLibInconsistentVariableSetsException() {

@@ -6,7 +6,9 @@ package bna.bnlib;
 
 
 /**
- * Thrown when query specified as a string is invalid.
+ * Thrown when a query specification is invalid.
+ * Example could be a wrong query string (missing parentehis, non-existent
+ * variable, non-existent variable value etc.).
  */
 public class BNLibIllegalQueryException extends BNLibException {
     public BNLibIllegalQueryException() {

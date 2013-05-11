@@ -24,6 +24,8 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
     private HashMap<String, String[]> parents;
     private HashMap<String, double[]> probabilities;
     
+    
+    /** Create a BN importer for the given .net file. */
     public BayesianNetworkNetFileReader(String filename) {
         super(filename);
         this.parsed = false;
@@ -169,4 +171,3 @@ public class BayesianNetworkNetFileReader extends BayesianNetworkFileReader {
         return quoted.substring(1, quoted.length() - 1);
     }
 }
-

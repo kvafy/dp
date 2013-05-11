@@ -34,6 +34,13 @@ public class ParsedQuery {
     public int[] e;
     
     
+    /**
+     * Parse the given query.
+     * @throws BNLibIllegalQueryException When the query is not syntactically
+     *         correct, the given network doesn't contain some of the variables
+     *         specified in the query or when an unknown assignment of a variable
+     *         is used.
+     */
     public ParsedQuery(BayesianNetwork bn, String query) throws BNLibIllegalQueryException {
         this.bn = bn;
         this.query = query;

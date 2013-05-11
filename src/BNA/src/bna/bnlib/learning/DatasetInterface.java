@@ -8,12 +8,13 @@ import bna.bnlib.*;
 
 
 /**
- *
- * @author David Chaloupka
+ * Generic interface of a dataset holding samples (multiset of instantiations) of a set of variables.
  */
 public interface DatasetInterface {
+    /** Get the set of variables whose instantiations this dataset records. */
     public Variable[] getVariables();
     
+    /** Get the number of records in this dataset. */
     public int getSize();
     
     /** Add new record to the dataset. */

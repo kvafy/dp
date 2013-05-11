@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Action that removes an edge from an existing Bayesian network.
+ * Concrete action that removes the edge (parent,child) from an existing Bayesian network.
  */
 public class AlterationActionRemoveEdge extends AlterationAction {
     

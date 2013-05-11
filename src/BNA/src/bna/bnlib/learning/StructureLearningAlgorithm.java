@@ -14,9 +14,25 @@ import bna.bnlib.BayesianNetwork;
 public abstract class StructureLearningAlgorithm {
     protected DecomposableScoringMethod scoringMethod;
     
+    
+    /**
+     * Creates an instance of the learning algorithm that uses the given scoring
+     * for evaluation of candidate solutions.
+     */
     public StructureLearningAlgorithm(DecomposableScoringMethod method) {
         this.scoringMethod = method;
     }
     
-    public abstract BayesianNetwork learn(BayesianNetwork bnInitial, LearningController controller, StructuralConstraints constraints);
+    /**
+     * Runs the structure learning process.
+     * @param bnInitial Structure to start the learning from.
+     * @param controller Specifies the maximum number of iterations and can be
+     *                   used to prematurely stop the learning process.
+     * @param constraints Structural contraints that have to be met by the
+     *                    resulting structure as well as by every immediate
+     *                    structure during the structure learning.
+     */
+    public abstract BayesianNetwork learn(BayesianNetwork bnInitial,
+                                          LearningController controller,
+                                          StructuralConstraints constraints);
 }

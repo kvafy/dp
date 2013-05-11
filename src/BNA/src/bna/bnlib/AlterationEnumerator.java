@@ -13,11 +13,18 @@ import java.util.Random;
 
 /**
  * Iterator of all possible alteration actions of a BN.
+ * The implementation uses Warshall's algorithm and is based on theory
+ * of binary relations and topological orderings (see text of the thesis for
+ * a detailed explanation).
  */
 public class AlterationEnumerator implements Iterable<AlterationAction> {
     private ArrayList<AlterationAction> possibleActions;
     
     
+    /**
+     * Computes all possible structural alterations that meet given constraints.
+     * The alterations are saved within the object to allow repeated iteration.
+     */
     public AlterationEnumerator(BayesianNetwork bn, StructuralConstraints constraints) {
         this.possibleActions = this.determinePossibleActions(bn, constraints);
     }
@@ -62,7 +69,6 @@ public class AlterationEnumerator implements Iterable<AlterationAction> {
                 
             }
         }
-        this.verifyAlterationCountHypotheses(NODE_COUNT, actions.size()); // TODO remove
         return actions;
     }
     
@@ -71,26 +77,14 @@ public class AlterationEnumerator implements Iterable<AlterationAction> {
         return this.possibleActions.iterator();
     }
     
+    /** Get number of all legal alterations wrt the given constraints. */
     public int getAlterationCount() {
         return this.possibleActions.size();
     }
     
+    /** Randomly pick a single legal alteration. */
     public AlterationAction getRandomAlteration(Random rand) {
         int index = rand.nextInt(this.possibleActions.size());
         return this.possibleActions.get(index);
-    }
-    
-    private void verifyAlterationCountHypotheses(int nodesCount, int alterationsCount) {
-        int N = nodesCount;
-        // TODO remove
-        int[] upperBounds = {
-            //N * (N - 1) / 2  +  N * N / 4,
-            //N * (N - 1) / 2  +  (int)((2.0 / 3) * N * (N - 1) / 2),
-            N * (N - 1) / 2  +  N * (N - 1) / 2 // must be always true
-        };
-        for(int i = 0 ; i < upperBounds.length ; i++)
-            if(upperBounds[i] < alterationsCount)
-                System.out.printf("max #of alterations: hypothesis %d broken by %.1f %%\n", i, 100.0 * (alterationsCount - upperBounds[i]) / alterationsCount);
-        
     }
 }

@@ -17,7 +17,7 @@ import java.util.HashMap;
 
 /**
  * Provides means of evaluation of structure learning.
- * This means keeping best scoring networks, connection matrix etc.
+ * This means keeping best-scoring networks, connection matrix etc.
  */
 public class StructureLearningStatistics {
     // what structures have been found (clustered by equal score and sorted in decreasing order) TODO memory consuming??
@@ -30,6 +30,8 @@ public class StructureLearningStatistics {
     private HashMap<Variable, Integer> variable2IndexMapping = new HashMap<Variable, Integer>();
     private int[][] edgeOccurences;
     
+    
+    /** Initialize structure learing statistics for learning of network with given set of variables. */
     public StructureLearningStatistics(Variable[] variables) {
         this.variableOrder = Arrays.copyOf(variables, variables.length);
         this.edgeOccurences = new int[this.variableOrder.length][this.variableOrder.length];
@@ -37,6 +39,7 @@ public class StructureLearningStatistics {
             this.variable2IndexMapping.put(this.variableOrder[i], new Integer(i));
     }
     
+    /** Reflect the given network in this statistics. */
     public void registerLearntNetwork(BayesianNetwork bnLearnt, double score) {
         this.addLearntNetworkStructure(bnLearnt, score);
         
@@ -75,6 +78,7 @@ public class StructureLearningStatistics {
         }
     }
     
+    /** Print textual report to stdout. */
     public void report() {
         // best-scoring network(s) hitparade
         System.out.println("Best-scoring networks hitparade");
@@ -105,10 +109,12 @@ public class StructureLearningStatistics {
         System.out.println(edgeFreqTable.toString());
     }
     
+    /** All variables the learnt networks contain. */
     public Variable[] getVariables() {
         return Arrays.copyOf(this.variableOrder, this.variableOrder.length);
     }
     
+    /** matrix[i][j] == count means that there has been count-times occurent of the edge (vertex_i, vertex_j). */
     public int[][] getEdgeCountMatrix() {
         int variableCount = this.variableOrder.length;
         int[][] copy = new int[variableCount][];
@@ -117,6 +123,7 @@ public class StructureLearningStatistics {
         return copy;
     }
     
+    /** What is the highest score we have seen so far? */
     public Double getBestScoreSoFar() {
         if(this.bnLearntHitparade.isEmpty())
             return null;
@@ -124,6 +131,7 @@ public class StructureLearningStatistics {
         return firstRecord.score;
     }
     
+    /** Get networks sharing the best score achieved. */
     public BayesianNetwork[] getBestScoringNetworks() {
         if(this.bnLearntHitparade.isEmpty())
             return null;
@@ -141,9 +149,6 @@ public class StructureLearningStatistics {
         else
             return 0;
     }
-    
-    /*public BayesianNetwork[] getBestScroringNetworks() {
-    }*/
     
     /**
      * By the edge occurence frequency determine the most probable and highest scoring structure.
@@ -198,7 +203,7 @@ public class StructureLearningStatistics {
         return bn;
     }
     
-    /** For internal book-keeping within this file. */
+    /** For internal book-keeping within this class. */
     class LearningRecord {
         final double score;
         final ArrayList<BayesianNetwork> networks = new ArrayList<BayesianNetwork>();;

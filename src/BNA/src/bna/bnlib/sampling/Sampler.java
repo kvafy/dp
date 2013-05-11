@@ -8,7 +8,9 @@ import bna.bnlib.*;
 
 
 /**
- * Generates samples from the distribution P(X | Y, E = e) and subclass defines what to do with them.
+ * Generates samples from the distribution P(X | Y, E = e) and subclass
+ * defines what to do with them.
+ * Template method design pattern is used.
  */
 public abstract class Sampler implements SamplerInterface {
     protected SampleProducer sampleProducer;
@@ -16,12 +18,13 @@ public abstract class Sampler implements SamplerInterface {
     protected Variable[] XYVars;
     
     
+    /** Create a generic sampler that user sampleProducer to get a single sample. */
     public Sampler(SampleProducer sampleProducer) {
         this.sampleProducer = sampleProducer;
         this.XYVars = this.sampleProducer.XYVars;
     }
     
-    /** Perform sampling according to given controller. */
+    /** Perform sampling that can be stopped given controller. */
     @Override
     public final void sample(SamplingController controller) {
         this.presamplingActions();

@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Exception that is truly unexpected, due to some internal error of the library.
+ * Exception that thrown only due to some internal error of the library itself.
  */
 public class BNLibInternalException extends BNLibException {
     public BNLibInternalException() {

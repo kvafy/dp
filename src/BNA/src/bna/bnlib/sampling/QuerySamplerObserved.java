@@ -8,7 +8,8 @@ import java.util.ArrayList;
 
 
 /**
- * A decorator of QuerySampler that allows to register observers that get notified with each generater sample.
+ * A decorator of QuerySampler that allows to register observers that get
+ * notified with each generater sample via the QuerySamplerObserver#notifySample.
  */
 public class QuerySamplerObserved extends QuerySampler {
     private ArrayList<QuerySamplerObserver> observers = new ArrayList<QuerySamplerObserver>();

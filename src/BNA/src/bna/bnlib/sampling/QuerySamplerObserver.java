@@ -9,5 +9,6 @@ package bna.bnlib.sampling;
  * Observer of a sampling process.
  */
 public interface QuerySamplerObserver {
+    /** Notification that new sample has been produced. */
     public void notifySample();
 }

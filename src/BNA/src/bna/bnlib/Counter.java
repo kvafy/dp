@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 
 /**
- * Class serving as a counter addressable by assignment of variables.
+ * Class serving as a counter that is addressable by assignment of variables.
  */
 public class Counter {
     private Variable[] variables;
@@ -18,7 +18,7 @@ public class Counter {
     
     
     /**
-     * Create counter addresable by assignments of given set of variables, each entry with given initial value.
+     * Create counter addresable by assignments of given set of variables, each entry having the given initial value.
      * @param variables
      * @param init Initial value in each entry of the counter.
      */
@@ -31,14 +31,20 @@ public class Counter {
     }
     
     /**
-     * Create counter addresable by assignments of given set of variables, each entry equal to 0.
+     * Create counter addresable by assignments of given set of variables, each entry initially equal to 0.
      * @param variables
      */
     public Counter(Variable[] variables) {
         this(variables, 0.0);
     }
     
-    public void add(int[] assignment, double delta) {
+    /**
+     * Add the given delta value to counter addressed by given assignment.
+     * @throws BNLibInvalidInstantiationException When the given assignment is
+     *         not a valid assignment of the variables specified in constructor
+     *         of this object.
+     */
+    public void add(int[] assignment, double delta) throws BNLibInvalidInstantiationException {
         if(!Toolkit.validateAssignment(this.variables, assignment))
             throw new BNLibInvalidInstantiationException("Invalid variables assignment of variables for mapper.");
         int index = this.indexMapper.assignmentToIndex(assignment);

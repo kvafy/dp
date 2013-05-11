@@ -19,14 +19,21 @@ public class LearningController {
         this.stopFlag = false;
     }
     
+    /**
+     * Returns true if the learning in current iteration should be stopped.
+     * There are two reasons for stopping: stop flag is set or the maximum
+     * number of iterations has been exceeded.
+     */
     public boolean shouldStop(long currentIteration) {
         return this.stopFlag || (this.maxIterations != null && currentIteration >= this.maxIterations);
     }
     
+    /** Is the stop flag set?. */
     public boolean getStopFlag() {
         return this.stopFlag;
     }
     
+    /** Set the stop flag. */
     public void setStopFlag() {
         this.stopFlag = true;
     }

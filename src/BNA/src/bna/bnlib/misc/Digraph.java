@@ -7,18 +7,18 @@ package bna.bnlib.misc;
 import java.util.ArrayList;
 
 
-/**
- * A general digraph with valued nodes (each node has some associated data).
- */
+/** A general digraph with valued nodes (each node has some associated data). */
 public class Digraph {
     DigraphNode[] nodes;
     
+    /** Create a digraph whose nodes (vertices) are the given items. */
     public Digraph(Object[] dataNodes) {
         this.nodes = new DigraphNode[dataNodes.length];
         for(int i = 0 ; i < dataNodes.length ; i++)
             this.nodes[i] = new DigraphNode(dataNodes[i]);
     }
     
+    /** Add the directed edge (uData,vData). */
     public void addEdge(Object uData, Object vData) {
         DigraphNode u = this.findNodeByData(uData),
                     v = this.findNodeByData(vData);
@@ -26,12 +26,13 @@ public class Digraph {
         v.in.add(u);
     }
     
+    /** Check whether the graph is acyclic. */
     public boolean isAcyclic() {
         return this.topologicalSort() != null;
     }
     
     /**
-     * Compute topological sort of given graph.
+     * Compute topological sort of given graph using a DFS-based O(n) algorithm.
      * @return Return the node-associated data if the nodes are arranged in
      *         topological order. If the graph is not acyclic, returns null.
      */

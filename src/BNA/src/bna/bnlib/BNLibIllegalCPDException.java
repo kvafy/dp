@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * When we attempt to set invalid CPD for a node.
+ * Thrown on an attempt to set invalid CPD for a node.
  */
 public class BNLibIllegalCPDException extends BNLibIllegalOperationException {
     public BNLibIllegalCPDException() {

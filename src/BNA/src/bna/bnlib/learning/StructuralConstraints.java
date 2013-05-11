@@ -21,6 +21,7 @@ public class StructuralConstraints {
     private int maxParentCount;
     
     
+    /** Create empty contraints for given set of variables (any edge is allowed). */
     public StructuralConstraints(Variable[] variables) {
         // constraints by selective connectivity (all enabled except for autoconnections)
         this.connectivityMatrix = new boolean[variables.length][];
@@ -36,20 +37,24 @@ public class StructuralConstraints {
         this.maxParentCount = Integer.MAX_VALUE;
     }
     
+    /** Set the maximum number of parents a variable can have. */
     public void setMaxParentCount(int count) {
         this.maxParentCount = count;
     }
     
+    /** Would such parents count be within the legal bounds? */
     public boolean isOKParentsCount(int parentsCount) {
         return parentsCount <= this.maxParentCount;
     }
     
+    /** Explicitly allow/disallow the edge (from,to). */
     public void setConnectionAllowed(Variable from, Variable to, boolean allowed) {
         int fromIndex = this.variable2IndexMapping.get(from),
             toIndex = this.variable2IndexMapping.get(to);
         this.connectivityMatrix[fromIndex][toIndex] = allowed;
     }
     
+    /** Disallow any outgoing edge from the given variable. */
     public void disallowBeParent(Variable var) {
         int variableCount = this.variable2IndexMapping.size();
         int varIndex = this.variable2IndexMapping.get(var);
@@ -57,6 +62,7 @@ public class StructuralConstraints {
             this.connectivityMatrix[varIndex][i] = false;
     }
     
+    /** Disallow any incomming edge to the given variable. */
     public void disallowBeChild(Variable var) {
         int variableCount = this.variable2IndexMapping.size();
         int varIndex = this.variable2IndexMapping.get(var);
@@ -64,6 +70,7 @@ public class StructuralConstraints {
             this.connectivityMatrix[i][varIndex] = false;
     }
     
+    /** Check whether the edge (from,to) is allowed. */
     public boolean isConnectionAllowed(Variable from, Variable to) {
         Integer fromIndex = this.variable2IndexMapping.get(from),
                 toIndex = this.variable2IndexMapping.get(to);

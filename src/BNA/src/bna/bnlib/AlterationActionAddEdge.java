@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Action that adds an edge to an existing Bayesian network.
+ * Concrete action that adds the edge (parent,child) to an existing Bayesian network.
  */
 public class AlterationActionAddEdge extends AlterationAction {
 

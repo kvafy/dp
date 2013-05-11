@@ -18,5 +18,9 @@ public abstract class DatasetFileWriter {
         this.filename = filename;
     }
     
+    /**
+     * Writes the given dataset to file specified in the constructor.
+     * @throws BNLibIOException When a Java IOException occurs.
+     */
     public abstract void save(Dataset dataset) throws BNLibIOException;
 }

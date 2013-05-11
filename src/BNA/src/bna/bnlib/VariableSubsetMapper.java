@@ -8,11 +8,16 @@ import bna.bnlib.misc.Toolkit;
 
 
 /**
- * Map assignment of a superset of variables to assignment of their subset.
+ * Maps assignment of a superset of variables to assignment of their subset.
+ * Two problems need to be addressed:
+ *   1) Variables are on different indices in the superset and subset arrays.
+ *   2) For the same variable, list of its assignments might be permuted, so
+ *      the same integer assignment might correspond with a different real
+ *      assignment (ie. with an index into the Variable.values array).
  */
 public class VariableSubsetMapper {
     private Variable[] superset;
-    private int[] indexMapping;   // subset -> index in superset
+    private int[] indexMapping;   // subset[i] -> index in superset
     private int[][] valueMapping; // supersetIntValue -> subsetIntValue
     
     
@@ -62,9 +67,6 @@ public class VariableSubsetMapper {
      * Map an assignment of the superset variables of this mapper to an assignment
      * to the subset variables of this mapper.
      * For the subset assignment is used the passed array.
-     * @param supersetAssignment
-     * @param subsetAssignment
-     * @return
      * @throws BNLibInvalidInstantiationException When the first argument isn't
      *         an instantiation of the superset variables of this mapper.
      * @throws BNLibIllegalArgumentException When the second argument is not

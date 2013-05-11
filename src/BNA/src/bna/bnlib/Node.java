@@ -13,42 +13,47 @@ import java.util.Random;
 /**
  * Node of a Bayesian network holding it's variable, CPT as a factor and
  * connectivity information.
- * Mutable (but just from inside its own package).
+ * Mutable (but just from inside its own package by package-private methods).
  */
 public class Node {
-    // associated variables
     private Variable variable;
     private ArrayList<Node> parents = new ArrayList<Node>();
     private ArrayList<Node> children = new ArrayList<Node>();
+    private Factor factor; // CPD
     
-    private Factor factor;
     
-    
+    /** Create a node with empty CPD. */
     public Node(Variable variable) {
         this(variable, null);
     }
     
+    /** Create a node with the given cpd. */
     public Node(Variable variable, Factor factor) {
         this.variable = variable;
         this.setFactor(factor);
     }
     
+    /** Get variable represented by this node. */
     public Variable getVariable() {
         return this.variable;
     }
     
+    /** Get CPD associated with this node. */
     public Factor getFactor() {
         return this.factor;
     }
     
+    /** Get the number of parents of this node. */
     public int getParentCount() {
         return this.parents.size();
     }
     
+    /** Get the number of children of this node. */
     public int getChildrenCount() {
         return this.children.size();
     }
     
+    /** Get parent variables of this node. */
     public Variable[] getParentVariables() {
         Variable[] parentsArray = new Variable[this.parents.size()];
         for(int i = 0 ; i < this.parents.size() ; i++)
@@ -56,16 +61,13 @@ public class Node {
         return parentsArray;
     }
     
+    /** Get parent nodes of this variable. */
     public Node[] getParentNodes() {
         Node[] parentsArray = new Node[this.parents.size()];
         return this.parents.toArray(parentsArray);
     }
     
-    public Node[] getChildNodes() {
-        Node[] childrenArray = new Node[this.children.size()];
-        return this.children.toArray(childrenArray);
-    }
-    
+    /** Get child variables of this node. */
     public Variable[] getChildVariables() {
         Variable[] childrenArray = new Variable[this.children.size()];
         for(int i = 0 ; i < this.children.size() ; i++)
@@ -73,9 +75,13 @@ public class Node {
         return childrenArray;
     }
     
-    /**
-     * Compute scope according to currently registered parent nodes.
-     */
+    /** Get child nodes of this variable. */
+    public Node[] getChildNodes() {
+        Node[] childrenArray = new Node[this.children.size()];
+        return this.children.toArray(childrenArray);
+    }
+    
+    /** Compute scope according to currently registered parent nodes. */
     public Variable[] getScope() {
         Variable[] scope = new Variable[1 + parents.size()];
         scope[0] = this.variable;
@@ -84,10 +90,16 @@ public class Node {
         return scope;
     }
     
+    /** Returns value of this factor associated with the given assignment. */
     public double getProbability(int[] assignment) {
         return this.factor.getProbability(assignment);
     }
     
+    /**
+     * Return a random assignment of this node from the distribution P(X | parents).
+     * @throws BNLibInvalidInstantiationException When the given assignment
+     *         is not a valid assignment of parent variables of this node.
+     */
     public int sampleVariable(int[] assignmentOfParents, Random random) throws BNLibInvalidInstantiationException {
         if(!Toolkit.validateAssignment(this.getParentVariables(), assignmentOfParents)) // TODO defensive
             throw new BNLibInvalidInstantiationException("Invalid assignment of parents.");
@@ -150,6 +162,7 @@ public class Node {
         this.factor = f;
     }
     
+    /** Check whether the CPD of this node is legal wrt the set of parent variables. */
     public boolean hasValidFactor() {
         // not null factor
         if(this.factor == null)

@@ -6,7 +6,9 @@ package bna.bnlib;
 
 
 /**
- * When we attempt a structural change of a network (ie. edges) which is invalid.
+ * Thrown on an attempt of an invalid structural change of a network.
+ * For example, removing a non-existent edge or adding an edge that introduces
+ * a cycle.
  */
 public class BNLibIllegalStructuralModificationException extends BNLibIllegalOperationException {
     public BNLibIllegalStructuralModificationException() {

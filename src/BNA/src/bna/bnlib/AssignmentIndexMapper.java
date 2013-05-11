@@ -7,7 +7,14 @@ package bna.bnlib;
 import bna.bnlib.misc.Toolkit;
 
 /**
- * Map between assignment of variables and corresponding index in a linear vector.
+ * Map between an assignment of variables and corresponding integer index in a linear vector.
+ * Logic of the mapping is as follows: Let x_1, ..., x_n be an assignment
+ * of variables X_1, ..., X_n. Then the assignment 0, ..., 0 corresponds with
+ * the index 0. Assignment 1, 0, ..., 0 corresponds with index 1 etc. up to
+ * the assignment |X_1| - 1, ..., |X_n| - 1.
+ * Ie. the leftmost variable changes its value the most rapidly while the
+ * corresponding integral value increments at the same time with each
+ * subsequent assignment.
  */
 public class AssignmentIndexMapper {
     private Variable[] vars;
@@ -24,6 +31,12 @@ public class AssignmentIndexMapper {
             accessVector[i] = accessVector[i - 1] * variables[i - 1].getCardinality();
     }
     
+    /**
+     * Convert given assignment to an integer index.
+     * @throws BNLibInvalidInstantiationException When assignment is not a valid
+     *         instantiation of variables specified in the constructor.
+     * @throws BNLibIllegalArgumentException When the assignment is null.
+     */
     public int assignmentToIndex(int[] assignment) throws BNLibInvalidInstantiationException, BNLibIllegalArgumentException {
         // validate parameters
         if(assignment == null)
@@ -37,6 +50,11 @@ public class AssignmentIndexMapper {
         return index;
     }
     
+    /**
+     * Convert given integer index to an assignment.
+     * @throws BNLibInvalidInstantiationException When index doesn't correspond
+     *         with any valid instantiation of variables specified in the constructor.
+     */
     public int[] indexToAssignment(int index) throws BNLibInvalidInstantiationException {
         if(index < 0 || index >= this.assignmentsCount)
             throw new BNLibInvalidInstantiationException(String.format("Assignment index %i out of valid range [0, %i).", index, this.assignmentsCount));

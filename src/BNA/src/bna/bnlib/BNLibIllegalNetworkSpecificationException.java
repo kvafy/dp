@@ -6,7 +6,7 @@ package bna.bnlib;
 
 
 /**
- * Trying to create a network or its component from bad data (eg. non-unique variables).
+ * Thrown on an attempt to create a network, or its component, from bad data (eg. non-unique variables).
  */
 public class BNLibIllegalNetworkSpecificationException extends BNLibException {
     public BNLibIllegalNetworkSpecificationException() {

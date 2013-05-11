@@ -10,12 +10,17 @@ import java.util.WeakHashMap;
 
 
 /**
- * Custom implementation of java.util.concurrent.ThreadLocalRandom from Java7.
+ * Custom implementation of java.util.concurrent.ThreadLocalRandom from Java 7.
+ * Uses WeakHashMap for Thread instances, so that when a Thread is no longer
+ * strongly reachable, it can be collected and its associated Random instance
+ * becomes garbage as well.
  */
 public class ThreadLocalRandom {
     // weak references ensure that the map doesn't contain entries for dead threads
     private static Map<Thread, Random> theadRandomMap = new WeakHashMap<Thread, Random>();
     
+    
+    /** Get Random instance that is specific to the current thread. */
     public static Random current() {
         // Java 6 - hand-made ThreadLocalRandom using weak references
         Thread currentThread = Thread.currentThread();

@@ -17,6 +17,7 @@ import java.io.IOException;
 public class DatasetCSVFileWriter extends DatasetFileWriter {
     private String separator;
     
+    
     public DatasetCSVFileWriter(String filename, String separator) {
         super(filename);
         this.separator = separator;

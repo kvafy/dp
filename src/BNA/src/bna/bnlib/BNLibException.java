@@ -7,6 +7,7 @@ package bna.bnlib;
 
 /**
  * The base exception of all other exceptions in the bnlib package and subpackages.
+ * All the exceptions are unchecked.
  */
 public class BNLibException extends RuntimeException {
     public BNLibException() {

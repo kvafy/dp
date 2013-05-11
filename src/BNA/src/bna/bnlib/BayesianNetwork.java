@@ -9,19 +9,26 @@ import bna.bnlib.misc.Digraph;
 import bna.bnlib.misc.Toolkit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 
 /**
- * General Bayesian network class.
- * The network consists of network nodes (Node class), each node has associated
- * variable, collection of parents and children, a factor holding CPT of this
- * node.
+ * Data representation of a Bayesian network.
+ * The network consists of network nodes (instances of Node), each node has
+ * associated a variable, collection of parents and children (Nodes) and
+ * a factor holding CPT of this node.
  */
 public class BayesianNetwork {
     private Node[] nodes;
     
     
+    /**
+     * Creates discrete Bayesian network with given variables.
+     * @throws BNLibIllegalNetworkSpecificationException When the variables
+     *         are not mutually unique.
+     */
     public BayesianNetwork(Variable[] variables) throws BNLibIllegalNetworkSpecificationException {
         if(!Toolkit.unique(variables))
             throw new BNLibIllegalNetworkSpecificationException("The variables are not unique.");
@@ -63,23 +70,23 @@ public class BayesianNetwork {
         }
     }
     
-    /** Duplicate the network's structure, but set empty CPDs. */
+    /** Create a discrete Bayesian network (no edges) with the same variables as this network has. */
     public BayesianNetwork copyEmptyStructure() {
         return new BayesianNetwork(this, false, false);
     }
     
-    /** Duplicate the network's structure, but set empty CPDs. */
+    /** Duplicate the network's structure, but set empty CPDs (as nulls). */
     public BayesianNetwork copyStructureWithEmptyCPDs() {
         return new BayesianNetwork(this, true, false);
     }
     
-    /** Duplicate the network's structure, but set empty CPDs. */
+    /** Completely duplicate the network, ie. structure and CPDs. */
     public BayesianNetwork copyStructureAndCPDs() {
         return new BayesianNetwork(this, true, true);
     }
     
     
-    // methods for building/editing a Bayesian network (see BayesianNetworkFileReader or AlterationAction)
+    // methods for building/editing a Bayesian network (see BayesianNetworkFileReader and AlterationAction)
     
     public void addDependency(String parent, String child) throws BNLibIllegalStructuralModificationException {
         this.addDependency(this.getNode(parent), this.getNode(child));
@@ -122,7 +129,7 @@ public class BayesianNetwork {
         node.setProbabilityVector(probs);
     }
     
-    public void setCPT(String variable, Factor cpt) {
+    public void setCPT(String variable, Factor cpt) throws BNLibIllegalCPDException {
         Node node = this.getNode(variable);
         node.setFactor(cpt);
     }
@@ -163,6 +170,8 @@ public class BayesianNetwork {
      *        variable and its parents
      *   <li> normalized factors (optional for non-skeletal networks)
      * </ul>
+     * @throws BNLibIllegalNetworkSpecificationException When some of the
+     *         consistency criteria is broken.
      */
     public void validate() throws BNLibIllegalNetworkSpecificationException {
         this.validateAcyclicity();
@@ -191,6 +200,12 @@ public class BayesianNetwork {
                 throw new BNLibIllegalNetworkSpecificationException("Variable \"" + n.getVariable().getName() + "\" has invalid factor.");
     }
     
+    /**
+     * Load Bayesian network from given file.
+     * Currently only the .net format of files is recognized and supported.
+     * @throws BNLibIOException When an IO exception occurs or the file
+     *         is corrupted (syntactically or semantically wrong).
+     */
     public static BayesianNetwork loadFromFile(String filename) throws BNLibIOException {
         int lastdotPos = filename.lastIndexOf('.');
         String extension = (lastdotPos == -1) ? "" : filename.substring(lastdotPos + 1);
@@ -207,26 +222,52 @@ public class BayesianNetwork {
         return reader.load();
     }
     
+    /**
+     * Get variable of the given name.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
     public Variable getVariable(String variableName) throws BNLibNonexistentVariableException {
         return this.getNode(variableName).getVariable();
     }
     
-    public Variable[] getVariableParents(Variable variable) {
+    /**
+     * Get parent variables of the specified variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
+    public Variable[] getVariableParents(Variable variable) throws BNLibNonexistentVariableException {
         return this.getNode(variable).getParentVariables();
     }
     
-    public Variable[] getVariableChildren(Variable variable) {
+    /**
+     * Get child variables of the specified variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
+    public Variable[] getVariableChildren(Variable variable) throws BNLibNonexistentVariableException {
         return this.getNode(variable).getChildVariables();
     }
     
-    public int getVariableParentsCount(Variable variable) {
+    /**
+     * Get the number of parent variables of the specified variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
+    public int getVariableParentsCount(Variable variable) throws BNLibNonexistentVariableException {
         return this.getNode(variable).getParentCount();
     }
     
-    public int getVariableChildrenCount(Variable variable) {
+    /**
+     * Get the number of child variables of the specified variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
+    public int getVariableChildrenCount(Variable variable) throws BNLibNonexistentVariableException {
         return this.getNode(variable).getChildrenCount();
     }
     
+    /** Get all variables of this network. */
     public Variable[] getVariables() {
         Variable[] vars = new Variable[this.nodes.length];
         for(int i = 0 ; i < this.nodes.length ; i++)
@@ -234,10 +275,21 @@ public class BayesianNetwork {
         return vars;
     }
     
+    /** Get the numer of variables in this network. */
+    public int getVariablesCount() {
+        return this.getNodeCount();
+    }
+    
+    /** Get the number of nodes (variables) of this network. */
     public int getNodeCount() {
         return this.nodes.length;
     }
     
+    /**
+     * Get node representing the given variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
     public Node getNode(String variableName) throws BNLibNonexistentVariableException {
         for(Node n : this.nodes)
             if(n.getVariable().getName().equals(variableName))
@@ -245,6 +297,11 @@ public class BayesianNetwork {
         throw new BNLibNonexistentVariableException("Node with variable \"" + variableName + "\" is not in the network.");
     }
     
+    /**
+     * Get node representing the given variable.
+     * @throws BNLibNonexistentVariableException When no such variable exists
+     *         in this network.
+     */
     public Node getNode(Variable variable) throws BNLibNonexistentVariableException {
         for(Node n : this.nodes)
             if(n.getVariable().equals(variable))
@@ -252,10 +309,12 @@ public class BayesianNetwork {
         throw new BNLibNonexistentVariableException("Node with variable \"" + variable.getName() + "\" is not in the network.");
     }
     
+    /** Get all nodes of this network. */
     public Node[] getNodes() {
         return Arrays.copyOf(this.nodes, this.nodes.length);
     }
     
+    /** Check whether all the nodes have valid CPDs wrt the set of parents. */
     public boolean hasValidCPDs() {
         for(Node n : this.nodes)
             if(!n.hasValidFactor())
@@ -263,16 +322,12 @@ public class BayesianNetwork {
         return true;
     }
     
-    /** Is there a node with variable v? */
+    /** Is there a node with variable v in this network? */
     private boolean containsVariable(Variable v) {
         for(Node node : this.nodes)
             if(v == node.getVariable())
                 return true;
         return false;
-    }
-    
-    public int getVariablesCount() {
-        return this.nodes.length;
     }
     
      /** Return number of degrees of freedom of the network wrt CPD entries. */
@@ -286,7 +341,7 @@ public class BayesianNetwork {
         return degreesOfFreedom;
     }
     
-    /** Return number of degrees of freedom of the network wrt CPD entries. */
+    /** Return the number of edges in this network. */
     public int getEdgeCount() {
         int edgeCount = 0;
         for(Node v : this.nodes)
@@ -294,11 +349,12 @@ public class BayesianNetwork {
         return edgeCount;
     }
     
+    /** Network dimension is considered to be the number of degress of freedom wrt CPD entries. */
     public int getNetworkDimension() {
         return this.getDegreesOfFreedomInCPDs();
     }
     
-    /** Provides an overall statistics for this network. */
+    /** Provides an overall statistics of this network (edge counts, min/max/average in/out-degree etc.). */
     public BayesianNetworkStatistics getStatistics() {
         BayesianNetworkStatistics statistics = new BayesianNetworkStatistics();
         boolean hasCPDs = this.hasValidCPDs();
@@ -342,6 +398,11 @@ public class BayesianNetwork {
     
     // Graph operations
     
+    /**
+     * Return variables of this network in topological order.
+     * @throws BNLibIllegalNetworkSpecificationException When the network is not
+     *         acyclic (therefore topological sort can't exist).
+     */
     public Variable[] topologicalSort() throws BNLibIllegalNetworkSpecificationException {
         Node[] topologicalOrderNodes = this.topologicalSortNodes();
         Variable[] topologicalOrderVariables = new Variable[topologicalOrderNodes.length];
@@ -350,6 +411,11 @@ public class BayesianNetwork {
         return topologicalOrderVariables;
     }
     
+    /**
+     * Return nodes of this network in topological order.
+     * @throws BNLibIllegalNetworkSpecificationException When the network is not
+     *         acyclic (therefore topological sort can't exist).
+     */
     public Node[] topologicalSortNodes() throws BNLibIllegalNetworkSpecificationException {
         Digraph digraph = this.convertToDigraph();
         Object[] topologicalOrderObjects = digraph.topologicalSort();
@@ -388,6 +454,7 @@ public class BayesianNetwork {
         return matrix;
     }
     
+    /** Create a textual representation of the structure of this network. */
     public String dumpStructure() {
         StringBuilder ret = new StringBuilder();
         for(Node node : this.topologicalSortNodes()) { // in a nice top-down manner
@@ -407,6 +474,7 @@ public class BayesianNetwork {
         return ret.toString();
     }
     
+    /** Create textual representation of all the CPDs of this network. */
     public String dumpCPTs() {
         StringBuilder ret = new StringBuilder();
         boolean firstLine = true;
@@ -419,5 +487,55 @@ public class BayesianNetwork {
             firstLine = false;
         }
         return ret.toString();
+    }
+    
+    
+    /** Data structure that captures structural differences of two networks. */
+    public static class StructuralDifference {
+        private ArrayList<Variable[]> missingEdges,
+                                      reversedEdges,
+                                      redundantEdges;
+        
+        public StructuralDifference(BayesianNetwork bnReferential, BayesianNetwork bnOther) {
+            this.missingEdges = new ArrayList<Variable[]>();
+            this.reversedEdges = new ArrayList<Variable[]>();
+            this.redundantEdges = new ArrayList<Variable[]>();
+            // broken edges (reversed or totally missing)
+            for(Node nodeReferential : bnReferential.getNodes()) {
+                Node nodeOther = bnOther.getNode(nodeReferential.getVariable());
+                Variable[] nodeOtherNeighbours = Toolkit.union(nodeOther.getParentVariables(), nodeOther.getChildVariables());
+                for(Variable childReferential : nodeReferential.getChildVariables()) {
+                    if(!Toolkit.arrayContains(nodeOtherNeighbours, childReferential))
+                        this.missingEdges.add(new Variable[] {nodeReferential.getVariable(), childReferential});
+                    else if(!Toolkit.arrayContains(nodeOther.getChildVariables(), childReferential))
+                        this.reversedEdges.add(new Variable[] {nodeReferential.getVariable(), childReferential});
+                }
+            }
+            // redundant edges
+            for(Node nodeOther : bnOther.getNodes()) {
+                Node nodeReferential = bnReferential.getNode(nodeOther.getVariable());
+                Variable[] nodeOrigNeighbours = Toolkit.union(nodeReferential.getParentVariables(), nodeReferential.getChildVariables());
+                for(Variable childOther : nodeOther.getChildVariables()) {
+                    if(!Toolkit.arrayContains(nodeOrigNeighbours, childOther)) {
+                        this.redundantEdges.add(new Variable[] {nodeOther.getVariable(), childOther});
+                    }
+                }
+            }
+        }
+        
+        /** Returns missing edges u->v in the form of 2-tuples (arrays of length 2). */
+        public List<Variable[]> getMissingEdges() {
+            return Collections.unmodifiableList(this.missingEdges);
+        }
+        
+        /** Returns reversed edges u->v in the form of 2-tuples (arrays of length 2). */
+        public List<Variable[]> getReversedEdges() {
+            return Collections.unmodifiableList(this.reversedEdges);
+        }
+        
+        /** Returns redundant edges u->v in the form of 2-tuples (arrays of length 2). */
+        public List<Variable[]> getRedundantEdges() {
+            return Collections.unmodifiableList(this.redundantEdges);
+        }
     }
 }

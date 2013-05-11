@@ -14,9 +14,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 
 
-/**
- * General purpose functions that are inconvinient to be placed elsewhere.
- */
+/** General purpose functions that are inconvinient to be placed elsewhere. */
 public class Toolkit {
     /** Maximal difference of two double values that are considered equal. */
     public static final double DOUBLE_EPS = 1e-4;
@@ -40,6 +38,7 @@ public class Toolkit {
             System.out.println(" * " + item.toString());
     }
     
+    /** Are all elements in the array unique? (using their equals and hashCode methods) */
     public static <T> boolean unique(T[] array) {
         HashSet<T> set = new HashSet<T>();
         for(T obj : array)
@@ -47,6 +46,7 @@ public class Toolkit {
         return set.size() == array.length;
     }
     
+    /** Are all elements in the collection unique? (using their equals and hashCode methods) */
     public static <T> boolean unique(Collection<T> collection) {
         HashSet<T> set = new HashSet<T>();
         set.addAll(collection);
@@ -78,10 +78,10 @@ public class Toolkit {
     }
     
     /**
-     * Compute relative entropy between two networks with identical structure.
+     * Compute relative entropy (aka. KL-divergence) between two networks with identical structure.
      * @throws BNLibIllegalArgumentException When the two networks aren't structurally equal.
      */
-    public static double networkDistanceRelativeEntropy2(BayesianNetwork bnExact,
+    public static double networkDistanceRelativeEntropy(BayesianNetwork bnExact,
                                                          Map<Variable, Factor> distributionsOverParents,
                                                          BayesianNetwork bnApprox) 
                                                     throws BNLibIllegalArgumentException {
@@ -147,6 +147,7 @@ public class Toolkit {
         return relativeEntropy;
     }
     
+    /** Infer the joint probability distribution P(v1, ..., vn). */
     public static Factor inferJointDistribution(BayesianNetwork bn, Variable[] vars) {
         final long SAMPLES_COUNT = 100 * 1000 * 1000;
         final int THREAD_COUNT = 5;
@@ -157,6 +158,7 @@ public class Toolkit {
         return querySamplerMultithreaded.getSamplesCounterNormalized();
     }
     
+    /** Are all elements of subset contained in the superset? (using equals method) */
     public static <T> boolean isSubset(T[] superset, T[] subset) {
         if(superset.length < subset.length)
             return false;
@@ -167,10 +169,12 @@ public class Toolkit {
         return true;
     }
     
+    /** Do the two arrays contain the same set of objects? (using equals method) */
     public static <T> boolean areEqual(T[] set1, T[] set2) {
         return Toolkit.isSubset(set1, set2) && Toolkit.isSubset(set2, set1);
     }
     
+    /** Do the two arrays contain disjoint sets of objects? (using equals method) */
     public static <T> boolean areDisjoint(T[] set1, T[] set2) {
         for(Object o : set1) {
             if(Toolkit.arrayContains(set2, o))
@@ -179,6 +183,7 @@ public class Toolkit {
         return true;
     }
     
+    /** Do the two collections contain disjoint sets of objects? (using equals method) */
     public static <T> boolean areDisjoint(Collection<T> set1, Collection<T> set2) {
         for(Object o : set1) {
             if(set2.contains((T)o))
@@ -187,7 +192,7 @@ public class Toolkit {
         return true;
     }
     
-    /** From set2 appends all elements not in set1 to set1. */
+    /** From set2 appends all elements, that are not present in set1, to set1. (using equals method) */
     public static <T> T[] union(T[] set1, T[] set2) {
         if(set1.length == 0)
             return Arrays.copyOf(set2, set2.length);
@@ -206,7 +211,7 @@ public class Toolkit {
         }
     }
     
-    /** From set1 removes all elements present in set2. */
+    /** From set1 removes all elements present in set2. (using equals method) */
     public static <T> T[] difference(T[] set1, T[] set2) {
         if(set1.length == 0 || set2.length == 0)
             return Arrays.copyOf(set1, set1.length);
@@ -232,8 +237,6 @@ public class Toolkit {
     
     /**
      * Find index of obj in array or -1.
-     * @param array
-     * @param obj
      * @return Index of obj in array or -1.
      */
     public static <T> int indexOf(T[] array, T obj) {
@@ -277,7 +280,7 @@ public class Toolkit {
         throw new BNLibIllegalArgumentException(String.format("Invalid probabilities sum %.3f.", probabilitiesScan));
     }
     
-    /** Compute transitive closure of given relation. */
+    /** Compute transitive closure of given relation using Warshall's algorithm. */
     public static boolean[][] transitiveClosure(boolean[][] relation) {
         boolean[][] closure = new boolean[relation.length][];
         for(int i = 0 ; i < relation.length ; i++)
@@ -333,7 +336,7 @@ public class Toolkit {
         return count;
     }
     
-    /** Joins all the strings to a single string, each two occurences separated by separator. */
+    /** Joins all the strings to a single string, each two occurences separated by given separator. */
     public static String stringJoin(String[] strs, String separator) {
         if(strs == null)
             return null;

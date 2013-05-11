@@ -6,9 +6,9 @@ package bna.bnlib;
 
 
 /**
- * When we are given an assignment of variables that is invalid.
- * That means variable value index out of range or instantiation of wrong
- * number of variables.
+ * Thrown when we are given an assignment of variables that is invalid.
+ * That could mean variable value index out of range, instantiation of wrong
+ * number of variables etc.
  */
 public class BNLibInvalidInstantiationException extends BNLibException {
     public BNLibInvalidInstantiationException() {

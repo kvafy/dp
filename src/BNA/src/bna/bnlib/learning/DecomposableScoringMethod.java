@@ -12,7 +12,8 @@ import java.util.Set;
 
 
 /**
- * A general class for scoring methods decomposable by structure to a sum of family scores and penalty for complexity.
+ * A general class for scoring methods decomposable by structure to a sum of family
+ * scores plus a penalty term for complexity.
  * <p>
  * The scoring method works with a notion of "current network" in order to use
  * an efficient caching scheme of delta family scores. Therefore the optimization
@@ -38,6 +39,12 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
     private HashMap<AlterationAction, Double> deltaFamilyScoreCache = new HashMap<AlterationAction, Double>();
 
     
+    /**
+     * Create a generic scoring object that computes the scores based on supplied dataset.
+     * As this class keeps cache of delta-family scores the dataset is not
+     * supposed to change because no such change is intercepted and isn't
+     * reflected.
+     */
     public DecomposableScoringMethod(DatasetInterface dataset) {
         this.dataset = dataset;
     }
@@ -53,6 +60,11 @@ public abstract class DecomposableScoringMethod extends ScoringMethod {
         return likelihoodScore + structurePenalization;
     }
     
+    /**
+     * Compute the score increase when the given action is applied on the supplied network.
+     * @throws BNLibIllegalStructuralModificationException When the alteration
+     *         cannot be applied to given network.
+     */
     public final double deltaScore(BayesianNetwork bn, AlterationAction action) throws BNLibIllegalStructuralModificationException {
         Double deltaFamilyScore = this.deltaFamilyScorecacheLookup(bn, action);
         if(deltaFamilyScore == null) {

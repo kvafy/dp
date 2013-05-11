@@ -11,11 +11,19 @@ import java.util.Map;
 
 /**
  * LRU associative cache.
+ * The implementation uses LinkedHashMap which remembers the access order
+ * (with "true" specified in the constructor) and with redefined method
+ * LinkedHashMap#removeEldestEntry to achieve the desired cache capacity.
  */
 public class LRUCache<K,V> implements Iterable<V> {
     private int capacity;
     private LinkedHashMap<K,V> data;
     
+    
+    /**
+     * Create an LRU cache with the given capacity.
+     * To determine the least recently used entry last access is used.
+     */
     public LRUCache(int capacity) {
         this.capacity = capacity;
         // for the LRU we can quite ellegantly use standard class LinkedHashMap
@@ -31,14 +39,22 @@ public class LRUCache<K,V> implements Iterable<V> {
         };
     }
     
+    /** Clear all entries in this cache. */
     public void clear() {
         this.data.clear();
     }
     
+    /**
+     * Get value associated with given key or null if no such key exists.
+     * Accessing an element moves it in from of the que of recently used objects.
+     * Note that returning null may also mean that the mapped value actually
+     * is null.
+     */
     public V get(K key) {
         return this.data.get(key);
     }
     
+    /** Put or rewrite the given pair mapping. */
     public void put(K key, V value) {
         this.data.put(key, value);
     }

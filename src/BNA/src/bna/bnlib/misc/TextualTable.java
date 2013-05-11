@@ -24,6 +24,10 @@ public class TextualTable {
     private boolean separateColumns;   // use extra character (COLUMN_SEPARATOR) between columns?
     
     
+    /**
+     * Create table with given set of columns, floating point precesion and
+     * optionally separated columns.
+     */
     public TextualTable(String[] columnHeaders, int precision, boolean separateColumns) {
         this.columnCount = columnHeaders.length;
         this.rows = new LinkedList<Object[]>();
@@ -32,17 +36,24 @@ public class TextualTable {
         this.separateColumns = separateColumns;
     }
     
+    /** How many decimal places should be used for Double and Float instances. */
     public void setNumberPrecision(int prec) {
         this.precision = prec;
     }
     
+    /** Should columns be separated by a non-white character? */
     public void setColumnSeparatorFlag(boolean flg) {
         this.separateColumns = flg;
     }
     
+    /**
+     * Append a row.
+     * @throws IllegalArgumentException When length of the data row is different
+     *         than was specified in the constructor of this table.
+     */
     public void addRow(Object[] data) {
         if(data == null || data.length != this.columnCount)
-            throw new RuntimeException("Data row has invalid number of entries.");
+            throw new IllegalArgumentException("Data row has invalid number of entries.");
         this.rows.addLast(data);
     }
     

@@ -13,12 +13,12 @@ import java.util.LinkedList;
 
 /**
  * Immutable representation of a factor.
- * The factor is iterable over all possible assignments to its scope (not values!).
+ * The factor can be iterated over all possible assignments of its scope (not over values!).
  */
 public class Factor implements Iterable<int[]> {
     private Variable[] scope;
     private double[] values;
-    private AssignmentIndexMapper mapper;
+    private AssignmentIndexMapper mapper; // mapping: index into this.values <-> int[] assignment
     
     
     /**
@@ -35,7 +35,7 @@ public class Factor implements Iterable<int[]> {
      */
     public Factor(Variable[] scope, double[] values) throws BNLibIllegalArgumentException {
         if(scope == null || scope.length == 0)
-            throw new BNLibIllegalArgumentException("Scope cannot null nor empty");
+            throw new BNLibIllegalArgumentException("Scope cannot be null nor empty");
         this.scope = Arrays.copyOf(scope, scope.length);
         this.values = Arrays.copyOf(values, values.length);
         this.mapper = new AssignmentIndexMapper(scope);
@@ -44,6 +44,7 @@ public class Factor implements Iterable<int[]> {
             throw new BNLibIllegalArgumentException("Invalid values length wrt scope.");
     }
     
+    /** Create factor with given scope and with each entry set to the given value. */
     public Factor(Variable[] scope, double valueOfEachEntry) {
         this.scope = Arrays.copyOf(scope, scope.length);
         this.values = new double[Toolkit.cardinality(scope)];
@@ -52,20 +53,32 @@ public class Factor implements Iterable<int[]> {
         this.mapper = new AssignmentIndexMapper(scope);
     }
     
+    /** Get value of the factor on given index (ie. this.values[index]). */
     public double getProbability(int index) {
         return this.values[index];
     }
     
+    /**
+     * Get value of the factor corresponding to given assignment.
+     * @throws BNLibInvalidInstantiationException When the given argument is
+     *         not an assignment of the variables in scope of this factor.
+     */
     public double getProbability(int[] assignment) throws BNLibInvalidInstantiationException {
         if(!Toolkit.validateAssignment(this.scope, assignment))
             throw new BNLibInvalidInstantiationException("Invalid assignment wrt. scope of the factor.");
         return this.values[this.mapper.assignmentToIndex(assignment)];
     }
     
+    /**
+     * Get the number of values in this factor.
+     * Cardinality can be also viewed as a product of cardinalities of all variables
+     * in the scope of this factor.
+     */
     public int getCardinality() {
         return values.length;
     }
     
+    /** Get the scope (variables) of this factor. */
     public Variable[] getScope() {
         return Arrays.copyOf(this.scope, this.scope.length);
     }
@@ -94,7 +107,11 @@ public class Factor implements Iterable<int[]> {
         return this.normalizeByFirstNVariables(this.scope.length);
     }
     
-    /** Values for assignments that differ only in (n+1)-th variable and higher will sum to one. */
+    /**
+     * Values for assignments that differ only in (n+1)-th variable and higher will sum to one.
+     * @throws BNLibIllegalOperationException When the value of n is invalid wrt.
+     *         the scope of this factor.
+     */
     public Factor normalizeByFirstNVariables(int n) throws BNLibIllegalOperationException {
         if(n < 1 || n > this.scope.length)
             throw new BNLibIllegalOperationException("Normalization by invalid number of variables.");
@@ -120,6 +137,7 @@ public class Factor implements Iterable<int[]> {
         return new Factor(this.scope, normalizedValues);
     }
     
+    /** Check whether the factor has valid cardinality (the this.values vector) wrt its scope. */
     public final boolean hasValidCardinality() {
         int cardinalityByScope = Toolkit.cardinality(this.scope);
         return this.values.length == cardinalityByScope;
@@ -128,7 +146,7 @@ public class Factor implements Iterable<int[]> {
     /**
      * Sums set of factor which all have exactly the same scope.
      * @throws BNLibIllegalArgumentException When the factors cannot be summed
-     *         (the array is empty or the factors don't have the same set of variables).
+     *         (the array is empty or scopes of the factors aren't equal).
      */
     public static Factor sumFactors(Factor[] factors) throws BNLibIllegalArgumentException {
         if(factors == null || factors.length == 0)
@@ -154,7 +172,7 @@ public class Factor implements Iterable<int[]> {
         return new Factor(sumScope, sumValues);
     }
     
-    /** Iterate over all possible assignments to variables in scope of this factor. */
+    /** Iterate over all possible assignments to variables in the scope of this factor. */
     @Override
     public Iterator<int[]> iterator() {
         return new AssignmentIterator(this.scope);

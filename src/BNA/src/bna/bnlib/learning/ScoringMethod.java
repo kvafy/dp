@@ -11,6 +11,6 @@ import bna.bnlib.BayesianNetwork;
  * A general class for structure scoring methods.
  */
 public abstract class ScoringMethod {
-    /** Compute overall score of the network structure. */
+    /** Compute the overall score of the network structure. */
     public abstract double absoluteScore(BayesianNetwork bn);
 }

@@ -23,8 +23,6 @@ public class QuerySamplerMultithreaded implements SamplerInterface {
     
     /**
      * Create new sampler that uses theadcount parallel threads sharing the given sample producer.
-     * @param sharedSampleProducer
-     * @param threadcount
      * @throws BNLibIllegalArgumentException When the threadcount or sharedSampleProducer is invalid.
      */
     public QuerySamplerMultithreaded(SampleProducer sharedSampleProducer, int threadcount) throws BNLibIllegalArgumentException {

@@ -34,7 +34,7 @@ public class ParameterLearner {
     
     /**
      * Produce a new network with identical structure but with CPTs computed by Bayesian estimation with uniform prior.
-     * @param alpha Equivalent sample size.
+     * @param alpha Equivalent sample size for uniform BDe prior (see thesis for details).
      * @throws BNLibInconsistentVariableSetsException When the network contains
      *         some variable not present in the dataset.
      */

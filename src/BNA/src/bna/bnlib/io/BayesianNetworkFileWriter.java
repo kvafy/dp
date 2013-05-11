@@ -18,5 +18,9 @@ public abstract class BayesianNetworkFileWriter {
         this.filename = filename;
     }
     
+    /**
+     * Saves the given network to the file specified in the constructor.
+     * @throws BNLibIOException When a Java IOException occurs.
+     */
     public abstract void save(BayesianNetwork bn) throws BNLibIOException;
 }
