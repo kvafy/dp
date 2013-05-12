@@ -45,8 +45,6 @@
 \newcommand{\bnfgroup}[1]{\textit{#1}}     % BNF skupina
 \newcommand{\ignore}[1]{}                  % komentar v radku
 \newcommand{\todo}[1]{{\color{red}#1}}
-\newcommand{\uncertain}[1]{{\color{magenta}#1}}
-\newcommand{\note}[1]{{\color{green}#1}}
 
 % prostredi pro vlozeni prilohy na strance velikosti A3
 \usepackage{afterpage}
@@ -54,11 +52,13 @@
   {\clearpage
    %\pagestyle{empty}  % turn off display of page numbers, headers, ...
    %\changepage{247mm}{370mm}{25mm}{25mm}{}{}{}{}{}} % switch to A3
-   \changepage{}{210mm}{}{}{}{}{}{}{}}
+   \changepage{}{210mm}{}{}{-8cm}{}{}{}{}
+  }
   {%\addtocounter{page}{-1} % decrement "page" counter variable by 1
    \clearpage
    %\changepage{160mm}{247mm}{25mm}{25mm}{}{}{}{}{}} % back to A4
-   \changepage{}{-210mm}{}{}{}{}{}{}{}}
+   \changepage{}{-210mm}{}{}{8cm}{}{}{}{}
+  }
 
 % SP komentar co se hodi zohlednit ve finalni diplomce
 
@@ -105,16 +105,17 @@
   %bud pomoci nasledujicich parametru nebo pomoci vyhrazenych maker (viz dale)
   %===========================================================================
   %Klicova slova
-  keywords.cs={Bayesovská síť, pravděpodobnost, inference, učení struktury, strojové učení, spam.}, %klicova slova v ceskem jazyce
-  keywords.en={Bayesian network, probability, inference, structure learning, machine learning, spam.}, %klicova slova v anglickem jazyce
+  keywords.cs={Bayesovská síť, pravděpodobnost, stochastická inference, učení struktury, strojové učení, spam.}, %klicova slova v ceskem jazyce
+  keywords.en={Bayesian network, probability, stochastic, inference, structure learning, machine learning, spam.}, %klicova slova v anglickem jazyce
   %Abstract
-  abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti a později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně ozřejmění silných a~slabých stránek popisovaných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury. Těmito aplikacemi jsou obecné benchmarkové úlohy, dále užití Bayesovských sítí pro účely dolování znalostí o příčinách zločinnosti a prozkoumání možnosti nasazení Bayesovské sítě jakožto vysoce přesného spam filtru.}, % abstrakt v ceskem jazyce
-  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications that demand learning a Bayesian network, both in terms of network parameters as well as structure. These applications include general benchmarks, usage of Bayesian networks for knowledge discovery regarding the causes of crime and exploration of the possibility of using a Bayesian network as a highly accurate spam filter.}, % abstrakt v anglickem jazyce
+  abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti a později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně ozřejmění silných a~slabých stránek popisovaných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury. Těmito aplikacemi jsou obecné benchmarkové úlohy, dále užití Bayesovských sítí pro účely dolování znalostí o příčinách zločinnosti a prozkoumání možnosti nasazení Bayesovské sítě jakožto spam filtru.}, % abstrakt v ceskem jazyce
+  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing explanations of pros and cons of these techniques. The practical part focuses on applications that demand learning a Bayesian network, both in terms of network parameters as well as structure. These applications include general benchmarks, usage of Bayesian networks for knowledge discovery regarding the causes of criminality and exploration of the possibility of using a Bayesian network as a spam filter.}, % abstrakt v anglickem jazyce
   %Prohlaseni
   declaration={Prohlašuji, že jsem tuto diplomovou práci vypracoval samostatně pod vedením pana doc.~Ing. Františka V. Zbořila, CSc.},
   %Podekovani (nepovinne)
   acknowledgment={Na tomto místě bych rád poděkoval svému vedoucímu, docentu Františku V. Zbořilovi, za cenné rady, odborné vedení a vstřícný přístup v nesnázích při řešení této práce.} % nepovinne
 }
+\date{16. května 2013}
 
 
 \begin{document}
@@ -145,31 +146,29 @@
 %=========================================================================
 % (c) Michal Bidlo, Bohuslav Křena, 2008
 
-\chapter{Introduction}
-\vspace{-0.7mm}
+\chapter{\vspace*{-2mm}Introduction}
+\vspace{-3.45mm}
 Bayesian networks are a subclass of probabilistic graphical models and serve as a~tool for modeling joint probability distributions of random variables. Bayesian networks were originally used to evaluate medical data of a patient in order to determine the probability of him having a certain disease which is a situation with many unknowns, eg. missing medical history or unknown results of medical tests that haven't been performed. Since then there have been many other applications such as inspection of pedigree trees in genetics or discovery of protein signaling mechanisms based purely on statistical data.
 
-The main advantages of Bayesian networks lie in the fact that they are easy to interpret, even for a non-specialist, and in their inherent property that they can represent joint probability distributions in a very compact way in terms of space complexity. Construction of a Bayesian network for some concrete domain is a complicated task demanding complex algorithms, enough input data and, in many cases, expert knowledge. Another problem is providing accurate answers to queries regarding the probability distribution induced by a~given Bayesian network, so called inference.
+The main advantages of Bayesian networks lie in the fact that they are easy to interpret, even for a non-specialist, and in their inherent property that they can represent joint probability distributions in a very compact way in terms of space complexity. Construction of a Bayesian network for some concrete domain is a complicated task demanding complex algorithms, enough input data and, in many cases, expert knowledge. Another problem is providing accurate answers to queries regarding the probability distribution induced by a~Bayesian network, so called inference.
 
-The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables, ie. model parameters, as well as in terms of structure, and to demonstrate possible applications of these networks. Inference techniques are narrowed down to stochastic approaches because other ways are complex even in the most basic form. Still, all approaches to inference will be mentioned at least on the level of basic concept, since it is a fundamental part of the theory of Bayesian networks.
+The aim of this thesis is to present techniques of learning Bayesian networks, both in terms of conditional probability tables, ie. model parameters, as well as in terms of structure, and to demonstrate possible applications of these networks. Inference techniques are narrowed down to stochastic approaches because other ways are complex even in the most basic form. Still, all approaches to inference will be mentioned at least on the conceptual level since it is a fundamental part of the theory of Bayesian networks.
 
 \medskip
 
-Chapter 2 serves as an introduction to the fundamentals of the probability theory and provides necessary foundations for understanding the rest of this thesis, including the used mathematical notation.
+Chapter~\ref{ch:preliminaries} serves as an introduction to the fundamentals of the probability theory and provides necessary foundations for understanding the rest of this thesis, including the used mathematical notation.
 
-Chapter 3 discusses the theory of Bayesian networks. First, the motivation for using Bayesian networks is explained, followed by an overview of inference methods and by a~detailed analysis of model learning techniques in terms of parameters as well as structure.
+Chapter~\ref{ch:bn_theory} discusses the theory of Bayesian networks. First, the motivation for using Bayesian networks is explained, followed by an overview of inference methods and by a~detailed analysis of model learning techniques in terms of parameters as well as structure.
 
-In chapter 4 I will introduce the realization output of this thesis, focusing on the overall design and philosophy. This chapter should be partly seen as program documentation.
+In chapter~\ref{ch:implementation} I will introduce the realization output of this thesis, focusing on the overall design and philosophy. This chapter should be partly seen as program documentation.
 
-Chapter 5 discusses selected applications of parameter and structure learning of Bayesian networks. The first application is a study of optimal parameter settings of the model learning procedures for networks and datasets of various sizes. The second application uses model learning as a tool to discover the main causes of criminality. The third application explores the option of using a generalized Naïve Bayes model for spam filtering.
+Chapter~\ref{ch:practical} discusses selected applications of parameter and structure learning of Bayesian networks. The first application is a study of optimal parameter settings of the model learning procedures for networks and datasets of various sizes. The second application uses model learning as a tool to discover the main causes of criminality. The third application explores the option of using a generalized Naïve Bayes model for spam filtering.
 
-Appendix A provides an overview of the mathematical notation used in this thesis.
+Appendix~\ref{ch:appendix_notation} provides an overview of the mathematical notation used in this thesis.
 
-Appendix B describes content of the CD enclosed with this thesis.
+Appendix~\ref{ch:appendix_cd_content} describes content of the CD enclosed with this thesis.
 
-
-
-
+Appendix~\ref{ch:appendix_crime_net} contains folded A3 figures of Bayesian networks from Section~\ref{ch:practical_crime}.
 
 
 
@@ -197,7 +196,11 @@ Appendix B describes content of the CD enclosed with this thesis.
 
 
 
-\chapter{Preliminaries}
+
+
+
+
+\chapter{Preliminaries}\label{ch:preliminaries}
 This chapter will present theoretical foundations for understanding Bayesian networks and for performing computation over them. Studying Bayesian networks (further abbreviated as BNs) is challenging both because of necessary mathematical rigor as well as for the need of efficient non-trivial algorithms to construct them and to provide answers for probability queries. In case of some formulas their mathematical derivation will be presented because, I believe, it provides useful insight into the underlaying theory. In other cases we will jump straight to the practical conclusion needed in order to algorithmically solve the problem at hand because the derivation is either very difficult or the process itself is uninteresting for a~non-mathematician and would unnecessarily prolong the thesis or even obfuscate the topic.
 
 First will be established notation used in this thesis and necessary overview of probability theory. Then we will move on to the theory of Bayesian networks, explain their advantages and proceed to inference and model learning techniques.
@@ -297,7 +300,7 @@ It may be useful to point out that renormalization makes sense only for factors 
 
 
 
-\chapter{Theory of Bayesian networks}
+\chapter{Theory of Bayesian networks}\label{ch:bn_theory}
 In this chapter we will first discuss the reasons for using Bayesian networks. Then we will move on to various inference methods and to methods of model learning, both in terms of model parameters as well as in terms of structure.
 
 Let's ask the question why to use Bayesian networks? What do they bring us? First of all, having a complicated joint probability distribution with many random variables inevitably leads to an enormously large table that would represent such probability distribution. Let's assume we have binary random variables $X_1, \dots, X_k$. Then to represent the joint probability distribution $P(X_1, \dots, X_k)$ we would need a table with $2^k$ entries. This exponential growth brings several problems:
@@ -807,7 +810,6 @@ The best-scoring forest is useful, for example, as a starting point for search o
 The search for a graph with general structure has already been characterized as an optimization task of maximizing score of the whole structure. We usually explore the space of all hypotheses using some greedy algorithm (best-first-search, hill climbing, tabu search etc.) but, in principle, other more sophisticated optimization methods are applicable as well. The search starts with some initial structure which can be graph with no edges, the best-coring forest, random graph or structure capturing our prior knowledge and believes regarding the target domain. The search uses the following three operators: edge addition, edge removal and edge reversal. The problem of local maxima in the context of greedy algorithms is usually addressed by introducing a tabu list or by random restarts making a~number of random transformations regardless the score difference. Another problem that often arises is the problem of \term{plateaux} which means that structures with low edit-distance often have the same score (reversing an edge in a tree etc.). A plateau effectively makes the search space locally \uv{flat} in terms of the scoring function and the space search algorithm can't pick the right direction to go. It turns out that the problem of plateaux is also solvable by random restarts or by a tabu list~\cite[p.~815]{pgm}.
 
 When considering computational complexity of greedy search, let's remember that the scoring functions are decomposable with the structure of the graph. So, in order to evaluate a structural change, we only need to consider local change of score in the nodes affected by this change and score of the rest of the network remains the same~\cite[p.~818]{pgm}. Furthermore, the state-space exploration has local character because the structure changes only locally by applying the edge addition/removal/reversal operators. Therefore, in consequent search steps we often need to reexamine many structural changes again to pick the best one and, in this case, caching of previously examined changes leads to a significant speedup~\cite[p.~819]{pgm}.
-% SP pgm820 - data structures for caching
 
 
 
@@ -879,7 +881,7 @@ If for two structures $\mathcal{G}_1, \mathcal{G}_2$ holds that $I(\mathcal{G}_1
 
 
 
-\chapter{Implementation}
+\chapter{Implementation}\label{ch:implementation}
 This chapter will present the program realization of this thesis and should be also considered program documentation and reference for anyone who intends to write an extension.
 
 The implementation relies heavily on design patterns and object-oriented programming principles to be flexible and easily extensible, ideally with no need to modify the existing code. For better understanding, I will describe the inter-class dependencies in terms of names of used design patterns as presented in~\cite{head_first_design_patterns}.
@@ -1685,7 +1687,6 @@ Family completeness has major impact on criminality and is a sign of healthy soc
 The need of public assistance income, lack of education and quality of jobs also contribute to criminality but not as significantly as one might think. Again, in this case it is about mentality and introduces a grand challenge for sociology to \uv{make} people think the right way without actually forcing them do it.
 
 
-\clearpage
 
 \begin{comment}
 The course of our experiments will be the following. First we will learn a big network using all 100 features of the dataset which will give us a general overview of the whole domain. Then we will repeatedly identify a set of variables that are very similar by their semantics, dependencies and are topologically close (directly connected one to the other); such a set of variables will be reduced to only one representative variable for two reasons: (1)~to obtain a~more readable network while hopefully preserving the key characteristics and (2)~to reduce the state-space of possible structures.
@@ -1765,7 +1766,7 @@ So far we have successfully obtained a dataset with reduced number of attributes
 
 
 
-
+\clearpage
 \section{Spam filtering}
 Since the 1990s spam has become an unpleasant part of the Internet. The working mechanism of spam is to flood as many users as possible with unsolicited emails in the hope that a small percentage of these users will respond the way spammer wants them to. Spam, as a stand-alone class of malware, has many subtypes distinguished by their content and purpose, for example advertisement, virus spreading or phishing emails. The main reasons for addressing the problem of spam is that manual spam deletion requires non-trivial portion of time and it may also pose a serious threat to a careless or trustful user.
 
@@ -1832,7 +1833,7 @@ Parameters of the structure learning procedure: 200 runs, 3\,000 iterations per 
 \subsection{Conclusion}
 In this section I have demonstrated that a~Bayesian network can perform better than a~Naïve Bayes model in the field of spam detection even with a relatively small training set. Because both these models are very close in their nature and because Naïve Bayes model is so powerful that many real-world spam filters use it, I believe that with a large scale dataset a Bayesian network can achieve very high success rates. This is because the scoring functions for structure learning of Bayesian networks inherently make a bias-variance trade-off depending on the size of our dataset and because we can further relax structural restrictions to increase possible variance of the Bayesian network model (in my experiments I disallowed the $spam$ variable to be a child and allowed no more than three parents per node). Both these properties of Bayesian networks suggest that their true power in the field of spam detection lies with large datasets having rich sets of features, whereas the Naïve Bayes model has been repeatedly proved to perform excellently with small datasets which are common in practice.
 
-\todo{There also exists an extension of Naïve Bayes, called Tree Augmented Naïve Bayes (TAM), that has the structure of Naïve Bayes model and furthermore allows for edges among attribute variables, as long as they don't form a V-structure. Advantage of TAM is that the optimal tree structure can be learnt in polynomial time whereas the learning of a more general Bayesian network, which I did, is generally NP-hard and therefore an optimization technique needs to be employed. (add citation, try to find a paper that employs TAM on spam)}
+%\todo{There also exists an extension of Naïve Bayes, called Tree Augmented Naïve Bayes (TAM), that has the structure of Naïve Bayes model and furthermore allows for edges among attribute variables, as long as they don't form a V-structure. Advantage of TAM is that the optimal tree structure can be learnt in polynomial time whereas the learning of a more general Bayesian network, which I did, is generally NP-hard and therefore an optimization technique needs to be employed. (add citation, try to find a paper that employs TAM on spam)}
 
 
 \begin{comment}
@@ -1924,12 +1925,17 @@ Best performance of $spam$ parent-only, max 3 parents per node, Bayesian score $
 \chapter{Conclusion}
 This master's thesis explained the fundamentals of Bayesian networks, described various inference methods and methods of model learning. To get better hold of the theoretical concepts and to gain some insight I supplied commented formal proofs or derivations of multiple statements, some of the proofs were constructed by myself. All techniques have been studied and presented in such a detail that is fully sufficient in order to implement them and to understand their limitations.
 
+\smallskip
 The practical part of this thesis is divided into three areas.
-The first area is a study of effects of different parameter settings of presented model learning methods for datasets and networks of various sizes. This study provides the reader with some intuition and hints on how to proceed when learning a network whose structure and/or CPDs are unknown.
-The second practical application explores the possibility of using Bayesian networks as a tool for data-mining. Concretely, three models for the Crimes and Communities dataset have been learnt and we were able to observe close interaction of certain clusters of variables as well as their overall impact on criminality.
+The first area is a study of effects of different parameter settings of presented model learning methods for datasets and networks of various sizes. This study provides the reader with some intuition and hints on how to proceed when learning a network whose correct structure and/or CPDs are unknown.
+
+The second practical application explores the possibility of using Bayesian networks as a~data-mining tool in order to discover internal structure of a studied domain. Concretely, three models for the Communities and crime dataset have been learnt and we have identified recurring clusters of tightly connected variables as well as overall impact of these variables on criminality. Based on these networks we were able to make propositions regarding suppression of criminality through justified interventions.
+
 The third practical application examines the possibilities of using a Bayesian network in the field of spam detection and shows that a Bayesian network can outperform the very successful Naïve Bayes model, even with a~relatively modest training set.
 
+\smallskip
 I believe that the most promising continuation of this thesis would be to thoroughly inspect the possibility of using Bayesian networks as spam detectors. In order to achieve better results a bigger dataset would be needed and extending the Bayesian network from discrete to continuous would also bring additional improvement.
+
 
 \ignore{
 \bigskip

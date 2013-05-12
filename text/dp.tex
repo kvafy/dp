@@ -25,7 +25,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1, IL2]{fontenc}
 \usepackage{url}
-
 \DeclareUrlCommand\url{\def\UrlLeft{<}\def\UrlRight{>} \urlstyle{tt}}
 
 %zde muzeme vlozit vlastni balicky
@@ -46,10 +45,7 @@
 \newcommand{\bnfgroup}[1]{\textit{#1}}     % BNF skupina
 \newcommand{\ignore}[1]{}                  % radkovy komentar
 % znacky rozpracovane prace
-%\newcommand{\todo}[1]{{\color{red}TODO #1}}
 \newcommand{\todo}[1]{}
-\newcommand{\uncertain}[1]{{\color{blue} #1}}
-\newcommand{\note}[1]{{\color{green} #1}}
 
 % prostredi pro vlozeni prilohy na strance velikosti A3
 \usepackage{afterpage}
@@ -83,40 +79,41 @@
 \fi
 \fi
 
-%Informace o praci/projektu
+% Informace o praci/projektu
 %---------------------------------------------------------------------------
 \projectinfo{
-  %Prace
-  project=DP,            %typ prace BP/SP/DP/DR
-  year=2013,             %rok
-  date=\today,          %datum odevzdani
-  %Nazev prace
-  title.cs={Aplikace Bayesovských sítí},  %nazev prace v cestine
-  title.en={Bayesian Networks Applications}, %nazev prace v anglictine
-  %Autor
-  author={David Chaloupka},   %jmeno prijmeni autora
-  author.title.p=Bc., %titul pred jmenem (nepovinne)
-  %author.title.a=PhD, %titul za jmenem (nepovinne)
-  %Ustav
+  % Prace
+  project=DP,            % typ prace BP/SP/DP/DR
+  year=2013,             % rok
+  date=\today,           % datum odevzdani
+  % Nazev prace
+  title.cs={Aplikace Bayesovských sítí},     % nazev prace v cestine
+  title.en={Bayesian Networks Applications}, % nazev prace v anglictine
+  % Autor
+  author={David Chaloupka},   % jmeno prijmeni autora
+  author.title.p=Bc.,         % titul pred jmenem (nepovinne)
+  %author.title.a=PhD,        % titul za jmenem (nepovinne)
+  % Ustav
   department=UITS, % doplnte prislusnou zkratku: UPSY/UIFS/UITS/UPGM
-  %Skolitel
-  supervisor=František V. Zbořil, %jmeno prijmeni skolitele
-  supervisor.title.p=doc.~Ing.,   %titul pred jmenem (nepovinne)
-  supervisor.title.a={CSc.},    %titul za jmenem (nepovinne)
+  % Skolitel
+  supervisor=František V. Zbořil, % jmeno prijmeni skolitele
+  supervisor.title.p=doc.~Ing.,   % titul pred jmenem (nepovinne)
+  supervisor.title.a={CSc.},      % titul za jmenem (nepovinne)
   %Klicova slova, abstrakty, prohlaseni a podekovani je mozne definovat 
   %bud pomoci nasledujicich parametru nebo pomoci vyhrazenych maker (viz dale)
   %===========================================================================
   %Klicova slova
-  keywords.cs={Bayesovská síť, pravděpodobnost, inference, učení struktury, strojové učení, spam.}, %klicova slova v ceskem jazyce
-  keywords.en={Bayesian network, probability, inference, structure learning, machine learning, spam.}, %klicova slova v anglickem jazyce
+  keywords.cs={Bayesovská síť, pravděpodobnost, stochastická inference, učení struktury, strojové učení, spam.}, %klicova slova v ceskem jazyce
+  keywords.en={Bayesian network, probability, stochastic, inference, structure learning, machine learning, spam.}, %klicova slova v anglickem jazyce
   %Abstract
-  abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti a později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně ozřejmění silných a~slabých stránek popisovaných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury. Těmito aplikacemi jsou obecné benchmarkové úlohy, dále užití Bayesovských sítí pro účely dolování znalostí o příčinách zločinnosti a prozkoumání možnosti nasazení Bayesovské sítě jakožto vysoce přesného spam filtru.}, % abstrakt v ceskem jazyce
-  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing an explanation of pros and cons of these techniques. The practical part focuses on applications that demand learning a Bayesian network, both in terms of network parameters as well as structure. These applications include general benchmarks, usage of Bayesian networks for knowledge discovery regarding the causes of crime and exploration of the possibility of using a Bayesian network as a highly accurate spam filter.}, % abstrakt v anglickem jazyce
+  abstract.cs={Tato diplomová práce se zabývá možnými aplikacemi Bayesovských sítí. Nejprve se zaměřuje na obecnou teorii pravděpodobnosti a později na úrovni matematiky vysvětluje samotnou teorii Bayesovských sítí, přístupy k inferenci a k učení včetně ozřejmění silných a~slabých stránek popisovaných technik. V praktické části je kladen důraz na aplikace vyžadující učení Bayesovské sítě, jednak ve smyslu učení parametrů a jednak ve smyslu struktury. Těmito aplikacemi jsou obecné benchmarkové úlohy, dále užití Bayesovských sítí pro účely dolování znalostí o příčinách zločinnosti a prozkoumání možnosti nasazení Bayesovské sítě jakožto spam filtru.}, % abstrakt v ceskem jazyce
+  abstract.en={This master's thesis deals with possible applications of Bayesian networks. The theoretical part is mainly of mathematical nature. At first, we focus on general probability theory and later we move on to the theory of Bayesian networks and discuss approaches to inference and to model learning while providing explanations of pros and cons of these techniques. The practical part focuses on applications that demand learning a Bayesian network, both in terms of network parameters as well as structure. These applications include general benchmarks, usage of Bayesian networks for knowledge discovery regarding the causes of criminality and exploration of the possibility of using a Bayesian network as a spam filter.}, % abstrakt v anglickem jazyce
   %Prohlaseni
   declaration={Prohlašuji, že jsem tuto diplomovou práci vypracoval samostatně pod vedením pana doc.~Ing. Františka V. Zbořila, CSc.},
   %Podekovani (nepovinne)
   acknowledgment={Na tomto místě bych rád poděkoval svému vedoucímu, docentu Františku V. Zbořilovi, za cenné rady, odborné vedení a vstřícný přístup v nesnázích při řešení této práce.} % nepovinne
 }
+\date{16. května 2013}
 
 
 \begin{document}
