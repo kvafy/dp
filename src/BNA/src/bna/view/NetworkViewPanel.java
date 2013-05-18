@@ -253,7 +253,7 @@ public class NetworkViewPanel extends javax.swing.JPanel implements ActiveDatase
         double angle = Toolkit.angleOfVector(pointStart, pointEnd);
         pointStart = parent.getBorderPointFromCenter(angle);
         pointEnd = child.getBorderPointFromCenter(angle - Math.PI);
-        g2D.drawLine(pointStart.x, pointStart.y, pointEnd.x, pointEnd.y); // TODO antialiasing
+        g2D.drawLine(pointStart.x, pointStart.y, pointEnd.x, pointEnd.y);
         
         // possibly pointy arrow at the end node (little triangle resembling)
         double ARROW_ROTATION_ANGLE = Math.PI / 9;

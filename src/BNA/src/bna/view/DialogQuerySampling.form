@@ -130,9 +130,6 @@
           <Connection code="new javax.swing.DefaultComboBoxModel(new String[] { &quot;Weighted sampling&quot;, &quot;MCMC sampling&quot; })" type="code"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="comboBoxMethodActionPerformed"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JCheckBox" name="checkBoxOnline">
       <Properties>

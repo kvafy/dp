@@ -29,7 +29,7 @@ public class GBayesianNetwork {
     private final BayesianNetwork bn;
     private GNode[] gnodes;
     
-    // TODO kompletne jinak (uz NetworkLayoutGenerator vrati GBayesianNetwork)
+    
     public GBayesianNetwork(BayesianNetwork bn, GNode[] gnodes) {
         this.bn = bn;
         this.gnodes = Arrays.copyOf(gnodes, gnodes.length);

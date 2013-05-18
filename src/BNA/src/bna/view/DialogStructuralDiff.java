@@ -1,150 +1,67 @@
 // Project: Bayesian networks applications (Master's thesis), BUT FIT 2013
 // Author:  David Chaloupka (xchalo09)
-// Created: 2013/04/14
+// Created: 2013/05/06
 
 package bna.view;
 
+import bna.bnlib.BNLibIOException;
 import bna.bnlib.BayesianNetwork;
-import bna.bnlib.Factor;
 import bna.bnlib.Variable;
-import bna.bnlib.learning.Dataset;
 import bna.bnlib.misc.Toolkit;
-import bna.bnlib.sampling.QuerySampler;
-import bna.bnlib.sampling.SampleProducer;
-import bna.bnlib.sampling.SamplingController;
-import bna.bnlib.sampling.WeightedSampleProducer;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 /**
- * Dialog takes current network, dataset and attempts to predict a single selected attribute.
+ * Dialog compares structure of two Bayesian networks.
  */
-public class DialogPredictionTest extends javax.swing.JDialog {
-    /** How many samples are generated used in stochastic inference to make a prediction. */
-    public static final long SAMPLES_PER_PREDICTION = 5000;
-    
-    private BayesianNetwork bn;
-    private Dataset dataset;
+public class DialogStructuralDiff extends javax.swing.JDialog {
+    private BayesianNetwork bnReferential,
+                            bnOther;
+    private String bnReferentialSource = "<not selected>",
+                   bnOtherSource = "<not selected>";
 
     
-    public DialogPredictionTest(java.awt.Frame parent, boolean modal,
-                                BayesianNetwork bn, Dataset dataset) {
+    public DialogStructuralDiff(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
-        this.bn = bn;
-        this.dataset = dataset;
+        this.bnReferential = this.bnOther = null;
         initComponents();
         this.setLocationRelativeTo(this.getParent());
         this.loadConfiguration();
+        this.onSelectedNetworksChange();
     }
     
     private void loadConfiguration() {
-        MainWindow mw = MainWindow.getInstance();
-        try {
-            String targetAttrIndexStr = mw.getConfiguration("Prediction", "target_attr_index");
-            int targetAttrIndex = Integer.valueOf(targetAttrIndexStr);
-            this.comboBoxTargetAttribute.setSelectedIndex(targetAttrIndex);
-        }
-        catch(NumberFormatException ex) {}
-        catch(IllegalArgumentException ex) {}
-        mw.loadWindowBounds(this, "DialogPredictionTest");
+        MainWindow.getInstance().loadWindowBounds(this, "DialogStructuralDiff");
     }
     
-    private void saveConfiguration() {
-        MainWindow mw = MainWindow.getInstance();
-        int targetAttrIndex = this.comboBoxTargetAttribute.getSelectedIndex();
-        mw.setConfiguration("Prediction", "target_attr_index", String.valueOf(targetAttrIndex));
-    }
-
-    private boolean verifyInputs() {
-        int targetAttrIndex = this.comboBoxTargetAttribute.getSelectedIndex();
-        if(targetAttrIndex < 0 || targetAttrIndex >= this.bn.getVariablesCount()) {
-            String msg = "A target attribute has to be selected.";
-            JOptionPane.showMessageDialog(this, msg, "Incomplete inputs", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        return true;
-    }
-    
-    private void notifyTestingStarted() {
-        this.comboBoxTargetAttribute.setEnabled(false);
-        this.buttonTest.setEnabled(false);
-        this.progressBar.setValue(0);
-        this.setConfusionMatrix(null, null);
-    }
-    
-    private void notifyTestingProgress(double progress) {
-        this.progressBar.setValue((int)(100 * progress));
-    }
-    
-    private void notifyTestingFinished(Variable predictedVar, int[][] confusionMatrix) {
-        this.comboBoxTargetAttribute.setEnabled(true);
-        this.buttonTest.setEnabled(true);
-        this.progressBar.setValue(100);
-        this.setConfusionMatrix(predictedVar, confusionMatrix);
-    }
-    
-    private void setConfusionMatrix(Variable predictedVar, int[][] matrix) {
-        if(predictedVar == null || matrix == null) {
-            this.tableConfusionMatrix.setModel(new DefaultTableModel());
-            return;
-        }
-        String[] assignments = predictedVar.getValues();
-        // generate header
-        String[] header = new String[1 + assignments.length + 1];
-        header[0] = "predicted / real";
-        Object[][] data = new Object[assignments.length + 1][1 + assignments.length + 1];
-        for(int i = 0 ; i < assignments.length ; i++)
-            header[i + 1] = assignments[i];
-        header[1 + assignments.length] = "class precision";
-        // fill in confusion counts
-        for(int i = 0 ; i < assignments.length ; i++) {
-            data[i][0] = assignments[i];
-            for(int j = 0 ; j < assignments.length ; j++)
-                data[i][j + 1] = new Integer(matrix[i][j]);
-        }
-        // fill in precision
-        for(int i = 0 ; i < assignments.length ; i++) {
-            int truePositives = 0,
-                falsePositives = 0;
-            for(int j = 0 ; j < assignments.length ; j++) {
-                if(i == j)
-                    truePositives += matrix[i][j];
-                else
-                    falsePositives += matrix[i][j];
-            }
-            double precision = ((double)truePositives) / (truePositives + falsePositives);
-            data[i][1 + assignments.length] = String.format("%.3f", precision);
-        }
-        // fill in recall
-        data[assignments.length][0] = "class recall";
-        for(int i = 0 ; i < assignments.length ; i++) {
-            int truePositives = 0,
-                falseNegatives = 0;
-            for(int j = 0 ; j < assignments.length ; j++) {
-                if(i == j)
-                    truePositives += matrix[j][i];
-                else
-                    falseNegatives += matrix[j][i];
-            }
-            double recall = ((double)truePositives) / (truePositives + falseNegatives);
-            data[assignments.length][i + 1] = String.format("%.3f", recall);
-        }
-        // fill in accuracy
-        int predictOK = 0,
-            predictFail = 0;
-        for(int i = 0 ; i < assignments.length ; i++) {
-            for(int j = 0 ; j < assignments.length ; j++) {
-                if(i == j)
-                    predictOK += matrix[i][j];
-                else
-                    predictFail += matrix[i][j];
-            }
-        }
-        double accuracy = ((double)predictOK) / (predictOK + predictFail);
-        data[assignments.length][1 + assignments.length] = String.format("accuracy = %.3f", accuracy);
+    private void onSelectedNetworksChange() {
+        this.labelReferentialNetwork.setText(this.bnReferentialSource);
+        this.labelOtherNetwork.setText(this.bnOtherSource);
         
-        this.tableConfusionMatrix.setModel(new DefaultTableModel(data, header));
+        if(this.bnReferential != null && this.bnOther != null) {
+            if(!Toolkit.areEqual(bnReferential.getVariables(), bnOther.getVariables())) {
+                String msg = "The two networks have to containt exactly the same variables.";
+                JOptionPane.showMessageDialog(this, msg, "Incompatible networks", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            // format the diff string
+            StringBuilder sb = new StringBuilder();
+            BayesianNetwork.StructuralDifference diff = new BayesianNetwork.StructuralDifference(bnReferential, bnOther);
+            sb.append(String.format("Missing edges (%d)\n", diff.getMissingEdges().size()));
+            for(Variable[] edge : diff.getMissingEdges())
+                sb.append(String.format(" * %s -> %s\n", edge[0].getName(), edge[1].getName()));
+            sb.append("\n");
+            sb.append(String.format("Reversed edges (%d)\n", diff.getReversedEdges().size()));
+            for(Variable[] edge : diff.getReversedEdges())
+                sb.append(String.format(" * %s -> %s\n", edge[0].getName(), edge[1].getName()));
+            sb.append("\n");
+            sb.append(String.format("Redundant edges (%d)\n", diff.getRedundantEdges().size()));
+            for(Variable[] edge : diff.getRedundantEdges())
+                sb.append(String.format(" * %s -> %s\n", edge[0].getName(), edge[1].getName()));
+            this.textPaneResults.setText(sb.toString());
+        }
     }
     
     /**
@@ -156,16 +73,23 @@ public class DialogPredictionTest extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton1 = new javax.swing.JButton();
         labelPath = new javax.swing.JLabel();
-        buttonTest = new javax.swing.JButton();
-        comboBoxTargetAttribute = new javax.swing.JComboBox();
         jLabel1 = new javax.swing.JLabel();
+        buttonLoadRefentialFromFile = new javax.swing.JButton();
+        labelReferentialNetwork = new javax.swing.JLabel();
+        labelOtherNetwork = new javax.swing.JLabel();
+        buttonLoadOtherFromFile = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tableConfusionMatrix = new javax.swing.JTable();
-        progressBar = new javax.swing.JProgressBar();
+        textPaneResults = new javax.swing.JTextPane();
+        buttonCurrentAsOther = new javax.swing.JButton();
+        buttonCurrentAsReferential = new javax.swing.JButton();
+
+        jButton1.setText("jButton1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Prediction accuracy test");
+        setTitle("Structural difference");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
@@ -175,25 +99,41 @@ public class DialogPredictionTest extends javax.swing.JDialog {
             }
         });
 
-        labelPath.setText("Target attribute");
+        labelPath.setText("Referential network:");
 
-        buttonTest.setText("Test");
-        buttonTest.addActionListener(new java.awt.event.ActionListener() {
+        jLabel1.setText("Other network:");
+
+        buttonLoadRefentialFromFile.setText("Load from file");
+        buttonLoadRefentialFromFile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonTestActionPerformed(evt);
+                buttonLoadRefentialFromFileActionPerformed(evt);
             }
         });
 
-        Variable[] variables = this.bn.getVariables();
-        String[] variableNames = new String[variables.length];
-        for(int i = 0 ; i < variables.length ; i++)
-        variableNames[i] = variables[i].getName();
-        comboBoxTargetAttribute.setModel(new javax.swing.DefaultComboBoxModel(variableNames));
+        buttonLoadOtherFromFile.setText("Load from file");
+        buttonLoadOtherFromFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonLoadOtherFromFileActionPerformed(evt);
+            }
+        });
 
-        jLabel1.setText("Confusion matrix");
+        jLabel2.setText("Results");
 
-        tableConfusionMatrix.setModel(new javax.swing.table.DefaultTableModel());
-        jScrollPane1.setViewportView(tableConfusionMatrix);
+        jScrollPane1.setViewportView(textPaneResults);
+
+        buttonCurrentAsOther.setText("Set current network");
+        buttonCurrentAsOther.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonCurrentAsOtherActionPerformed(evt);
+            }
+        });
+
+        buttonCurrentAsReferential.setText("Set current network");
+        buttonCurrentAsReferential.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonCurrentAsReferentialActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -202,153 +142,160 @@ public class DialogPredictionTest extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(labelPath)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(comboBoxTargetAttribute, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel1)
+                                .addComponent(buttonCurrentAsReferential, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(12, 12, 12)
+                                .addComponent(buttonLoadRefentialFromFile, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(buttonTest, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addComponent(buttonCurrentAsOther, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(buttonLoadOtherFromFile, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 172, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(labelPath)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelReferentialNetwork, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelOtherNetwork, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(labelPath)
-                    .addComponent(comboBoxTargetAttribute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(labelPath, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(labelReferentialNetwork, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
-                .addGap(8, 8, 8)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(buttonTest)
-                    .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonLoadRefentialFromFile)
+                    .addComponent(buttonCurrentAsReferential))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(labelOtherNetwork, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonCurrentAsOther)
+                    .addComponent(buttonLoadOtherFromFile))
+                .addGap(30, 30, 30)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void buttonTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonTestActionPerformed
-        if(!this.verifyInputs())
-            return;
-        
-        PredictionTestingThread worker = new PredictionTestingThread(this.bn, this.dataset);
-        worker.setDaemon(true);
-        worker.start();
-        
-        this.saveConfiguration();
-    }//GEN-LAST:event_buttonTestActionPerformed
-
     private void formComponentMoved(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentMoved
-        MainWindow.getInstance().saveWindowBounds(this, "DialogPredictionTest");
+        MainWindow.getInstance().saveWindowBounds(this, "DialogStructuralDiff");
     }//GEN-LAST:event_formComponentMoved
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        MainWindow.getInstance().saveWindowBounds(this, "DialogPredictionTest");
+        MainWindow.getInstance().saveWindowBounds(this, "DialogStructuralDiff");
     }//GEN-LAST:event_formComponentResized
 
-    /** Thread that carries out the prediction testing and notifies GUI. */
-    class PredictionTestingThread extends Thread {
-        private BayesianNetwork bn;
-        private Dataset dataset;
-        
-        
-        public PredictionTestingThread(BayesianNetwork bn, Dataset dataset) {
+    private void buttonCurrentAsReferentialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCurrentAsReferentialActionPerformed
+        BayesianNetwork bn = this.loadCurrent();
+        if(bn != null) {
+            this.bnReferential = bn;
+            this.bnReferentialSource = "copied from the main window";
+            this.onSelectedNetworksChange();
+        }
+    }//GEN-LAST:event_buttonCurrentAsReferentialActionPerformed
+
+    private void buttonLoadRefentialFromFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadRefentialFromFileActionPerformed
+        NetworkFromFile bnFromFile = this.loadFromFile();
+        if(bnFromFile != null) {
+            this.bnReferential = bnFromFile.bn;
+            this.bnReferentialSource = bnFromFile.file;
+            this.onSelectedNetworksChange();
+        }
+    }//GEN-LAST:event_buttonLoadRefentialFromFileActionPerformed
+
+    private void buttonCurrentAsOtherActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCurrentAsOtherActionPerformed
+        BayesianNetwork bn = this.loadCurrent();
+        if(bn != null) {
+            this.bnOther = bn;
+            this.bnOtherSource = "copied from the main window";
+            this.onSelectedNetworksChange();
+        }
+    }//GEN-LAST:event_buttonCurrentAsOtherActionPerformed
+
+    private void buttonLoadOtherFromFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLoadOtherFromFileActionPerformed
+        NetworkFromFile bnFromFile = this.loadFromFile();
+        if(bnFromFile != null) {
+            this.bnOther = bnFromFile.bn;
+            this.bnOtherSource = bnFromFile.file;
+            this.onSelectedNetworksChange();
+        }
+    }//GEN-LAST:event_buttonLoadOtherFromFileActionPerformed
+
+    class NetworkFromFile {
+        public BayesianNetwork bn;
+        public String file;
+        public NetworkFromFile(BayesianNetwork bn, String file) {
             this.bn = bn;
-            this.dataset = dataset;
-        }
-        
-        @Override
-        public void run() {
-            Variable[] bnVars = this.bn.getVariables();
-            Variable[] datasetVars = this.dataset.getVariables();
-            int targetAttrIndex = comboBoxTargetAttribute.getSelectedIndex();
-            Variable targetVar = bnVars[targetAttrIndex];
-            // need to have instance of the target variable from dataset (values may have other ordering)
-            int targetVarIndexInDataset = Toolkit.indexOf(datasetVars, targetVar);
-            targetVar = datasetVars[targetVarIndexInDataset];
-
-            int[][] confusionMatrix = new int[targetVar.getCardinality()][targetVar.getCardinality()];
-
-            notifyTestingStarted();
-            int i = 0;
-            for(int[] sample : this.dataset.getDataReadOnly()) {
-                // assemble a query in which everything except targetVariable is evidence, ie. P(Target | E = e)
-                String query = this.getQueryString(targetVar, datasetVars, sample);
-                // make a prediction via sampling
-                Factor predictionFactor = this.getPredictionFactor(query);
-                // evaluate prediction result for this sample
-                int realValue = sample[targetVarIndexInDataset];
-                String predictedValueStr = this.getPredictedValue(predictionFactor);
-                int predictedValue = targetVar.getValueIndex(predictedValueStr);
-                confusionMatrix[predictedValue][realValue]++;
-                notifyTestingProgress(++i / (double)this.dataset.getSize());
-            }
-            
-            notifyTestingFinished(targetVar, confusionMatrix);
-        }
-        
-        private String getQueryString(Variable targetVar, Variable[] datasetVars, int[] datasetSample) {
-            StringBuilder query = new StringBuilder();
-            query.append("P(")
-                    .append(targetVar.getName())
-                    .append(" | ");
-            boolean firstEvidence = true;
-            for(int i = 0 ; i < datasetVars.length ; i++) {
-                if(datasetVars[i].equals(targetVar))
-                    continue;
-                if(!firstEvidence)
-                    query.append(", ");
-                firstEvidence = false;
-                String datasetVarValue = datasetVars[i].getValues()[datasetSample[i]];
-                query.append(datasetVars[i].getName())
-                        .append(" = ")
-                        .append(datasetVarValue);
-            }
-            query.append(")");
-            return query.toString();
-        }
-
-        private Factor getPredictionFactor(String query) {
-            SampleProducer sampleProducer = new WeightedSampleProducer(this.bn, query);
-            QuerySampler sampler = new QuerySampler(sampleProducer);
-            SamplingController samplingController = new SamplingController(DialogPredictionTest.SAMPLES_PER_PREDICTION);
-            sampler.sample(samplingController);
-            return sampler.getSamplesCounter(); // no need to normalize
-        }
-
-        /** According to prediction policy and to inferred probabilities pick a final predicted value. */
-        private String getPredictedValue(Factor predictionFactor) {
-            int maxProbIndex = 0;
-            double maxProb = predictionFactor.getProbability(maxProbIndex);
-            for(int i = 1 ; i < predictionFactor.getCardinality() ; i++) {
-                double iProb = predictionFactor.getProbability(i);
-                if(iProb > maxProb) {
-                    maxProb = iProb;
-                    maxProbIndex = i;
-                }
-            }
-            return predictionFactor.getScope()[0].getValues()[maxProbIndex];
+            this.file = file;
         }
     }
     
+    private BayesianNetwork loadCurrent() {
+        BayesianNetwork bn = MainWindow.getInstance().getActiveNetwork();
+        if(bn == null) {
+            String msg = "There is no active network to be loaded.";
+            JOptionPane.showMessageDialog(this, msg, "Unable to set network", JOptionPane.ERROR_MESSAGE);
+        }
+        return bn;
+    }
+    
+    private NetworkFromFile loadFromFile() {
+        // pick the file and remember last directory
+        MainWindow mw = MainWindow.getInstance();
+        String lastNetworkDirectory = mw.getConfiguration("Network", "directory");
+        if(lastNetworkDirectory == null)
+            lastNetworkDirectory = ".";
+        JFileChooser networkFileChooser = new JFileChooser(lastNetworkDirectory);
+        networkFileChooser.setFileFilter(new FileNameExtensionFilter("Net file", "net"));
+        networkFileChooser.setDialogTitle("Load a Bayesian network from file");
+        networkFileChooser.showOpenDialog(this);
+        if(networkFileChooser.getSelectedFile() == null)
+            return null;
+        mw.setConfiguration("Network", "directory", networkFileChooser.getSelectedFile().getParent());
+        // attempt to load the network
+        NetworkFromFile networkFromFile;
+        try {
+            String file = networkFileChooser.getSelectedFile().getPath();
+            BayesianNetwork bn = BayesianNetwork.loadFromFile(file);
+            networkFromFile = new NetworkFromFile(bn, file);
+            
+        }
+        catch(BNLibIOException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "I/O error while loading the network", JOptionPane.ERROR_MESSAGE);
+            networkFromFile = null;
+        }
+        return networkFromFile;
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton buttonTest;
-    private javax.swing.JComboBox comboBoxTargetAttribute;
+    private javax.swing.JButton buttonCurrentAsOther;
+    private javax.swing.JButton buttonCurrentAsReferential;
+    private javax.swing.JButton buttonLoadOtherFromFile;
+    private javax.swing.JButton buttonLoadRefentialFromFile;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel labelOtherNetwork;
     private javax.swing.JLabel labelPath;
-    private javax.swing.JProgressBar progressBar;
-    private javax.swing.JTable tableConfusionMatrix;
+    private javax.swing.JLabel labelReferentialNetwork;
+    private javax.swing.JTextPane textPaneResults;
     // End of variables declaration//GEN-END:variables
 }

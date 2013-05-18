@@ -397,7 +397,7 @@ public class BNA {
             LinkedList<Object> dataRowList = new LinkedList<Object>();
             dataRowList.add(samples);
             for(BayesianNetwork bnLearned : networks) {
-                Double entropy = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, distributionsOverParents, bnLearned);
+                Double entropy = Toolkit.networkDistanceRelativeEntropy(bnOriginal, distributionsOverParents, bnLearned);
                 dataRowList.addLast(entropy);
             }
             Object[] entropyRow = dataRowList.toArray();
@@ -443,7 +443,7 @@ public class BNA {
                 partialDataset.addRecord(sample);
             // learn the parameters using MLE and Bayesian estimation with various equivalent sample sizes
             BayesianNetwork bnCurrentMLE = ParameterLearner.learnMLE(bnOriginal, partialDataset);
-            Double klCurrentMLE = Toolkit.networkDistanceRelativeEntropy2(bnOriginal, distributionsOverParents, bnCurrentMLE);
+            Double klCurrentMLE = Toolkit.networkDistanceRelativeEntropy(bnOriginal, distributionsOverParents, bnCurrentMLE);
             if(klPreviousMLE != null && klPreviousMLE - klCurrentMLE >= 0.15) {
                 System.out.printf("jump of KL-divergence by %.2f at %d samples\n", klPreviousMLE - klCurrentMLE, samples);
                 System.out.println("previous bn:");

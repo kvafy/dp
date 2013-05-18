@@ -64,13 +64,13 @@ public class DialogNodeInfo extends javax.swing.JDialog {
 
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tableCPTView = new bna.view.FactorViewTable();
         jLabel4 = new javax.swing.JLabel();
         labelVariableName = new javax.swing.JLabel();
         labelParents = new javax.swing.JLabel();
         labelChildren = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tableCPTView = new bna.view.FactorViewTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Detail of variable");
@@ -87,14 +87,18 @@ public class DialogNodeInfo extends javax.swing.JDialog {
 
         jLabel2.setText("Children:");
 
-        tableCPTView.setModel(FactorViewTable.EMPTY_TABLE_MODEL);
-        tableCPTView.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-        tableCPTView.setEnabled(false);
-        jScrollPane1.setViewportView(tableCPTView);
-
         jLabel4.setText("Variable:");
 
         jLabel3.setText("Conditional probability table");
+
+        jScrollPane1.setAlignmentX(0.0F);
+
+        tableCPTView.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        tableCPTView.setModel(FactorViewTable.EMPTY_TABLE_MODEL);
+        tableCPTView.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tableCPTView.setEnabled(false);
+        tableCPTView.setPreferredSize(null);
+        jScrollPane1.setViewportView(tableCPTView);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -103,20 +107,20 @@ public class DialogNodeInfo extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel2)
                             .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(labelVariableName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(labelParents, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(labelChildren, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(labelParents, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(labelChildren, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(labelVariableName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(0, 154, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -137,7 +141,7 @@ public class DialogNodeInfo extends javax.swing.JDialog {
                 .addGap(18, 18, 18)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 342, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE)
                 .addContainerGap())
         );
 

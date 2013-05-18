@@ -89,7 +89,6 @@ public class MCMCSampleProducer extends SampleProducer {
     @Override
     protected void produceSample(SamplingContext context) {
         context.sampleWeight = 1.0;
-        // TODO maybe sequentially instead of at random ??
         int actionIndex = context.rand.nextInt(this.resamplingActions.size());
         MCMCResamplingAction action = this.resamplingActions.get(actionIndex);
         action.resample(context);

@@ -21,10 +21,6 @@ import javax.swing.JOptionPane;
 public class DialogQuerySampling extends javax.swing.JDialog implements ActiveNetworkObserver {
     private BayesianNetwork bn;
     
-
-    /**
-     * Creates new form DialogSampling
-     */
     public DialogQuerySampling(java.awt.Frame parent, boolean modal, final NetworkViewPanel networkViewer) {
         super(parent, modal);
         this.bn = null;
@@ -127,11 +123,6 @@ public class DialogQuerySampling extends javax.swing.JDialog implements ActiveNe
         jLabel3.setText("Method");
 
         comboBoxMethod.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Weighted sampling", "MCMC sampling" }));
-        comboBoxMethod.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                comboBoxMethodActionPerformed(evt);
-            }
-        });
 
         checkBoxOnline.setText("On-line results");
         checkBoxOnline.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -222,10 +213,6 @@ public class DialogQuerySampling extends javax.swing.JDialog implements ActiveNe
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void comboBoxMethodActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboBoxMethodActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_comboBoxMethodActionPerformed
 
     private void buttonStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStartActionPerformed
         if(this.bn == null || !this.bn.hasValidCPDs()) {

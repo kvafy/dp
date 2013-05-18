@@ -87,7 +87,6 @@ public class Factor implements Iterable<int[]> {
     public Factor marginalize(Variable[] over) throws BNLibIllegalOperationException {
         Variable[] newScope = Toolkit.difference(this.scope, over);
         if(newScope.length == 0)
-            // TODO create a special "ONE" factor (??)
             throw new BNLibIllegalOperationException("Marginalizing over all variables yields an empty factor.");
         double[] newValues = new double[Toolkit.cardinality(newScope)];
         VariableSubsetMapper scopeToNewScopeMapper = new VariableSubsetMapper(this.scope, newScope);

@@ -45,7 +45,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
         this.loadConfiguration();
         this.prepareEdgeFrequenciesTable();
         this.initializeNetworksSelectionCombobox();
-        this.buttonAnalyze.setVisible(false);
         
         // ensure proper observing (registration and deregistration)
         final DialogStructureLearning thisDialog = this;
@@ -185,8 +184,8 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
                 errorMsg = "Random restart step count has to be a non-negative integer.";
             else if(!(tabulistRelsize >= 0 && tabulistRelsize <= 1.0))
                 errorMsg = "Tabulist relative size has to be a real number from the interval [0,1].";
-            else if(maxParents < 0) // TODO will work for 0? (ie. will not crash?)
-                errorMsg = "Maximum number of parents has to be a non-negative integer.";
+            else if(maxParents <= 0)
+                errorMsg = "Maximum number of parents has to be a positive integer.";
             if(errorMsg != null) {
                 JOptionPane.showMessageDialog(this, errorMsg, "Invalid parameters", JOptionPane.ERROR_MESSAGE);
                 return false;
@@ -350,7 +349,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
         comboBoxNetworksSelection = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
         labelStatus = new javax.swing.JLabel();
-        buttonAnalyze = new javax.swing.JButton();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -545,13 +543,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
 
         labelStatus.setText("not started yet");
 
-        buttonAnalyze.setText("Analyze");
-        buttonAnalyze.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonAnalyzeActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout panelResultsLayout = new javax.swing.GroupLayout(panelResults);
         panelResults.setLayout(panelResultsLayout);
         panelResultsLayout.setHorizontalGroup(
@@ -580,8 +571,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
                         .addComponent(jLabel8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(29, 29, 29)
-                        .addComponent(buttonAnalyze, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
         panelResultsLayout.setVerticalGroup(
@@ -598,12 +587,11 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
-                    .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(buttonAnalyze))
+                    .addComponent(comboBoxNetworksSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 308, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -658,63 +646,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
         MainWindow.getInstance().setActiveNetwork(activeNetwork);
     }//GEN-LAST:event_comboBoxNetworksSelectionActionPerformed
 
-    private void buttonAnalyzeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAnalyzeActionPerformed
-        if(this.comboBoxNetworksSelectionContent.length <= 1) {
-            System.out.println("tududu tum (need at least two networks)");
-            return;
-        }
-        BayesianNetwork bnOrig = this.comboBoxNetworksSelectionContent[0],
-                        bnLearnt = this.comboBoxNetworksSelectionContent[this.comboBoxNetworksSelection.getSelectedIndex()];
-        // what variables are not connected in the learnt network (directions don't matter)
-        System.out.println("Broken connections (undirected):");
-        int brokenConnections = 0;
-        int totalEdges = 0;
-        for(Node nodeOrig : bnOrig.getNodes()) {
-            totalEdges += nodeOrig.getChildrenCount();
-            Node nodeLearnt = bnLearnt.getNode(nodeOrig.getVariable());
-            Variable[] nodeLearntNeighbours = Toolkit.union(nodeLearnt.getParentVariables(), nodeLearnt.getChildVariables());
-            for(Variable childOrig : nodeOrig.getChildVariables()) {
-                if(!Toolkit.arrayContains(nodeLearntNeighbours, childOrig)) {
-                    System.out.printf(" - missing %s - %s\n", nodeOrig.getVariable().getName(), childOrig.getName());
-                    brokenConnections++;
-                }
-            }
-        }
-        System.out.printf(" - missing %d out of %d\n\n", brokenConnections, totalEdges);
-        
-        // what edges (directed) are not present in the learnt structure
-        System.out.println("Broken edges (directed):");
-        int brokenDirectedEdges = 0;
-        for(Node nodeOrig : bnOrig.getNodes()) {
-            Node nodeLearnt = bnLearnt.getNode(nodeOrig.getVariable());
-            Variable[] nodeLearntChildren = nodeLearnt.getChildVariables();
-            for(Variable childOrig : nodeOrig.getChildVariables()) {
-                if(!Toolkit.arrayContains(nodeLearntChildren, childOrig)) {
-                    System.out.printf(" - missing %s - %s\n", nodeOrig.getVariable().getName(), childOrig.getName());
-                    brokenDirectedEdges++;
-                }
-            }
-        }
-        System.out.printf(" - missing %d out of %d\n\n", brokenDirectedEdges, totalEdges);
-        
-        // what variables are connected in the learnt network (directions don't matter) but shouldn't be
-        System.out.println("Redundant connections (undirected):");
-        int redundantConnections = 0;
-        for(Node nodeLearnt : bnLearnt.getNodes()) {
-            Node nodeOrig = bnOrig.getNode(nodeLearnt.getVariable());
-            Variable[] nodeOrigNeighbours = Toolkit.union(nodeOrig.getParentVariables(), nodeOrig.getChildVariables());
-            for(Variable childLearnt : nodeLearnt.getChildVariables()) {
-                if(!Toolkit.arrayContains(nodeOrigNeighbours, childLearnt)) {
-                    System.out.printf(" - shouldn't have %s - %s\n", nodeLearnt.getVariable().getName(), childLearnt.getName());
-                    redundantConnections++;
-                }
-            }
-        }
-        System.out.printf(" - total %d\n\n", redundantConnections);
-        
-        System.out.println("\n\n");
-    }//GEN-LAST:event_buttonAnalyzeActionPerformed
-
     private void comboBoxMethodItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_comboBoxMethodItemStateChanged
         boolean bayesianScoringMethod = this.comboBoxMethod.getSelectedIndex() == 1;
         this.textFieldAlpha.setEnabled(bayesianScoringMethod);
@@ -730,7 +661,6 @@ public class DialogStructureLearning extends javax.swing.JDialog implements Acti
 
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton buttonAnalyze;
     private javax.swing.JButton buttonLearn;
     private javax.swing.JButton buttonStop;
     private javax.swing.JComboBox comboBoxMethod;

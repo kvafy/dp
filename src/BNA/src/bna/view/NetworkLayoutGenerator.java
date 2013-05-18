@@ -225,13 +225,6 @@ public class NetworkLayoutGenerator {
             else
                 action.undo();
             
-            // consistency check
-            // TODO remove
-            for(LNode[] layer : ordering)
-                for(int j = 0 ; j < layer.length ; j++)
-                    if(layer[j].inlayerIndex != j)
-                        throw new RuntimeException("invalid inlayer index after " + action.getClass().getName() + ", accept = " + accept);
-            
             // if new best, record the current ordering
             if(currentCrossings < bestCrossings) {
                 bestCrossings = currentCrossings;
@@ -328,7 +321,7 @@ public class NetworkLayoutGenerator {
                 return;
             }
         }
-        throw new BNLibInternalException("Array already full!"); // TODO defensive
+        throw new BNLibInternalException("Array already full!");
     }
     
     private static void preliminaryAbsoluteLayout(LNode[][] relativeOrder) {
@@ -383,13 +376,6 @@ public class NetworkLayoutGenerator {
                 currentScore = newScore;
             else
                 action.undo();
-            
-            // consistency check
-            // TODO remove
-            for(LNode[] layer : ordering)
-                for(int j = 0 ; j < layer.length - 1 ; j++)
-                    if(layer[j].gridX + 2 > layer[j + 1].gridX)
-                        throw new RuntimeException("invalid gridX padding, accept = " + accept);
             
             // if new best, record the current ordering
             if(currentScore > bestScore) {

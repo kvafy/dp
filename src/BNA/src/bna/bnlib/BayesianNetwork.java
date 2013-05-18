@@ -146,6 +146,13 @@ public class BayesianNetwork {
         return true;
     }
     
+    /** Does this network and the given one contain exactly the same variables? */
+    public boolean hasTheSameVariables(BayesianNetwork bnOther) {
+        Variable[] varsThis = this.getVariables(),
+                   varsOther = bnOther.getVariables();
+        return Toolkit.areEqual(varsThis, varsOther);
+    }
+    
     /** Check whether "descendant" is an (indirect) descendant of "var". */
     public boolean hasDescendant(Variable var, Variable descendant) {
         LinkedList<Node> openQueue = new LinkedList<Node>();
@@ -489,6 +496,54 @@ public class BayesianNetwork {
         return ret.toString();
     }
     
+    /**
+     * Compute structural intersection of given networks.
+     * Structural intersection means producing a network containing only edges
+     * occuring in all given networks while tolerating at most "tolerance"
+     * misses.
+     * @throws BNLibIllegalArgumentException When the given networks don't contain
+     *         the same variables or when the resulting network is not acyclic.
+     */
+    public static BayesianNetwork structuralIntersection(BayesianNetwork[] bns, int tolerance)
+            throws BNLibIllegalArgumentException {
+        // verify inputs
+        if(bns == null || bns.length == 0)
+            throw new BNLibIllegalArgumentException("There has to be at least one network to compute structural intersection.");
+        // the exact same set of variables?
+        for(int i = 1 ; i < bns.length ; i++) {
+            if(!bns[0].hasTheSameVariables(bns[i]))
+                throw new BNLibIllegalArgumentException("Networks don't contain the same variables.");
+        }
+        try {
+            // compute occurence count for all edges
+            Variable[] varsOrder = bns[0].getVariables(); // to have an ordering for the edgeCounter matrix
+            int edgeCounter[][] = new int[varsOrder.length][varsOrder.length];
+            for(BayesianNetwork bn : bns) {
+                for(Node node : bn.getNodes()) {
+                    Variable parent = node.getVariable();
+                    int parentIndex = Toolkit.indexOf(varsOrder, parent);
+                    for(Variable child : node.getChildVariables()) {
+                        int childIndex = Toolkit.indexOf(varsOrder, child);
+                        edgeCounter[parentIndex][childIndex]++;
+                    }
+                }
+            }
+            // construct a network containing edges whose occurence count falls within tolerance
+            BayesianNetwork bnIntersection = new BayesianNetwork(varsOrder);
+            for(int i = 0 ; i < varsOrder.length ; i++) {
+                for(int j = 0 ; j < varsOrder.length ; j++) {
+                    if(edgeCounter[i][j] >= bns.length - tolerance) // tolerate if the edge is missing "tolerance"-times
+                        bnIntersection.addDependency(varsOrder[i], varsOrder[j]);
+                }
+            }
+            // validate acyclicity (throws BNLibIllegalNetworkSpecificationException)
+            bnIntersection.validateAcyclicity();
+            return bnIntersection;
+        }
+        catch(BNLibIllegalNetworkSpecificationException notADagException) {
+            throw new BNLibIllegalArgumentException("The intersection network is not acyclic (try reducing tolerance).");
+        }
+    }
     
     /** Data structure that captures structural differences of two networks. */
     public static class StructuralDifference {
